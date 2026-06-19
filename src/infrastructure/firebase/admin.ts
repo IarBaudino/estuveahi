@@ -5,6 +5,14 @@ import { assertFirebaseConfigured, isFirebaseConfigured } from "./config";
 
 let app: App | null = null;
 
+function normalizePrivateKey(key: string): string {
+  const trimmed = key.trim();
+  if (trimmed.includes("\\n")) {
+    return trimmed.replace(/\\n/g, "\n");
+  }
+  return trimmed;
+}
+
 function initApp(): App {
   if (app) return app;
   if (getApps().length > 0) {
@@ -18,7 +26,7 @@ function initApp(): App {
     credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID!,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+      privateKey: normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY!),
     }),
   });
 
@@ -36,7 +44,12 @@ export function getDb(): Firestore {
 
 export function getDbIfConfigured(): Firestore | null {
   if (!isFirebaseConfigured()) return null;
-  return getFirestore(initApp());
+  try {
+    return getFirestore(initApp());
+  } catch (error) {
+    console.error("[firebase] No se pudo inicializar Firestore:", error);
+    return null;
+  }
 }
 
 export function getFirebaseAuth(): Auth {

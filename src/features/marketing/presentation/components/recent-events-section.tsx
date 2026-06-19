@@ -12,18 +12,19 @@ const HERO_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuBj8-NIDsvIc5_94Ha-x7LzHsNh1LihHHqv-wFpJ72UmdcbSTzp0trQVvHRQYEA-dHOxpGOC6BfmPLatFDecBejxIs-dPGmwiyMEDTBiqYMZejt3StocqWf-p8esuguN99f3bDOmkv-tMqj3R1pgVBHvUY1dHW_D2T4xLFAgLjKA4fu2reOsxxce6vPTUs7OgC0FByFRRk_cwR4y_Mk1KLTVh7gVJYnfo3nOSjae0MG0v1kJmIKairhBgqEvIcoV13QlSehGCoPgqc";
 
 export async function RecentEventsSection() {
-  const { events } = await searchPublicEvents({ page: 1, limit: 6 });
+  try {
+    const { events } = await searchPublicEvents({ page: 1, limit: 6 });
 
-  if (events.length === 0) return null;
+    if (events.length === 0) return null;
 
-  const eventsWithCovers = await Promise.all(
-    events.map(async (event) => {
-      const photos = await getEventPhotos(event.id, 1);
-      return { event, coverPhotoId: photos[0]?.id };
-    }),
-  );
+    const eventsWithCovers = await Promise.all(
+      events.map(async (event) => {
+        const photos = await getEventPhotos(event.id, 1);
+        return { event, coverPhotoId: photos[0]?.id };
+      }),
+    );
 
-  return (
+    return (
     <section className="bg-surface-container-lowest px-margin-mobile py-section-gap md:px-margin-desktop">
       <div className="mx-auto max-w-container-max">
         <div className="mb-16 flex items-end justify-between">
@@ -80,5 +81,9 @@ export async function RecentEventsSection() {
         </div>
       </div>
     </section>
-  );
+    );
+  } catch (error) {
+    console.error("[RecentEventsSection]", error);
+    return null;
+  }
 }

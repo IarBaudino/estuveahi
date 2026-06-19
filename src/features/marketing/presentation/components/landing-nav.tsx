@@ -4,7 +4,12 @@ import { routes } from "@/config/routes";
 import { MaterialIcon } from "@/shared/components/icon";
 
 export async function LandingNav() {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[LandingNav] auth:", error);
+  }
 
   return (
     <nav className="glass-nav fixed top-0 z-50 flex w-full items-center justify-between border-b border-white/10 px-margin-mobile py-4 md:px-margin-desktop">
