@@ -1,0 +1,64 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import {
+  authActionClient,
+  adminActionClient,
+} from "@/shared/lib/safe-action";
+import {
+  updateProfileSchema,
+  uploadAvatarSchema,
+} from "../../application/schemas/profile.schema";
+import {
+  assertUserNotBlocked,
+  getProfileById,
+  setUserBlocked,
+  updateProfile,
+  uploadAvatar,
+} from "../../infrastructure/profile.repository";
+import { routes } from "@/config/routes";
+import { z } from "zod";
+
+export const updateProfileAction = authActionClient
+  .schema(updateProfileSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await assertUserNotBlocked(ctx.user.id);
+    const profile = await updateProfile(ctx.user.id, parsedInput);
+    revalidatePath(routes.client.profile);
+    return { profile };
+  });
+
+export const uploadAvatarAction = authActionClient
+  .schema(uploadAvatarSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await assertUserNotBlocked(ctx.user.id);
+    const buffer = Buffer.from(parsedInput.fileBase64, "base64");
+    const avatarUrl = await uploadAvatar(
+      ctx.user.id,
+      buffer,
+      parsedInput.mimeType,
+    );
+    revalidatePath(routes.client.profile);
+    return { avatarUrl };
+  });
+
+export const getMyProfileAction = authActionClient.action(async ({ ctx }) => {
+  const profile = await getProfileById(ctx.user.id);
+  return { profile };
+});
+
+export const setUserBlockedAction = adminActionClient
+  .schema(
+    z.object({
+      userId: z.string().uuid(),
+      blocked: z.boolean(),
+    }),
+  )
+  .action(async ({ parsedInput, ctx }) => {
+    if (parsedInput.userId === ctx.user.id) {
+      throw new Error("No podés bloquear tu propia cuenta");
+    }
+    await setUserBlocked(parsedInput.userId, parsedInput.blocked);
+    revalidatePath(routes.admin.users);
+    return { success: true };
+  });

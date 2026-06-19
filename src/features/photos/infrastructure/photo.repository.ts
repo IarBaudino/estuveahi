@@ -1,0 +1,194 @@
+import { randomUUID } from "crypto";
+import { FieldValue } from "firebase-admin/firestore";
+import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
+import { COLLECTIONS } from "@/infrastructure/firebase/collections";
+import type { PhotoDoc } from "@/infrastructure/firebase/documents";
+import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
+import {
+  buildPhotoPaths,
+  ALLOWED_MIME_TYPES,
+} from "@/infrastructure/storage/storage.constants";
+import {
+  processAndUploadVariants,
+  uploadOriginal,
+} from "@/infrastructure/storage/image-processor";
+import type { Photo } from "@/domain/entities/photo";
+import { NotFoundError, ValidationError } from "@/domain/errors/domain-errors";
+import type { UploadPhotoInput } from "../application/schemas/photo.schema";
+
+function getExtension(mimeType: string): string {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  return map[mimeType] ?? "jpg";
+}
+
+export async function getEventPhotos(
+  eventId: string,
+  limit = 50,
+  offset = 0,
+): Promise<Photo[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.photos)
+    .where("eventId", "==", eventId)
+    .where("isVisible", "==", true)
+    .get();
+
+  return snap.docs
+    .map((doc) => mapPhoto(doc.id, doc.data() as PhotoDoc))
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(offset, offset + limit);
+}
+
+export async function getPhotoById(photoId: string): Promise<Photo | null> {
+  const db = getDbIfConfigured();
+  if (!db) return null;
+
+  const doc = await db.collection(COLLECTIONS.photos).doc(photoId).get();
+  if (!doc.exists) return null;
+  return mapPhoto(doc.id, doc.data() as PhotoDoc);
+}
+
+export async function uploadPhoto(
+  photographerId: string,
+  input: UploadPhotoInput,
+  fileBuffer: Buffer,
+): Promise<Photo> {
+  if (!ALLOWED_MIME_TYPES.includes(input.mimeType as (typeof ALLOWED_MIME_TYPES)[number])) {
+    throw new ValidationError("Tipo de archivo no permitido");
+  }
+
+  const db = getDb();
+  const eventRef = db.collection(COLLECTIONS.events).doc(input.eventId);
+  const eventDoc = await eventRef.get();
+
+  if (!eventDoc.exists) throw new NotFoundError("Evento no encontrado");
+  if ((eventDoc.data() as { photographerId: string }).photographerId !== photographerId) {
+    throw new NotFoundError("Evento no encontrado");
+  }
+
+  const photoId = randomUUID();
+  const ext = getExtension(input.mimeType);
+  const paths = buildPhotoPaths(photographerId, input.eventId, photoId, ext);
+
+  await uploadOriginal(fileBuffer, paths.original, input.mimeType);
+  const { width, height } = await processAndUploadVariants(fileBuffer, {
+    preview: paths.preview,
+    thumbnail: paths.thumbnail,
+  }, photoId);
+
+  const photosSnap = await db
+    .collection(COLLECTIONS.photos)
+    .where("eventId", "==", input.eventId)
+    .get();
+
+  const maxOrder = photosSnap.docs.reduce((max, doc) => {
+    const order = (doc.data() as PhotoDoc).sortOrder;
+    return order > max ? order : max;
+  }, -1);
+
+  const sortOrder = maxOrder + 1;
+
+  const photoData: PhotoDoc = {
+    eventId: input.eventId,
+    photographerId,
+    storagePath: paths.original,
+    thumbnailPath: paths.thumbnail,
+    previewPath: paths.preview,
+    originalFilename: input.filename,
+    mimeType: input.mimeType,
+    width,
+    height,
+    fileSizeBytes: input.fileSize,
+    priceCents: input.priceCents ?? null,
+    currency: "ARS",
+    isVisible: true,
+    sortOrder,
+    capturedAt: null,
+    metadata: {},
+    createdAt: FieldValue.serverTimestamp() as unknown as Date,
+  };
+
+  await db.collection(COLLECTIONS.photos).doc(photoId).set(photoData);
+
+  const newCount = photosSnap.size + 1;
+  const updates: Record<string, unknown> = {
+    photoCount: newCount,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (newCount === 1) {
+    updates.coverPhotoId = photoId;
+  }
+
+  await eventRef.update(updates);
+
+  return mapPhoto(photoId, photoData);
+}
+
+export async function deletePhoto(
+  photoId: string,
+  photographerId: string,
+): Promise<void> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.photos).doc(photoId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as PhotoDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Foto no encontrada");
+  }
+
+  const photo = doc.data() as PhotoDoc;
+  await ref.delete();
+
+  const eventRef = db.collection(COLLECTIONS.events).doc(photo.eventId);
+  const eventDoc = await eventRef.get();
+  if (eventDoc.exists) {
+    const currentCount = (eventDoc.data() as { photoCount: number }).photoCount;
+    await eventRef.update({
+      photoCount: Math.max(0, currentCount - 1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+}
+
+export async function updatePhotoPrice(
+  photoId: string,
+  eventId: string,
+  photographerId: string,
+  priceCents: number | null,
+): Promise<Photo> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.photos).doc(photoId);
+  const doc = await ref.get();
+
+  if (
+    !doc.exists ||
+    (doc.data() as PhotoDoc).photographerId !== photographerId ||
+    (doc.data() as PhotoDoc).eventId !== eventId
+  ) {
+    throw new NotFoundError("Foto no encontrada");
+  }
+
+  await ref.update({ priceCents });
+  const updated = await ref.get();
+  return mapPhoto(updated.id, updated.data() as PhotoDoc);
+}
+
+export async function getPhotographerPhotoCount(photographerId: string): Promise<number> {
+  const db = getDbIfConfigured();
+  if (!db) return 0;
+
+  const snap = await db
+    .collection(COLLECTIONS.photos)
+    .where("photographerId", "==", photographerId)
+    .count()
+    .get();
+
+  return snap.data().count;
+}

@@ -1,0 +1,408 @@
+import { randomUUID } from "crypto";
+import { FieldValue } from "firebase-admin/firestore";
+import { nanoid } from "nanoid";
+import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
+import { COLLECTIONS } from "@/infrastructure/firebase/collections";
+import type { EventDoc, PhotographerProfileDoc } from "@/infrastructure/firebase/documents";
+import {
+  buildSearchKeywords,
+  matchesSearch,
+  toDate,
+} from "@/infrastructure/firebase/helpers";
+import {
+  mapEvent,
+  mapEventWithPhotographer,
+  mapPhotographerSummary,
+} from "@/infrastructure/mappers/event.mapper";
+import { slugify } from "@/shared/lib/utils";
+import type { Event, EventWithPhotographer } from "@/domain/entities/event";
+import type {
+  CreateEventInput,
+  SearchEventsInput,
+  UpdateEventInput,
+} from "../application/schemas/event.schema";
+import { EventStatus } from "@/domain/enums/event-status";
+import { NotFoundError } from "@/domain/errors/domain-errors";
+import type { Profile } from "@/domain/entities/user";
+import { mapProfile } from "@/infrastructure/mappers/profile.mapper";
+import type { ProfileDoc } from "@/infrastructure/firebase/documents";
+
+async function getPhotographerSummary(photographerId: string) {
+  const db = getDbIfConfigured();
+  if (!db) return { id: photographerId, displayName: "Fotógrafo", isVerified: false };
+
+  const doc = await db
+    .collection(COLLECTIONS.photographerProfiles)
+    .doc(photographerId)
+    .get();
+
+  if (!doc.exists) {
+    return { id: photographerId, displayName: "Fotógrafo", isVerified: false };
+  }
+
+  return mapPhotographerSummary(doc.id, doc.data() as PhotographerProfileDoc);
+}
+
+export async function createEvent(
+  photographerId: string,
+  input: CreateEventInput,
+): Promise<Event> {
+  const db = getDb();
+  const id = randomUUID();
+  const baseSlug = slugify(input.title);
+  const slug = `${baseSlug}-${nanoid(6)}`;
+  const qrCode = nanoid(8);
+
+  const eventData: EventDoc = {
+    photographerId,
+    title: input.title,
+    slug,
+    description: input.description ?? null,
+    category: input.category,
+    venue: input.venue ?? null,
+    city: input.city ?? null,
+    country: input.country,
+    eventDate: new Date(input.eventDate),
+    status: EventStatus.DRAFT,
+    coverPhotoId: null,
+    qrCode,
+    isPublic: input.isPublic,
+    photoCount: 0,
+    searchKeywords: buildSearchKeywords(
+      input.title,
+      input.description,
+      input.city,
+      input.venue,
+    ),
+    createdAt: FieldValue.serverTimestamp() as unknown as Date,
+    updatedAt: FieldValue.serverTimestamp() as unknown as Date,
+  };
+
+  await db.collection(COLLECTIONS.events).doc(id).set(eventData);
+  return mapEvent(id, eventData);
+}
+
+async function findEventByField(
+  field: "slug" | "qrCode",
+  value: string,
+): Promise<{ id: string; data: EventDoc } | null> {
+  const db = getDbIfConfigured();
+  if (!db) return null;
+
+  const snap = await db
+    .collection(COLLECTIONS.events)
+    .where(field, "==", value)
+    .limit(1)
+    .get();
+
+  if (snap.empty) return null;
+  const doc = snap.docs[0]!;
+  return { id: doc.id, data: doc.data() as EventDoc };
+}
+
+export async function getEventBySlug(slug: string): Promise<EventWithPhotographer | null> {
+  const found = await findEventByField("slug", slug);
+  if (!found) return null;
+
+  const photographer = await getPhotographerSummary(found.data.photographerId);
+  return mapEventWithPhotographer(found.id, found.data, photographer);
+}
+
+export async function getEventByQrCode(qrCode: string): Promise<Event | null> {
+  const found = await findEventByField("qrCode", qrCode);
+  if (!found) return null;
+  return mapEvent(found.id, found.data);
+}
+
+export async function getEventById(id: string): Promise<Event | null> {
+  const db = getDbIfConfigured();
+  if (!db) return null;
+
+  const doc = await db.collection(COLLECTIONS.events).doc(id).get();
+  if (!doc.exists) return null;
+  return mapEvent(doc.id, doc.data() as EventDoc);
+}
+
+export async function getPhotographerEvents(photographerId: string): Promise<Event[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.events)
+    .where("photographerId", "==", photographerId)
+    .get();
+
+  return snap.docs
+    .map((doc) => mapEvent(doc.id, doc.data() as EventDoc))
+    .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+}
+
+export async function searchPublicEvents(
+  input: SearchEventsInput,
+): Promise<{ events: EventWithPhotographer[]; total: number }> {
+  const db = getDbIfConfigured();
+  if (!db) return { events: [], total: 0 };
+
+  let query = db
+    .collection(COLLECTIONS.events)
+    .where("status", "==", EventStatus.PUBLISHED)
+    .where("isPublic", "==", true);
+
+  if (input.category) {
+    query = query.where("category", "==", input.category);
+  }
+
+  const snap = await query.limit(200).get();
+
+  let rows = snap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data() as EventDoc,
+  }));
+
+  if (input.city) {
+    const cityLower = input.city.toLowerCase();
+    rows = rows.filter((r) => r.data.city?.toLowerCase().includes(cityLower));
+  }
+
+  if (input.q) {
+    rows = rows.filter((r) => matchesSearch(r.data.searchKeywords, input.q!));
+  }
+
+  rows.sort(
+    (a, b) => toDate(b.data.eventDate).getTime() - toDate(a.data.eventDate).getTime(),
+  );
+
+  const total = rows.length;
+  const offset = (input.page - 1) * input.limit;
+  const page = rows.slice(offset, offset + input.limit);
+
+  const photographerIds = [...new Set(page.map((r) => r.data.photographerId))];
+  const photographerSnaps = await Promise.all(
+    photographerIds.map((id) =>
+      db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+    ),
+  );
+
+  const photographerMap = new Map(
+    photographerSnaps
+      .filter((d) => d.exists)
+      .map((d) => [
+        d.id,
+        mapPhotographerSummary(d.id, d.data() as PhotographerProfileDoc),
+      ]),
+  );
+
+  const events = await Promise.all(
+    page.map(async (row) => {
+      const photographer =
+        photographerMap.get(row.data.photographerId) ??
+        (await getPhotographerSummary(row.data.photographerId));
+      return mapEventWithPhotographer(row.id, row.data, photographer);
+    }),
+  );
+
+  return { events, total };
+}
+
+export async function updateEvent(
+  eventId: string,
+  photographerId: string,
+  input: Omit<UpdateEventInput, "id">,
+): Promise<Event> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Evento no encontrado");
+  }
+
+  const current = doc.data() as EventDoc;
+  const title = input.title ?? current.title;
+  const description =
+    input.description !== undefined ? (input.description ?? null) : current.description;
+  const city = input.city !== undefined ? (input.city ?? null) : current.city;
+  const venue = input.venue !== undefined ? (input.venue ?? null) : current.venue;
+
+  const updates: Record<string, unknown> = {
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.description !== undefined) updates.description = input.description ?? null;
+  if (input.category !== undefined) updates.category = input.category;
+  if (input.venue !== undefined) updates.venue = input.venue ?? null;
+  if (input.city !== undefined) updates.city = input.city ?? null;
+  if (input.country !== undefined) updates.country = input.country;
+  if (input.eventDate !== undefined) updates.eventDate = new Date(input.eventDate);
+  if (input.isPublic !== undefined) updates.isPublic = input.isPublic;
+
+  if (
+    input.title !== undefined ||
+    input.description !== undefined ||
+    input.city !== undefined ||
+    input.venue !== undefined
+  ) {
+    updates.searchKeywords = buildSearchKeywords(
+      title,
+      description ?? undefined,
+      city ?? undefined,
+      venue ?? undefined,
+    );
+  }
+
+  await ref.update(updates);
+  const updated = await ref.get();
+  return mapEvent(updated.id, updated.data() as EventDoc);
+}
+
+export async function publishEvent(eventId: string, photographerId: string): Promise<Event> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Evento no encontrado");
+  }
+
+  await ref.update({
+    status: EventStatus.PUBLISHED,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await ref.get();
+  return mapEvent(updated.id, updated.data() as EventDoc);
+}
+
+export async function archiveEvent(eventId: string, photographerId: string): Promise<Event> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Evento no encontrado");
+  }
+
+  await ref.update({
+    status: EventStatus.ARCHIVED,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await ref.get();
+  return mapEvent(updated.id, updated.data() as EventDoc);
+}
+
+export async function deleteEvent(eventId: string, photographerId: string): Promise<void> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Evento no encontrado");
+  }
+
+  await ref.delete();
+}
+
+export async function getAdminStats() {
+  const db = getDbIfConfigured();
+  if (!db) {
+    return { users: 0, events: 0, photos: 0, pendingRequests: 0 };
+  }
+
+  const [users, events, photos, requests] = await Promise.all([
+    db.collection(COLLECTIONS.profiles).count().get(),
+    db.collection(COLLECTIONS.events).count().get(),
+    db.collection(COLLECTIONS.photos).count().get(),
+    db
+      .collection(COLLECTIONS.purchaseRequests)
+      .where("status", "==", "pending")
+      .count()
+      .get(),
+  ]);
+
+  return {
+    users: users.data().count,
+    events: events.data().count,
+    photos: photos.data().count,
+    pendingRequests: requests.data().count,
+  };
+}
+
+export async function getAllEventsForAdmin() {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.events)
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
+
+  if (snap.empty) return [];
+
+  const events = snap.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as EventDoc),
+  }));
+
+  const photographerIds = [...new Set(events.map((e) => e.photographerId))];
+  const photographerSnaps = await Promise.all(
+    photographerIds.map((id) =>
+      db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+    ),
+  );
+
+  const photographerMap = new Map(
+    photographerSnaps
+      .filter((d) => d.exists)
+      .map((d) => [d.id, (d.data() as PhotographerProfileDoc).displayName]),
+  );
+
+  return events.map((event) => ({
+    id: event.id,
+    title: event.title,
+    slug: event.slug,
+    status: event.status,
+    photoCount: event.photoCount,
+    eventDate: toDate(event.eventDate),
+    photographerId: event.photographerId,
+    photographerName: photographerMap.get(event.photographerId) ?? "—",
+  }));
+}
+
+export async function adminArchiveEvent(eventId: string): Promise<void> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+  if (!doc.exists) throw new NotFoundError("Evento no encontrado");
+
+  await ref.update({
+    status: EventStatus.ARCHIVED,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function adminDeleteEvent(eventId: string): Promise<void> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.events).doc(eventId);
+  const doc = await ref.get();
+  if (!doc.exists) throw new NotFoundError("Evento no encontrado");
+
+  await ref.delete();
+}
+
+export async function getAllUsersForAdmin(): Promise<Profile[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.profiles)
+    .orderBy("createdAt", "desc")
+    .limit(50)
+    .get();
+
+  return snap.docs.map((doc) =>
+    mapProfile(doc.id, doc.data() as ProfileDoc),
+  );
+}

@@ -1,0 +1,30 @@
+import type { EventCategory } from "@/domain/enums/event-category";
+import type { EventStatus } from "@/domain/enums/event-status";
+
+export interface Event {
+  id: string;
+  photographerId: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  category: EventCategory;
+  venue: string | null;
+  city: string | null;
+  country: string;
+  eventDate: Date;
+  status: EventStatus;
+  coverPhotoId: string | null;
+  qrCode: string;
+  isPublic: boolean;
+  photoCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventWithPhotographer extends Event {
+  photographer: {
+    id: string;
+    displayName: string;
+    isVerified: boolean;
+  };
+}

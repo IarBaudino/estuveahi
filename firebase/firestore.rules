@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  // El servidor usa Firebase Admin SDK (bypass de reglas).
+  // Estas reglas protegen acceso directo desde el cliente.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
