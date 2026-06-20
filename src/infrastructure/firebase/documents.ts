@@ -90,5 +90,6 @@ export interface PurchaseRequestDoc {
 
 export interface LandingSettingsDoc {
   images: Record<string, string>;
+  grayscale?: Record<string, boolean>;
   updatedAt: Timestamp | Date;
 }

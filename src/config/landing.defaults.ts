@@ -36,3 +36,20 @@ export const DEFAULT_LANDING_IMAGES: Record<LandingImageKey, string> = {
 };
 
 export type LandingImages = Record<LandingImageKey, string>;
+
+export const DEFAULT_LANDING_GRAYSCALE: Record<LandingImageKey, boolean> = {
+  hero: true,
+  festivales: true,
+  recitales: true,
+  teatro: true,
+  deportes: true,
+  photographer: true,
+  cta: true,
+};
+
+export type LandingGrayscale = Record<LandingImageKey, boolean>;
+
+export interface LandingSettings {
+  images: LandingImages;
+  grayscale: LandingGrayscale;
+}

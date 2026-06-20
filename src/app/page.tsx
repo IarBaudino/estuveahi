@@ -5,12 +5,14 @@ import { LandingFooter } from "@/features/marketing/presentation/components/land
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
-import { getLandingImages } from "@/features/platform/infrastructure/landing-settings.repository";
+import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
 import type { LandingImages } from "@/config/landing.defaults";
+import { cn } from "@/shared/lib/utils";
 
 function buildCategories(images: LandingImages) {
   return [
     {
+      key: "festivales" as const,
       title: "Festivales",
       subtitle: "248 galerías activas",
       image: images.festivales,
@@ -19,6 +21,7 @@ function buildCategories(images: LandingImages) {
       titleClass: "text-headline-lg",
     },
     {
+      key: "recitales" as const,
       title: "Recitales",
       subtitle: "Boutique & Arena",
       image: images.recitales,
@@ -27,6 +30,7 @@ function buildCategories(images: LandingImages) {
       titleClass: "text-headline-md",
     },
     {
+      key: "teatro" as const,
       title: "Teatro",
       subtitle: "Obras & Musicales",
       image: images.teatro,
@@ -35,6 +39,7 @@ function buildCategories(images: LandingImages) {
       titleClass: "text-headline-md",
     },
     {
+      key: "deportes" as const,
       title: "Deportes",
       subtitle: "Fútbol, Tenis & más",
       image: images.deportes,
@@ -68,7 +73,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function HomePage() {
-  const IMAGES = await getLandingImages();
+  const { images: IMAGES, grayscale: GRAYSCALE } = await getLandingSettings();
   const CATEGORIES = buildCategories(IMAGES);
 
   return (
@@ -84,7 +89,7 @@ export default async function HomePage() {
             fill
             priority
             unoptimized
-            className="object-cover opacity-60 grayscale"
+            className={cn("object-cover opacity-60", GRAYSCALE.hero && "grayscale")}
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/60" />
@@ -180,7 +185,10 @@ export default async function HomePage() {
                     alt={cat.title}
                     fill
                     unoptimized
-                    className="grayscale-filter object-cover transition-transform duration-700 group-hover:scale-105"
+                    className={cn(
+                      "object-cover transition-transform duration-700 group-hover:scale-105",
+                      GRAYSCALE[cat.key] && "grayscale-filter",
+                    )}
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
@@ -212,7 +220,7 @@ export default async function HomePage() {
                 alt="Fotógrafo trabajando"
                 fill
                 unoptimized
-                className="object-cover grayscale"
+                className={cn("object-cover", GRAYSCALE.photographer && "grayscale")}
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
@@ -334,7 +342,14 @@ export default async function HomePage() {
       {/* Final CTA */}
       <section className="relative overflow-hidden bg-black px-margin-mobile py-section-gap md:px-margin-desktop">
         <div className="absolute inset-0 z-0 opacity-40">
-          <Image src={IMAGES.cta} alt="" fill unoptimized className="object-cover grayscale" sizes="100vw" />
+          <Image
+            src={IMAGES.cta}
+            alt=""
+            fill
+            unoptimized
+            className={cn("object-cover", GRAYSCALE.cta && "grayscale")}
+            sizes="100vw"
+          />
           <div className="absolute inset-0 cinematic-overlay" />
         </div>
         <div className="relative z-10 mx-auto max-w-container-max space-y-12 text-center">

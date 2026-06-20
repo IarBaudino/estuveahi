@@ -1,34 +1,58 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAction } from "next-safe-action/hooks";
 import {
   LANDING_IMAGE_KEYS,
   LANDING_IMAGE_LABELS,
+  type LandingGrayscale,
   type LandingImages,
   type LandingImageKey,
 } from "@/config/landing.defaults";
 import {
   resetLandingImageAction,
+  updateLandingGrayscaleAction,
   uploadLandingImageAction,
 } from "@/features/admin/presentation/actions/landing.actions";
 import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 
 interface AdminLandingManagerProps {
   images: LandingImages;
+  grayscale: LandingGrayscale;
 }
 
-export function AdminLandingManager({ images }: AdminLandingManagerProps) {
+export function AdminLandingManager({ images, grayscale: initialGrayscale }: AdminLandingManagerProps) {
   const router = useRouter();
   const fileRefs = useRef<Partial<Record<LandingImageKey, HTMLInputElement | null>>>({});
+  const [grayscale, setGrayscale] = useState<LandingGrayscale>(initialGrayscale);
+  const [uploadGrayscale, setUploadGrayscale] = useState<Record<LandingImageKey, boolean>>(() =>
+    Object.fromEntries(LANDING_IMAGE_KEYS.map((key) => [key, initialGrayscale[key]])) as Record<
+      LandingImageKey,
+      boolean
+    >,
+  );
 
   const refresh = () => router.refresh();
 
   const { execute: upload, isExecuting: uploading } = useAction(uploadLandingImageAction, {
-    onSuccess: refresh,
+    onSuccess: () => refresh(),
   });
+
+  const { execute: updateGrayscale, isExecuting: updatingGrayscale } = useAction(
+    updateLandingGrayscaleAction,
+    {
+      onSuccess: ({ input }) => {
+        if (input) {
+          setGrayscale((prev) => ({ ...prev, [input.key]: input.grayscale }));
+          setUploadGrayscale((prev) => ({ ...prev, [input.key]: input.grayscale }));
+        }
+        refresh();
+      },
+    },
+  );
 
   const { execute: reset, isExecuting: resetting } = useAction(resetLandingImageAction, {
     onSuccess: refresh,
@@ -44,7 +68,13 @@ export function AdminLandingManager({ images }: AdminLandingManagerProps) {
       key,
       mimeType: file.type as "image/jpeg" | "image/png" | "image/webp",
       fileBase64: base64,
+      grayscale: uploadGrayscale[key],
     });
+  }
+
+  function handleGrayscaleChange(key: LandingImageKey, value: boolean) {
+    setUploadGrayscale((prev) => ({ ...prev, [key]: value }));
+    updateGrayscale({ key, grayscale: value });
   }
 
   return (
@@ -57,13 +87,38 @@ export function AdminLandingManager({ images }: AdminLandingManagerProps) {
               alt={LANDING_IMAGE_LABELS[key]}
               fill
               unoptimized
-              className="object-cover"
+              className={cn("object-cover", grayscale[key] && "grayscale")}
               sizes="(max-width: 768px) 100vw, 400px"
             />
           </div>
           <div className="space-y-3 p-4">
             <h3 className="text-sm font-medium">{LANDING_IMAGE_LABELS[key]}</h3>
             <p className="truncate text-xs text-on-surface-variant">{images[key]}</p>
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-on-surface-variant">Estilo al publicar</legend>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`style-${key}`}
+                    checked={!uploadGrayscale[key]}
+                    disabled={updatingGrayscale}
+                    onChange={() => handleGrayscaleChange(key, false)}
+                  />
+                  Color
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`style-${key}`}
+                    checked={uploadGrayscale[key]}
+                    disabled={updatingGrayscale}
+                    onChange={() => handleGrayscaleChange(key, true)}
+                  />
+                  Blanco y negro
+                </label>
+              </div>
+            </fieldset>
             <div className="flex flex-wrap gap-2">
               <input
                 ref={(el) => {
