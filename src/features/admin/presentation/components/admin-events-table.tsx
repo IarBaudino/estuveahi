@@ -63,6 +63,11 @@ export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
               <td className="px-4 py-3">{event.photoCount}</td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
+                  <Link href={routes.admin.event(event.id)}>
+                    <Button size="sm" variant="secondary">
+                      Gestionar
+                    </Button>
+                  </Link>
                   {event.status === "published" && event.slug && (
                     <Link href={routes.event(event.slug)} target="_blank">
                       <Button size="sm" variant="outline">

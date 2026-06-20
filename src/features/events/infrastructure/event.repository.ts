@@ -26,6 +26,9 @@ import { NotFoundError } from "@/domain/errors/domain-errors";
 import type { Profile } from "@/domain/entities/user";
 import { mapProfile } from "@/infrastructure/mappers/profile.mapper";
 import type { ProfileDoc } from "@/infrastructure/firebase/documents";
+import type { UserRole } from "@/domain/enums/roles";
+import { Role } from "@/domain/enums/roles";
+import { canManageEvent } from "./event-access";
 
 async function getPhotographerSummary(photographerId: string) {
   const db = getDbIfConfigured();
@@ -212,14 +215,15 @@ export async function searchPublicEvents(
 
 export async function updateEvent(
   eventId: string,
-  photographerId: string,
+  userId: string,
   input: Omit<UpdateEventInput, "id">,
+  role?: UserRole,
 ): Promise<Event> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.events).doc(eventId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+  if (!doc.exists || !canManageEvent(doc.data() as EventDoc, userId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
 
@@ -262,12 +266,16 @@ export async function updateEvent(
   return mapEvent(updated.id, updated.data() as EventDoc);
 }
 
-export async function publishEvent(eventId: string, photographerId: string): Promise<Event> {
+export async function publishEvent(
+  eventId: string,
+  userId: string,
+  role?: UserRole,
+): Promise<Event> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.events).doc(eventId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+  if (!doc.exists || !canManageEvent(doc.data() as EventDoc, userId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
 
@@ -280,12 +288,16 @@ export async function publishEvent(eventId: string, photographerId: string): Pro
   return mapEvent(updated.id, updated.data() as EventDoc);
 }
 
-export async function archiveEvent(eventId: string, photographerId: string): Promise<Event> {
+export async function archiveEvent(
+  eventId: string,
+  userId: string,
+  role?: UserRole,
+): Promise<Event> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.events).doc(eventId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+  if (!doc.exists || !canManageEvent(doc.data() as EventDoc, userId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
 
@@ -298,12 +310,16 @@ export async function archiveEvent(eventId: string, photographerId: string): Pro
   return mapEvent(updated.id, updated.data() as EventDoc);
 }
 
-export async function deleteEvent(eventId: string, photographerId: string): Promise<void> {
+export async function deleteEvent(
+  eventId: string,
+  userId: string,
+  role?: UserRole,
+): Promise<void> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.events).doc(eventId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as EventDoc).photographerId !== photographerId) {
+  if (!doc.exists || !canManageEvent(doc.data() as EventDoc, userId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
 
@@ -408,7 +424,48 @@ export async function getAllUsersForAdmin(): Promise<Profile[]> {
     .limit(50)
     .get();
 
-  return snap.docs.map((doc) =>
-    mapProfile(doc.id, doc.data() as ProfileDoc),
+  return snap.docs.map((doc) => mapProfile(doc.id, doc.data() as ProfileDoc));
+}
+
+export interface AdminPhotographerOption {
+  id: string;
+  label: string;
+  email: string;
+}
+
+export async function getPhotographersForAdmin(): Promise<AdminPhotographerOption[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.profiles)
+    .where("role", "in", [Role.PHOTOGRAPHER, Role.ADMIN])
+    .limit(100)
+    .get();
+
+  if (snap.empty) return [];
+
+  const profiles = snap.docs.map((doc) => ({
+    id: doc.id,
+    data: doc.data() as ProfileDoc,
+  }));
+
+  const photographerSnaps = await Promise.all(
+    profiles.map((p) =>
+      db.collection(COLLECTIONS.photographerProfiles).doc(p.id).get(),
+    ),
   );
+
+  return profiles.map((profile, index) => {
+    const photographerDoc = photographerSnaps[index];
+    const displayName = photographerDoc?.exists
+      ? (photographerDoc.data() as PhotographerProfileDoc).displayName
+      : profile.data.fullName;
+
+    return {
+      id: profile.id,
+      label: displayName || profile.data.email,
+      email: profile.data.email,
+    };
+  });
 }

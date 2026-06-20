@@ -87,3 +87,8 @@ export interface PurchaseRequestDoc {
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
+
+export interface LandingSettingsDoc {
+  images: Record<string, string>;
+  updatedAt: Timestamp | Date;
+}

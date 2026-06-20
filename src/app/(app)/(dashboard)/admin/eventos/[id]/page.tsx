@@ -1,28 +1,35 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/infrastructure/auth";
+import Link from "next/link";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
 import { getEventPhotos } from "@/features/photos/infrastructure/photo.repository";
 import { EventManageClient } from "@/features/events/presentation/components/event-manage-client";
-import { canManageEvent } from "@/features/events/infrastructure/event-access";
+import { routes } from "@/config/routes";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function EventManagePage({ params }: PageProps) {
+export default async function AdminEventManagePage({ params }: PageProps) {
   const { id } = await params;
-  const session = await auth();
   const event = await getEventById(id);
 
-  if (
-    !event ||
-    !session?.user?.id ||
-    !canManageEvent(event, session.user.id, session.user.role)
-  ) {
+  if (!event) {
     notFound();
   }
 
   const photos = await getEventPhotos(event.id, 100);
 
-  return <EventManageClient event={event} photos={photos} />;
+  return (
+    <div>
+      <Link
+        href={routes.admin.events}
+        className="text-sm text-on-surface-variant hover:text-on-surface"
+      >
+        ← Volver a eventos
+      </Link>
+      <div className="mt-4">
+        <EventManageClient event={event} photos={photos} />
+      </div>
+    </div>
+  );
 }

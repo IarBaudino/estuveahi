@@ -6,8 +6,20 @@ import { adminActionClient } from "@/shared/lib/safe-action";
 import {
   adminArchiveEvent,
   adminDeleteEvent,
+  createEvent,
 } from "@/features/events/infrastructure/event.repository";
+import { adminCreateEventSchema } from "@/features/events/application/schemas/event.schema";
 import { routes } from "@/config/routes";
+
+export const adminCreateEventAction = adminActionClient
+  .schema(adminCreateEventSchema)
+  .action(async ({ parsedInput }) => {
+    const { photographerId, ...input } = parsedInput;
+    const event = await createEvent(photographerId, input);
+    revalidatePath(routes.admin.events);
+    revalidatePath(routes.photographer.events);
+    return { event };
+  });
 
 export const adminArchiveEventAction = adminActionClient
   .schema(z.object({ eventId: z.string().uuid() }))

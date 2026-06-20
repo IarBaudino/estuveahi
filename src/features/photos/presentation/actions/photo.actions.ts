@@ -17,12 +17,13 @@ export const uploadPhotoAction = photographerActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { fileBase64, ...input } = parsedInput;
     const buffer = Buffer.from(fileBase64, "base64");
-    const photo = await uploadPhoto(ctx.user.id, input, buffer);
+    const photo = await uploadPhoto(ctx.user.id, input, buffer, ctx.user.role);
 
     const event = await getEventById(input.eventId);
     if (event) {
       revalidatePath(routes.event(event.slug));
       revalidatePath(routes.photographer.event(event.id));
+      revalidatePath(routes.admin.event(event.id));
     }
 
     return { photo };
@@ -31,11 +32,12 @@ export const uploadPhotoAction = photographerActionClient
 export const deletePhotoAction = photographerActionClient
   .schema(z.object({ photoId: z.string().uuid(), eventId: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
-    await deletePhoto(parsedInput.photoId, ctx.user.id);
+    await deletePhoto(parsedInput.photoId, ctx.user.id, ctx.user.role);
     const event = await getEventById(parsedInput.eventId);
     if (event) {
       revalidatePath(routes.event(event.slug));
       revalidatePath(routes.photographer.event(event.id));
+      revalidatePath(routes.admin.event(event.id));
     }
     return { success: true };
   });
@@ -48,11 +50,13 @@ export const updatePhotoPriceAction = photographerActionClient
       parsedInput.eventId,
       ctx.user.id,
       parsedInput.priceCents,
+      ctx.user.role,
     );
     const event = await getEventById(parsedInput.eventId);
     if (event) {
       revalidatePath(routes.event(event.slug));
       revalidatePath(routes.photographer.event(event.id));
+      revalidatePath(routes.admin.event(event.id));
     }
     return { photo };
   });

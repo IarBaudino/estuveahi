@@ -21,6 +21,16 @@ import {
 } from "../../infrastructure/event.repository";
 import { routes } from "@/config/routes";
 
+function revalidateEventPaths(event: { id: string; slug: string; status: string }) {
+  revalidatePath(routes.photographer.event(event.id));
+  revalidatePath(routes.admin.event(event.id));
+  revalidatePath(routes.photographer.events);
+  revalidatePath(routes.admin.events);
+  if (event.status === "published") {
+    revalidatePath(routes.event(event.slug));
+  }
+}
+
 export const createEventAction = photographerActionClient
   .schema(createEventSchema)
   .action(async ({ parsedInput, ctx }) => {
@@ -33,37 +43,33 @@ export const updateEventAction = photographerActionClient
   .schema(updateEventSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, ...rest } = parsedInput;
-    const event = await updateEvent(id, ctx.user.id, rest);
-    revalidatePath(routes.photographer.event(event.id));
-    revalidatePath(routes.photographer.events);
-    if (event.status === "published") {
-      revalidatePath(routes.event(event.slug));
-    }
+    const event = await updateEvent(id, ctx.user.id, rest, ctx.user.role);
+    revalidateEventPaths(event);
     return { event };
   });
 
 export const publishEventAction = photographerActionClient
   .schema(z.object({ eventId: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
-    const event = await publishEvent(parsedInput.eventId, ctx.user.id);
-    revalidatePath(routes.event(event.slug));
-    revalidatePath(routes.photographer.events);
+    const event = await publishEvent(parsedInput.eventId, ctx.user.id, ctx.user.role);
+    revalidateEventPaths(event);
     return { event };
   });
 
 export const archiveEventAction = photographerActionClient
   .schema(z.object({ eventId: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
-    const event = await archiveEvent(parsedInput.eventId, ctx.user.id);
-    revalidatePath(routes.photographer.events);
+    const event = await archiveEvent(parsedInput.eventId, ctx.user.id, ctx.user.role);
+    revalidateEventPaths(event);
     return { event };
   });
 
 export const deleteEventAction = photographerActionClient
   .schema(z.object({ eventId: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
-    await deleteEvent(parsedInput.eventId, ctx.user.id);
+    await deleteEvent(parsedInput.eventId, ctx.user.id, ctx.user.role);
     revalidatePath(routes.photographer.events);
+    revalidatePath(routes.admin.events);
     return { success: true };
   });
 

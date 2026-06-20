@@ -4,6 +4,7 @@ import {
   Calendar,
   Camera,
   Heart,
+  ImageIcon,
   LayoutDashboard,
   QrCode,
   Settings,
@@ -62,6 +63,11 @@ const adminNav: NavItem[] = [
     href: routes.admin.events,
     label: "Eventos",
     icon: <Calendar className="h-4 w-4" />,
+  },
+  {
+    href: routes.admin.content,
+    label: "Contenido",
+    icon: <ImageIcon className="h-4 w-4" />,
   },
   {
     href: routes.admin.requests,

@@ -2,8 +2,10 @@ import { randomUUID } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
-import type { PhotoDoc } from "@/infrastructure/firebase/documents";
+import type { PhotoDoc, EventDoc } from "@/infrastructure/firebase/documents";
 import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
+import type { UserRole } from "@/domain/enums/roles";
+import { canManageEvent } from "@/features/events/infrastructure/event-access";
 import {
   buildPhotoPaths,
   ALLOWED_MIME_TYPES,
@@ -60,9 +62,10 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
 }
 
 export async function uploadPhoto(
-  photographerId: string,
+  actorId: string,
   input: UploadPhotoInput,
   fileBuffer: Buffer,
+  role?: UserRole,
 ): Promise<Photo> {
   if (!ALLOWED_MIME_TYPES.includes(input.mimeType as (typeof ALLOWED_MIME_TYPES)[number])) {
     throw new ValidationError("Tipo de archivo no permitido");
@@ -73,9 +76,13 @@ export async function uploadPhoto(
   const eventDoc = await eventRef.get();
 
   if (!eventDoc.exists) throw new NotFoundError("Evento no encontrado");
-  if ((eventDoc.data() as { photographerId: string }).photographerId !== photographerId) {
+
+  const eventData = eventDoc.data() as EventDoc;
+  if (!canManageEvent(eventData, actorId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
+
+  const photographerId = eventData.photographerId;
 
   const photoId = randomUUID();
   const ext = getExtension(input.mimeType);
@@ -138,44 +145,53 @@ export async function uploadPhoto(
 
 export async function deletePhoto(
   photoId: string,
-  photographerId: string,
+  actorId: string,
+  role?: UserRole,
 ): Promise<void> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.photos).doc(photoId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as PhotoDoc).photographerId !== photographerId) {
+  if (!doc.exists) throw new NotFoundError("Foto no encontrada");
+
+  const photo = doc.data() as PhotoDoc;
+  const eventDoc = await db.collection(COLLECTIONS.events).doc(photo.eventId).get();
+
+  if (
+    !eventDoc.exists ||
+    !canManageEvent(eventDoc.data() as EventDoc, actorId, role)
+  ) {
     throw new NotFoundError("Foto no encontrada");
   }
 
-  const photo = doc.data() as PhotoDoc;
   await ref.delete();
 
-  const eventRef = db.collection(COLLECTIONS.events).doc(photo.eventId);
-  const eventDoc = await eventRef.get();
-  if (eventDoc.exists) {
-    const currentCount = (eventDoc.data() as { photoCount: number }).photoCount;
-    await eventRef.update({
-      photoCount: Math.max(0, currentCount - 1),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
+  const currentCount = (eventDoc.data() as EventDoc).photoCount;
+  await db.collection(COLLECTIONS.events).doc(photo.eventId).update({
+    photoCount: Math.max(0, currentCount - 1),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
 }
 
 export async function updatePhotoPrice(
   photoId: string,
   eventId: string,
-  photographerId: string,
+  actorId: string,
   priceCents: number | null,
+  role?: UserRole,
 ): Promise<Photo> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.photos).doc(photoId);
   const doc = await ref.get();
 
+  if (!doc.exists || (doc.data() as PhotoDoc).eventId !== eventId) {
+    throw new NotFoundError("Foto no encontrada");
+  }
+
+  const eventDoc = await db.collection(COLLECTIONS.events).doc(eventId).get();
   if (
-    !doc.exists ||
-    (doc.data() as PhotoDoc).photographerId !== photographerId ||
-    (doc.data() as PhotoDoc).eventId !== eventId
+    !eventDoc.exists ||
+    !canManageEvent(eventDoc.data() as EventDoc, actorId, role)
   ) {
     throw new NotFoundError("Foto no encontrada");
   }

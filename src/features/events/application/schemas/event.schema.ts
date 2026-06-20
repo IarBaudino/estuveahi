@@ -39,3 +39,9 @@ export const searchEventsSchema = z.object({
 });
 
 export type SearchEventsInput = z.infer<typeof searchEventsSchema>;
+
+export const adminCreateEventSchema = createEventSchema.extend({
+  photographerId: z.string().min(1, "Seleccioná un fotógrafo"),
+});
+
+export type AdminCreateEventInput = z.infer<typeof adminCreateEventSchema>;
