@@ -26,13 +26,22 @@ export default async function EventsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
 
-  const { events, total } = await searchPublicEvents({
-    q: params.q,
-    category: params.category as EventCategory | undefined,
-    city: params.city,
-    page,
-    limit: 20,
-  });
+  let events: Awaited<ReturnType<typeof searchPublicEvents>>["events"] = [];
+  let total = 0;
+
+  try {
+    const result = await searchPublicEvents({
+      q: params.q,
+      category: params.category as EventCategory | undefined,
+      city: params.city,
+      page,
+      limit: 20,
+    });
+    events = result.events;
+    total = result.total;
+  } catch (error) {
+    console.error("[EventsPage]", error);
+  }
 
   const totalPages = Math.ceil(total / 20);
 
