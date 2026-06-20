@@ -10,6 +10,7 @@ import {
   Settings,
   ShoppingBag,
   SlidersHorizontal,
+  UserCheck,
   Users,
 } from "lucide-react";
 import { routes } from "@/config/routes";
@@ -63,6 +64,11 @@ const adminNav: NavItem[] = [
     href: routes.admin.events,
     label: "Eventos",
     icon: <Calendar className="h-4 w-4" />,
+  },
+  {
+    href: routes.admin.photographers,
+    label: "Fotógrafos",
+    icon: <UserCheck className="h-4 w-4" />,
   },
   {
     href: routes.admin.content,

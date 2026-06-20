@@ -3,6 +3,7 @@ import type { EventCategory } from "@/domain/enums/event-category";
 import type { EventStatus } from "@/domain/enums/event-status";
 import type { PurchaseRequestStatus } from "@/domain/enums/purchase-request-status";
 import type { UserRole } from "@/domain/enums/roles";
+import type { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 
 /** Documentos Firestore — campos en camelCase */
 export interface ProfileDoc {
@@ -25,6 +26,7 @@ export interface PhotographerProfileDoc {
   instagramHandle: string | null;
   portfolioUrl: string | null;
   isVerified: boolean;
+  applicationStatus?: PhotographerApplicationStatus;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

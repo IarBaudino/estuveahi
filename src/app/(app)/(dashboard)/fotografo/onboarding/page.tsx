@@ -2,7 +2,6 @@
 
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,7 +17,6 @@ import { routes } from "@/config/routes";
 
 export default function PhotographerOnboardingPage() {
   const router = useRouter();
-  const { update } = useSession();
   const {
     register,
     handleSubmit,
@@ -28,9 +26,8 @@ export default function PhotographerOnboardingPage() {
   });
 
   const { execute, isExecuting, result } = useAction(becomePhotographerAction, {
-    onSuccess: async () => {
-      await update({ role: "photographer" });
-      router.push(routes.photographer.dashboard);
+    onSuccess: () => {
+      router.push(routes.photographer.onboardingPending);
       router.refresh();
     },
   });
@@ -39,9 +36,10 @@ export default function PhotographerOnboardingPage() {
     <div className="mx-auto max-w-lg px-4 py-12">
       <Card>
         <CardHeader>
-          <CardTitle>Conviértete en fotógrafo</CardTitle>
+          <CardTitle>Convertite en fotógrafo</CardTitle>
           <CardDescription>
-            Completa tu perfil para empezar a subir y vender fotografías
+            Completá tu perfil. Un administrador revisará tu solicitud antes de activar tu
+            panel de fotógrafo.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">
@@ -61,7 +59,7 @@ export default function PhotographerOnboardingPage() {
             <p className="text-sm text-red-500">{result.serverError}</p>
           )}
           <Button type="submit" className="w-full" isLoading={isExecuting}>
-            Crear perfil de fotógrafo
+            Enviar solicitud
           </Button>
         </form>
       </Card>

@@ -16,14 +16,32 @@ export function LandingNavAuth() {
   }
 
   if (session?.user) {
+    const isClient = session.user.role === "client";
+
     return (
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: routes.home })}
-        className="text-label-sm bg-primary px-4 py-2 tracking-widest text-background transition-colors duration-300 hover:bg-on-surface-variant md:px-6"
-      >
-        Salir
-      </button>
+      <div className="flex items-center gap-3">
+        {isClient && (
+          <Link
+            href={routes.photographer.onboarding}
+            className="text-label-sm hidden tracking-widest text-on-surface-variant transition-colors hover:text-primary sm:inline"
+          >
+            Ser fotógrafo
+          </Link>
+        )}
+        <Link
+          href={routes.client.dashboard}
+          className="text-label-sm hidden tracking-widest text-on-surface-variant transition-colors hover:text-primary md:inline"
+        >
+          Mi cuenta
+        </Link>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: routes.home })}
+          className="text-label-sm bg-primary px-4 py-2 tracking-widest text-background transition-colors duration-300 hover:bg-on-surface-variant md:px-6"
+        >
+          Salir
+        </button>
+      </div>
     );
   }
 

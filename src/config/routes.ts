@@ -16,6 +16,7 @@ export const routes = {
     profile: "/fotografo/perfil",
     settings: "/fotografo/ajustes",
     onboarding: "/fotografo/onboarding",
+    onboardingPending: "/fotografo/onboarding/pendiente",
   },
   client: {
     dashboard: "/cliente",
@@ -30,6 +31,7 @@ export const routes = {
     newEvent: "/admin/eventos/nuevo",
     event: (id: string) => `/admin/eventos/${id}`,
     content: "/admin/contenido",
+    photographers: "/admin/fotografos",
     requests: "/admin/solicitudes",
     qr: "/admin/qr",
     config: "/admin/configuracion",

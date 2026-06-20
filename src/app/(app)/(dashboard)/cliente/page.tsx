@@ -6,7 +6,7 @@ import { getUserFavorites } from "@/features/favorites/infrastructure/favorite.r
 import { getClientRequests } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
 import { getProfileById } from "@/features/profile/infrastructure/profile.repository";
 import { isProfileComplete } from "@/shared/lib/profile";
-import { Heart, ShoppingBag, User, ArrowRight } from "lucide-react";
+import { Heart, ShoppingBag, User, ArrowRight, Camera } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 
 export default async function ClientDashboardPage() {
@@ -75,6 +75,28 @@ export default async function ClientDashboardPage() {
             Completar perfil
             <ArrowRight className="h-4 w-4" />
           </Link>
+        </div>
+      )}
+
+      {session.user.role === "client" && (
+        <div className="mt-6 hairline-border bg-surface-container p-4">
+          <div className="flex items-start gap-3">
+            <Camera className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <div>
+              <p className="font-medium">¿Querés publicar y vender tus fotos?</p>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Enviá tu perfil para revisión. Un administrador debe aprobarla antes de que
+                puedas crear eventos.
+              </p>
+              <Link
+                href={routes.photographer.onboarding}
+                className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline"
+              >
+                Convertirme en fotógrafo
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

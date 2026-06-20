@@ -1,4 +1,5 @@
 import type { UserRole } from "@/domain/enums/roles";
+import type { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 
 export interface Profile {
   id: string;
@@ -22,6 +23,21 @@ export interface PhotographerProfile {
   instagramHandle: string | null;
   portfolioUrl: string | null;
   isVerified: boolean;
+  applicationStatus: PhotographerApplicationStatus | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PhotographerApplicationForAdmin {
+  userId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  displayName: string;
+  bio: string | null;
+  websiteUrl: string | null;
+  instagramHandle: string | null;
+  applicationStatus: PhotographerApplicationStatus;
+  submittedAt: Date;
 }

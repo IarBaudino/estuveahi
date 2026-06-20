@@ -1,9 +1,11 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/infrastructure/auth";
+import { getPhotographerApplicationStatus } from "@/features/auth/infrastructure/auth.repository";
 import { DashboardSidebar } from "@/shared/components/dashboard-sidebar";
 import { MobileDashboardNav } from "@/shared/components/mobile-dashboard-nav";
 import { routes } from "@/config/routes";
+import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 
 export default async function PhotographerLayout({
   children,
@@ -15,11 +17,13 @@ export default async function PhotographerLayout({
 
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") ?? "/fotografo";
+  const isOnboardingRoute = pathname.startsWith(routes.photographer.onboarding);
 
-  if (
-    session.user.role === "client" &&
-    !pathname.startsWith(routes.photographer.onboarding)
-  ) {
+  if (session.user.role === "client" && !isOnboardingRoute) {
+    const status = await getPhotographerApplicationStatus(session.user.id);
+    if (status === PhotographerApplicationStatus.PENDING) {
+      redirect(routes.photographer.onboardingPending);
+    }
     redirect(routes.photographer.onboarding);
   }
 

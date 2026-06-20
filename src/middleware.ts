@@ -27,9 +27,22 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
 
-      const isOnboarding = pathname.startsWith("/fotografo/onboarding");
+      if (route === "/fotografo") {
+        const isOnboarding = pathname.startsWith("/fotografo/onboarding");
 
-      if (isOnboarding) continue;
+        if (session.user.role === "client") {
+          if (!isOnboarding) {
+            return NextResponse.redirect(new URL("/fotografo/onboarding", request.url));
+          }
+          break;
+        }
+
+        if (!roles.includes(session.user.role)) {
+          return NextResponse.redirect(new URL("/", request.url));
+        }
+
+        break;
+      }
 
       if (!roles.includes(session.user.role)) {
         return NextResponse.redirect(new URL("/", request.url));

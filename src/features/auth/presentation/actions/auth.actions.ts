@@ -9,8 +9,11 @@ import {
   registerSchema,
 } from "../../application/schemas/auth.schema";
 import {
-  becomePhotographer,
+  submitPhotographerApplication,
+  approvePhotographerApplication,
+  rejectPhotographerApplication,
   registerUser,
+  getPhotographerApplicationStatus,
   updateUserRole,
   verifyPhotographer,
   unverifyPhotographer,
@@ -19,6 +22,8 @@ import {
 import { routes } from "@/config/routes";
 import { getProfileByEmail } from "@/features/profile/infrastructure/profile.repository";
 import type { UserRole } from "@/domain/enums/roles";
+import { Role } from "@/domain/enums/roles";
+import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { z } from "zod";
 import { AuthError } from "next-auth";
 
@@ -58,8 +63,38 @@ export const logoutAction = actionClient.action(async () => {
 export const becomePhotographerAction = authActionClient
   .schema(photographerOnboardingSchema)
   .action(async ({ parsedInput, ctx }) => {
-    await becomePhotographer(ctx.user.id, parsedInput);
-    revalidatePath(routes.photographer.dashboard);
+    const status = await getPhotographerApplicationStatus(ctx.user.id);
+    if (status === PhotographerApplicationStatus.PENDING) {
+      throw new Error("Tu solicitud ya está en revisión");
+    }
+    if (status === PhotographerApplicationStatus.APPROVED) {
+      throw new Error("Tu solicitud ya fue aprobada. Volvé a iniciar sesión.");
+    }
+    if (ctx.user.role === Role.PHOTOGRAPHER || ctx.user.role === Role.ADMIN) {
+      throw new Error("Ya tenés acceso de fotógrafo");
+    }
+
+    await submitPhotographerApplication(ctx.user.id, parsedInput);
+    revalidatePath(routes.photographer.onboarding);
+    revalidatePath(routes.photographer.onboardingPending);
+    revalidatePath(routes.admin.photographers);
+    return { success: true, status: "pending" as const };
+  });
+
+export const approvePhotographerApplicationAction = adminActionClient
+  .schema(z.object({ userId: z.string().min(1) }))
+  .action(async ({ parsedInput }) => {
+    await approvePhotographerApplication(parsedInput.userId);
+    revalidatePath(routes.admin.photographers);
+    revalidatePath(routes.admin.users);
+    return { success: true };
+  });
+
+export const rejectPhotographerApplicationAction = adminActionClient
+  .schema(z.object({ userId: z.string().min(1) }))
+  .action(async ({ parsedInput }) => {
+    await rejectPhotographerApplication(parsedInput.userId);
+    revalidatePath(routes.admin.photographers);
     return { success: true };
   });
 
