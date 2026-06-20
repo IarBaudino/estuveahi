@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getDbIfConfigured } from "@/infrastructure/firebase/admin";
+import { getDbIfConfigured, getLastFirebaseInitError } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import { EventStatus } from "@/domain/enums/event-status";
-import { diagnoseFirebasePrivateKey } from "@/infrastructure/firebase/config";
+import { diagnoseFirebasePrivateKey, isFirebaseConfigured } from "@/infrastructure/firebase/config";
 
 /** Diagnóstico rápido en Vercel — no expone secretos, solo si están definidos. */
 export async function GET() {
@@ -50,11 +50,15 @@ export async function GET() {
 
   if (!privateKeyCheck.ok) {
     firebase.error = privateKeyCheck.hint;
+  } else if (!isFirebaseConfigured()) {
+    firebase.error = "variables_missing";
   } else {
     try {
       const db = getDbIfConfigured();
       if (!db) {
-        firebase.error = "not_configured";
+        firebase.error =
+          getLastFirebaseInitError() ??
+          "No se pudo conectar a Firebase. Revisá FIREBASE_PRIVATE_KEY o usá FIREBASE_SERVICE_ACCOUNT_JSON.";
       } else {
         const snap = await db
           .collection(COLLECTIONS.events)

@@ -8,6 +8,7 @@ import {
 } from "./config";
 
 let app: App | null = null;
+let lastInitError: string | null = null;
 
 function initApp(): App {
   if (app) return app;
@@ -20,15 +21,25 @@ function initApp(): App {
 
   const credentials = resolveFirebaseCredentials();
 
-  app = initializeApp({
-    credential: cert({
-      projectId: credentials.projectId,
-      clientEmail: credentials.clientEmail,
-      privateKey: credentials.privateKey,
-    }),
-  });
+  try {
+    app = initializeApp({
+      credential: cert({
+        projectId: credentials.projectId,
+        clientEmail: credentials.clientEmail,
+        privateKey: credentials.privateKey,
+      }),
+    });
+    lastInitError = null;
+  } catch (error) {
+    lastInitError = error instanceof Error ? error.message : String(error);
+    throw error;
+  }
 
   return app;
+}
+
+export function getLastFirebaseInitError(): string | null {
+  return lastInitError;
 }
 
 export function getFirebaseApp(): App | null {

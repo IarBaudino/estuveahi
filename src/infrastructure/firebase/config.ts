@@ -13,6 +13,29 @@ function isPlaceholderValue(value: string | undefined): boolean {
   return PLACEHOLDER_MARKERS.some((marker) => lower.includes(marker));
 }
 
+function rewrapPemIfNeeded(key: string): string {
+  const pemMatch = key.match(
+    /^(-----BEGIN [A-Z ]+-----)\s*([\s\S]*?)\s*(-----END [A-Z ]+-----)\s*$/,
+  );
+  if (!pemMatch) return key;
+
+  const [, begin, body, end] = pemMatch;
+  const compactBody = body.replace(/\s+/g, "");
+  if (!compactBody) return key;
+
+  const bodyLines = body
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (bodyLines.length > 1) {
+    return `${begin}\n${bodyLines.join("\n")}\n${end}\n`;
+  }
+
+  const wrapped = compactBody.match(/.{1,64}/g)?.join("\n") ?? compactBody;
+  return `${begin}\n${wrapped}\n${end}\n`;
+}
+
 export function normalizePrivateKey(key: string): string {
   let normalized = key.trim();
 
@@ -25,6 +48,7 @@ export function normalizePrivateKey(key: string): string {
 
   normalized = normalized.replace(/\\n/g, "\n");
   normalized = normalized.replace(/\r\n/g, "\n");
+  normalized = rewrapPemIfNeeded(normalized);
 
   return normalized;
 }
