@@ -207,10 +207,10 @@ export default function HomePage() {
         </section>
       </LandingFadeIn>
 
-      {/* Recent events from DB */}
-      <Suspense fallback={null}>
+      {/* Recent events from DB — desactivado: EventCard async rompe SSR en Vercel */}
+      {/* <Suspense fallback={null}>
         <RecentEventsSection />
-      </Suspense>
+      </Suspense> */}
 
       {/* For photographers */}
       <LandingFadeIn>
