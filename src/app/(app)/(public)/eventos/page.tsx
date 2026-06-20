@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
+export const runtime = "nodejs";
 
 interface PageProps {
   searchParams: Promise<{
