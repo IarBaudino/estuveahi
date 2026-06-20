@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
-import { headers } from "next/headers";
-import { Header } from "@/shared/components/header";
-import { Footer } from "@/shared/components/footer";
 import { Providers } from "@/shared/components/providers";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
@@ -42,17 +39,11 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") ?? "";
-  const isLanding = pathname === "/";
-
   return (
     <html
       lang="es"
@@ -65,11 +56,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-black text-body-md antialiased">
-        <Providers>
-          {!isLanding && <Header />}
-          <main className={isLanding ? "flex-1" : "flex-1 pt-16"}>{children}</main>
-          {!isLanding && <Footer />}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

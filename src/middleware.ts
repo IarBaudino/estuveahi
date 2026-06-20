@@ -8,9 +8,9 @@ const protectedRoutes: Record<string, string[]> = {
 };
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next();
-  response.headers.set("x-pathname", request.nextUrl.pathname);
   const { pathname } = request.nextUrl;
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
 
   let session = null;
   try {

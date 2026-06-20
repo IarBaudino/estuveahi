@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { auth, signOut } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
 import { MaterialIcon } from "@/shared/components/icon";
+import { LandingNavAuth } from "@/features/marketing/presentation/components/landing-nav-auth";
 
-export async function LandingNav() {
-  const session = await auth();
-
+export function LandingNav() {
   return (
     <nav className="glass-nav fixed top-0 z-50 flex w-full items-center justify-between border-b border-white/10 px-margin-mobile py-4 md:px-margin-desktop">
       <Link
@@ -37,28 +35,7 @@ export async function LandingNav() {
         <Link href={routes.events} aria-label="Buscar eventos">
           <MaterialIcon name="search" className="text-primary" />
         </Link>
-        {session?.user ? (
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: routes.home });
-            }}
-          >
-            <button
-              type="submit"
-              className="text-label-sm bg-primary px-4 py-2 tracking-widest text-background transition-colors duration-300 hover:bg-on-surface-variant md:px-6"
-            >
-              Salir
-            </button>
-          </form>
-        ) : (
-          <Link
-            href={routes.login}
-            className="text-label-sm bg-primary px-4 py-2 tracking-widest text-background transition-colors duration-300 hover:opacity-90 md:px-6"
-          >
-            Entrar
-          </Link>
-        )}
+        <LandingNavAuth />
       </div>
     </nav>
   );
