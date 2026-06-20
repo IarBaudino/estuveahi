@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Encuentra fotografías de recitales, festivales, deportes y más.",
 };
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
 interface PageProps {
   searchParams: Promise<{
     q?: string;
