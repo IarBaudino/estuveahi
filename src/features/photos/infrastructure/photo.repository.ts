@@ -30,19 +30,24 @@ export async function getEventPhotos(
   limit = 50,
   offset = 0,
 ): Promise<Photo[]> {
-  const db = getDbIfConfigured();
-  if (!db) return [];
+  try {
+    const db = getDbIfConfigured();
+    if (!db) return [];
 
-  const snap = await db
-    .collection(COLLECTIONS.photos)
-    .where("eventId", "==", eventId)
-    .where("isVisible", "==", true)
-    .get();
+    const snap = await db
+      .collection(COLLECTIONS.photos)
+      .where("eventId", "==", eventId)
+      .get();
 
-  return snap.docs
-    .map((doc) => mapPhoto(doc.id, doc.data() as PhotoDoc))
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .slice(offset, offset + limit);
+    return snap.docs
+      .map((doc) => mapPhoto(doc.id, doc.data() as PhotoDoc))
+      .filter((photo) => photo.isVisible)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .slice(offset, offset + limit);
+  } catch (error) {
+    console.error("[getEventPhotos]", error);
+    return [];
+  }
 }
 
 export async function getPhotoById(photoId: string): Promise<Photo | null> {

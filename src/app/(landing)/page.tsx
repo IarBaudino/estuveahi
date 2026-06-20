@@ -92,6 +92,7 @@ export default function HomePage() {
             alt="Multitud en un recital"
             fill
             priority
+            unoptimized
             className="object-cover opacity-60 grayscale"
             sizes="100vw"
           />
@@ -187,6 +188,7 @@ export default function HomePage() {
                     src={cat.image}
                     alt={cat.title}
                     fill
+                    unoptimized
                     className="grayscale-filter object-cover transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
@@ -218,6 +220,7 @@ export default function HomePage() {
                 src={IMAGES.photographer}
                 alt="Fotógrafo trabajando"
                 fill
+                unoptimized
                 className="object-cover grayscale"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
@@ -340,7 +343,7 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="relative overflow-hidden bg-black px-margin-mobile py-section-gap md:px-margin-desktop">
         <div className="absolute inset-0 z-0 opacity-40">
-          <Image src={IMAGES.cta} alt="" fill className="object-cover grayscale" sizes="100vw" />
+          <Image src={IMAGES.cta} alt="" fill unoptimized className="object-cover grayscale" sizes="100vw" />
           <div className="absolute inset-0 cinematic-overlay" />
         </div>
         <div className="relative z-10 mx-auto max-w-container-max space-y-12 text-center">

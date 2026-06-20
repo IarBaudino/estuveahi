@@ -140,68 +140,74 @@ export async function getPhotographerEvents(photographerId: string): Promise<Eve
 export async function searchPublicEvents(
   input: SearchEventsInput,
 ): Promise<{ events: EventWithPhotographer[]; total: number }> {
-  const db = getDbIfConfigured();
-  if (!db) return { events: [], total: 0 };
+  try {
+    const db = getDbIfConfigured();
+    if (!db) return { events: [], total: 0 };
 
-  let query = db
-    .collection(COLLECTIONS.events)
-    .where("status", "==", EventStatus.PUBLISHED)
-    .where("isPublic", "==", true);
+    const snap = await db
+      .collection(COLLECTIONS.events)
+      .where("status", "==", EventStatus.PUBLISHED)
+      .limit(200)
+      .get();
 
-  if (input.category) {
-    query = query.where("category", "==", input.category);
-  }
+    let rows = snap.docs
+      .map((doc) => ({
+        id: doc.id,
+        data: doc.data() as EventDoc,
+      }))
+      .filter((row) => row.data.isPublic === true);
 
-  const snap = await query.limit(200).get();
+    if (input.category) {
+      rows = rows.filter((row) => row.data.category === input.category);
+    }
 
-  let rows = snap.docs.map((doc) => ({
-    id: doc.id,
-    data: doc.data() as EventDoc,
-  }));
-
-  if (input.city) {
+    if (input.city) {
     const cityLower = input.city.toLowerCase();
     rows = rows.filter((r) => r.data.city?.toLowerCase().includes(cityLower));
   }
 
-  if (input.q) {
-    rows = rows.filter((r) => matchesSearch(r.data.searchKeywords, input.q!));
+    if (input.q) {
+      rows = rows.filter((r) => matchesSearch(r.data.searchKeywords, input.q!));
+    }
+
+    rows.sort(
+      (a, b) => toDate(b.data.eventDate).getTime() - toDate(a.data.eventDate).getTime(),
+    );
+
+    const total = rows.length;
+    const offset = (input.page - 1) * input.limit;
+    const page = rows.slice(offset, offset + input.limit);
+
+    const photographerIds = [...new Set(page.map((r) => r.data.photographerId))];
+    const photographerSnaps = await Promise.all(
+      photographerIds.map((id) =>
+        db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+      ),
+    );
+
+    const photographerMap = new Map(
+      photographerSnaps
+        .filter((d) => d.exists)
+        .map((d) => [
+          d.id,
+          mapPhotographerSummary(d.id, d.data() as PhotographerProfileDoc),
+        ]),
+    );
+
+    const events = await Promise.all(
+      page.map(async (row) => {
+        const photographer =
+          photographerMap.get(row.data.photographerId) ??
+          (await getPhotographerSummary(row.data.photographerId));
+        return mapEventWithPhotographer(row.id, row.data, photographer);
+      }),
+    );
+
+    return { events, total };
+  } catch (error) {
+    console.error("[searchPublicEvents]", error);
+    return { events: [], total: 0 };
   }
-
-  rows.sort(
-    (a, b) => toDate(b.data.eventDate).getTime() - toDate(a.data.eventDate).getTime(),
-  );
-
-  const total = rows.length;
-  const offset = (input.page - 1) * input.limit;
-  const page = rows.slice(offset, offset + input.limit);
-
-  const photographerIds = [...new Set(page.map((r) => r.data.photographerId))];
-  const photographerSnaps = await Promise.all(
-    photographerIds.map((id) =>
-      db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
-    ),
-  );
-
-  const photographerMap = new Map(
-    photographerSnaps
-      .filter((d) => d.exists)
-      .map((d) => [
-        d.id,
-        mapPhotographerSummary(d.id, d.data() as PhotographerProfileDoc),
-      ]),
-  );
-
-  const events = await Promise.all(
-    page.map(async (row) => {
-      const photographer =
-        photographerMap.get(row.data.photographerId) ??
-        (await getPhotographerSummary(row.data.photographerId));
-      return mapEventWithPhotographer(row.id, row.data, photographer);
-    }),
-  );
-
-  return { events, total };
 }
 
 export async function updateEvent(

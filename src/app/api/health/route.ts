@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getDbIfConfigured } from "@/infrastructure/firebase/admin";
+import { COLLECTIONS } from "@/infrastructure/firebase/collections";
+import { EventStatus } from "@/domain/enums/event-status";
 
 /** Diagnóstico rápido en Vercel — no expone secretos, solo si están definidos. */
 export async function GET() {
@@ -30,9 +33,40 @@ export async function GET() {
 
   const missing = required.filter((key) => !flags[key]);
 
+  let firebase: { ok: boolean; error: string | null; publishedEvents: number | null } = {
+    ok: false,
+    error: null,
+    publishedEvents: null,
+  };
+
+  try {
+    const db = getDbIfConfigured();
+    if (!db) {
+      firebase.error = "not_configured";
+    } else {
+      const snap = await db
+        .collection(COLLECTIONS.events)
+        .where("status", "==", EventStatus.PUBLISHED)
+        .limit(5)
+        .get();
+      firebase = {
+        ok: true,
+        error: null,
+        publishedEvents: snap.size,
+      };
+    }
+  } catch (error) {
+    firebase = {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      publishedEvents: null,
+    };
+  }
+
   return NextResponse.json({
-    ok: missing.length === 0 && (flags.AUTH_SECRET || flags.NEXTAUTH_SECRET),
+    ok: missing.length === 0 && (flags.AUTH_SECRET || flags.NEXTAUTH_SECRET) && firebase.ok,
     missing,
     flags,
+    firebase,
   });
 }
