@@ -57,9 +57,8 @@ export default async function EventsPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <Suspense fallback={<div className="h-20 animate-pulse rounded-lg bg-zinc-100" />}>
-        <EventSearchForm
-          defaultValues={{
+      <Suspense fallback={<div className="mb-8 h-20 animate-pulse rounded-lg bg-white/5" />}>
+        <EventSearchForm          defaultValues={{
             q: params.q ?? "",
             category: params.category ?? "",
             city: params.city ?? "",
