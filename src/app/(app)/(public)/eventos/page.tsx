@@ -1,9 +1,11 @@
-import { Suspense } from "react";
-import { searchPublicEvents } from "@/features/events/infrastructure/event.repository";
-import { EventCard } from "@/features/events/presentation/components/event-card";
-import { EventSearchForm } from "@/features/events/presentation/components/event-search-form";
-import { EVENT_CATEGORY_LABELS, EventCategory } from "@/domain/enums/event-category";
 import type { Metadata } from "next";
+import { EventSearchForm } from "@/features/events/presentation/components/event-search-form";
+import { searchPublicEvents } from "@/features/events/infrastructure/event.repository";
+import { EventCategory } from "@/domain/enums/event-category";
+import Link from "next/link";
+import { routes } from "@/config/routes";
+import { formatDate } from "@/shared/lib/utils";
+import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 
 export const metadata: Metadata = {
   title: "Explorar eventos",
@@ -57,21 +59,32 @@ export default async function EventsPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <Suspense fallback={<div className="mb-8 h-20 animate-pulse rounded-lg bg-white/5" />}>
-        <EventSearchForm          defaultValues={{
-            q: params.q ?? "",
-            category: params.category ?? "",
-            city: params.city ?? "",
-          }}
-        />
-      </Suspense>
+      <EventSearchForm
+        defaultValues={{
+          q: params.q ?? "",
+          category: params.category ?? "",
+          city: params.city ?? "",
+        }}
+      />
 
       {events.length > 0 ? (
         <>
           <p className="mb-4 text-sm text-on-surface-variant">{total} eventos encontrados</p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <Link
+                key={event.id}
+                href={routes.event(event.slug)}
+                className="block overflow-hidden hairline-border p-5 transition-colors hover:bg-white/5"
+              >
+                <p className="text-label-sm text-on-surface-variant">
+                  {EVENT_CATEGORY_LABELS[event.category]}
+                </p>
+                <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
+                <p className="mt-2 text-sm text-on-surface-variant">
+                  {formatDate(event.eventDate)} · {event.photoCount} fotos
+                </p>
+              </Link>
             ))}
           </div>
           {totalPages > 1 && (
@@ -94,7 +107,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
         </>
       ) : (
         <div className="mt-12 text-center">
-          <p className="mt-12 text-center text-on-surface-variant">
+          <p className="text-on-surface-variant">
             No se encontraron eventos con esos filtros.
           </p>
         </div>
