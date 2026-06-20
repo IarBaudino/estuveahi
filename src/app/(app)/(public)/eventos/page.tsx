@@ -94,7 +94,3 @@ export default async function EventsPage({ searchParams }: PageProps) {
     </div>
   );
 }
-
-export function generateStaticParams() {
-  return [];
-}
