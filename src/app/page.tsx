@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { LandingNav } from "@/features/marketing/presentation/components/landing-nav";
 import { LandingFooter } from "@/features/marketing/presentation/components/landing-footer";
+import { RecentEventsSection } from "@/features/marketing/presentation/components/recent-events-section";
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
@@ -206,10 +208,9 @@ export default function HomePage() {
       </LandingFadeIn>
 
       {/* Recent events from DB */}
-      {/* Temporalmente desactivado en prod mientras estabilizamos deploy */}
-      {/* <Suspense fallback={null}>
+      <Suspense fallback={null}>
         <RecentEventsSection />
-      </Suspense> */}
+      </Suspense>
 
       {/* For photographers */}
       <LandingFadeIn>
