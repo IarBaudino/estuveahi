@@ -4,12 +4,7 @@ import { routes } from "@/config/routes";
 import { MaterialIcon } from "@/shared/components/icon";
 
 export async function Header() {
-  let session = null;
-  try {
-    session = await auth();
-  } catch (error) {
-    console.error("[Header] auth:", error);
-  }
+  const session = await auth();
 
   return (
     <header className="glass-nav fixed top-0 z-50 w-full border-b border-white/10">
