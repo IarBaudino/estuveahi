@@ -10,8 +10,14 @@ const protectedRoutes: Record<string, string[]> = {
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   response.headers.set("x-pathname", request.nextUrl.pathname);
-  const session = await edgeAuth();
   const { pathname } = request.nextUrl;
+
+  let session = null;
+  try {
+    session = await edgeAuth();
+  } catch (error) {
+    console.error("[middleware] auth:", error);
+  }
 
   for (const [route, roles] of Object.entries(protectedRoutes)) {
     if (pathname.startsWith(route)) {

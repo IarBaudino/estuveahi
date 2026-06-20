@@ -7,6 +7,7 @@ import type { UserRole } from "@/domain/enums/roles";
  */
 export const authConfig = {
   providers: [],
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
     error: "/login",

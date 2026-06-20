@@ -1,8 +1,16 @@
 import type { NextConfig } from "next";
 
-const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-  : "placeholder.supabase.co";
+function getSupabaseHost(): string {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!raw) return "placeholder.supabase.co";
+  try {
+    return new URL(raw).hostname;
+  } catch {
+    return "placeholder.supabase.co";
+  }
+}
+
+const supabaseHost = getSupabaseHost();
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
