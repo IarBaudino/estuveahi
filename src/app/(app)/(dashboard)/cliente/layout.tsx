@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/infrastructure/auth";
 import { ClientNav } from "@/shared/components/client-nav";
@@ -9,15 +8,19 @@ export default async function ClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session?.user) redirect(routes.login);
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[ClientLayout] auth:", error);
+    redirect(routes.login);
+  }
 
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") ?? "/cliente";
+  if (!session?.user) redirect(routes.login);
 
   return (
     <div className="mx-auto flex max-w-7xl gap-0 px-0 sm:px-6">
-      <ClientNav currentPath={pathname} />
+      <ClientNav />
       <div className="min-w-0 flex-1 px-4 py-8 pb-24 sm:px-0 md:pb-8">{children}</div>
     </div>
   );

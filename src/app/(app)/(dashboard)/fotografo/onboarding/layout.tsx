@@ -24,6 +24,10 @@ export default async function OnboardingLayout({
     if (status === PhotographerApplicationStatus.PENDING) {
       redirect(routes.photographer.dashboard);
     }
+
+    if (status === PhotographerApplicationStatus.APPROVED) {
+      redirect(routes.photographer.dashboard);
+    }
   }
 
   return children;

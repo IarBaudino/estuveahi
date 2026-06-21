@@ -28,13 +28,8 @@ export async function middleware(request: NextRequest) {
       }
 
       if (route === "/fotografo") {
-        const isOnboarding = pathname.startsWith("/fotografo/onboarding");
-        const isDashboard = pathname === "/fotografo";
-
         if (session.user.role === "client") {
-          if (!isOnboarding && !isDashboard) {
-            return NextResponse.redirect(new URL("/fotografo", request.url));
-          }
+          // Clientes pueden acceder al panel; el layout valida pending vs aprobado.
           break;
         }
 

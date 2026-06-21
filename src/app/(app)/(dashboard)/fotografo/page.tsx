@@ -25,11 +25,19 @@ export default async function PhotographerDashboardPage() {
 
   const userId = session.user.id;
 
-  const [events, pendingRequests, photoCount] = await Promise.all([
-    getPhotographerEvents(userId),
-    getPendingRequestCount(userId),
-    getPhotographerPhotoCount(userId),
-  ]);
+  let events: Awaited<ReturnType<typeof getPhotographerEvents>> = [];
+  let pendingRequests = 0;
+  let photoCount = 0;
+
+  try {
+    [events, pendingRequests, photoCount] = await Promise.all([
+      getPhotographerEvents(userId),
+      getPendingRequestCount(userId),
+      getPhotographerPhotoCount(userId),
+    ]);
+  } catch (error) {
+    console.error("[PhotographerDashboard] data load failed:", error);
+  }
 
   return (
     <div>

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import { Heart, Home, ShoppingBag, User } from "lucide-react";
 import { routes } from "@/config/routes";
@@ -10,7 +13,9 @@ const items = [
   { href: routes.client.profile, label: "Mi perfil", icon: User },
 ];
 
-export function ClientNav({ currentPath }: { currentPath: string }) {
+export function ClientNav() {
+  const currentPath = usePathname();
+
   return (
     <>
       <aside className="hidden w-56 shrink-0 border-r border-white/10 p-4 md:block">

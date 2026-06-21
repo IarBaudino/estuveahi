@@ -285,12 +285,30 @@ export async function getPendingRequestCount(photographerId: string): Promise<nu
   const db = getDbIfConfigured();
   if (!db) return 0;
 
-  const snap = await db
-    .collection(COLLECTIONS.purchaseRequests)
-    .where("photographerId", "==", photographerId)
-    .where("status", "==", "pending")
-    .count()
-    .get();
+  try {
+    const snap = await db
+      .collection(COLLECTIONS.purchaseRequests)
+      .where("photographerId", "==", photographerId)
+      .where("status", "==", "pending")
+      .count()
+      .get();
 
-  return snap.data().count;
+    return snap.data().count;
+  } catch (error) {
+    console.error("[getPendingRequestCount] count query failed:", error);
+
+    try {
+      const snap = await db
+        .collection(COLLECTIONS.purchaseRequests)
+        .where("photographerId", "==", photographerId)
+        .get();
+
+      return snap.docs.filter(
+        (doc) => (doc.data() as PurchaseRequestDoc).status === "pending",
+      ).length;
+    } catch (fallbackError) {
+      console.error("[getPendingRequestCount] fallback failed:", fallbackError);
+      return 0;
+    }
+  }
 }

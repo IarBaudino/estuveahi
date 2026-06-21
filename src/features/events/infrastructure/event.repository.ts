@@ -130,14 +130,27 @@ export async function getPhotographerEvents(photographerId: string): Promise<Eve
   const db = getDbIfConfigured();
   if (!db) return [];
 
-  const snap = await db
-    .collection(COLLECTIONS.events)
-    .where("photographerId", "==", photographerId)
-    .get();
+  try {
+    const snap = await db
+      .collection(COLLECTIONS.events)
+      .where("photographerId", "==", photographerId)
+      .get();
 
-  return snap.docs
-    .map((doc) => mapEvent(doc.id, doc.data() as EventDoc))
-    .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+    return snap.docs
+      .map((doc) => {
+        try {
+          return mapEvent(doc.id, doc.data() as EventDoc);
+        } catch (error) {
+          console.error("[getPhotographerEvents] skip invalid event:", doc.id, error);
+          return null;
+        }
+      })
+      .filter((event): event is Event => event !== null)
+      .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+  } catch (error) {
+    console.error("[getPhotographerEvents] query failed:", error);
+    return [];
+  }
 }
 
 export async function searchPublicEvents(
@@ -332,23 +345,28 @@ export async function getAdminStats() {
     return { users: 0, events: 0, photos: 0, pendingRequests: 0 };
   }
 
-  const [users, events, photos, requests] = await Promise.all([
-    db.collection(COLLECTIONS.profiles).count().get(),
-    db.collection(COLLECTIONS.events).count().get(),
-    db.collection(COLLECTIONS.photos).count().get(),
-    db
-      .collection(COLLECTIONS.purchaseRequests)
-      .where("status", "==", "pending")
-      .count()
-      .get(),
-  ]);
+  try {
+    const [users, events, photos, requests] = await Promise.all([
+      db.collection(COLLECTIONS.profiles).count().get(),
+      db.collection(COLLECTIONS.events).count().get(),
+      db.collection(COLLECTIONS.photos).count().get(),
+      db
+        .collection(COLLECTIONS.purchaseRequests)
+        .where("status", "==", "pending")
+        .count()
+        .get(),
+    ]);
 
-  return {
-    users: users.data().count,
-    events: events.data().count,
-    photos: photos.data().count,
-    pendingRequests: requests.data().count,
-  };
+    return {
+      users: users.data().count,
+      events: events.data().count,
+      photos: photos.data().count,
+      pendingRequests: requests.data().count,
+    };
+  } catch (error) {
+    console.error("[getAdminStats] count queries failed:", error);
+    return { users: 0, events: 0, photos: 0, pendingRequests: 0 };
+  }
 }
 
 export async function getAllEventsForAdmin() {

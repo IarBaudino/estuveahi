@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
 import {
   Calendar,
@@ -101,11 +104,10 @@ function isActive(currentPath: string, href: string) {
 
 export function DashboardSidebar({
   type,
-  currentPath,
 }: {
   type: "photographer" | "admin";
-  currentPath: string;
 }) {
+  const currentPath = usePathname();
   const items = type === "photographer" ? photographerNav : adminNav;
 
   return (

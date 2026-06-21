@@ -205,11 +205,27 @@ export async function getPhotographerPhotoCount(photographerId: string): Promise
   const db = getDbIfConfigured();
   if (!db) return 0;
 
-  const snap = await db
-    .collection(COLLECTIONS.photos)
-    .where("photographerId", "==", photographerId)
-    .count()
-    .get();
+  try {
+    const snap = await db
+      .collection(COLLECTIONS.photos)
+      .where("photographerId", "==", photographerId)
+      .count()
+      .get();
 
-  return snap.data().count;
+    return snap.data().count;
+  } catch (error) {
+    console.error("[getPhotographerPhotoCount] count query failed:", error);
+
+    try {
+      const snap = await db
+        .collection(COLLECTIONS.photos)
+        .where("photographerId", "==", photographerId)
+        .get();
+
+      return snap.size;
+    } catch (fallbackError) {
+      console.error("[getPhotographerPhotoCount] fallback failed:", fallbackError);
+      return 0;
+    }
+  }
 }
