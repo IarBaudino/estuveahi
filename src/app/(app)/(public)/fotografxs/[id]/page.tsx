@@ -10,6 +10,7 @@ import {
 import { formatDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 import { BadgeCheck, ExternalLink } from "lucide-react";
+import { PhotographerAvatar } from "@/features/photographers/presentation/components/photographer-avatar";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -49,33 +50,47 @@ export default async function PhotographerProfilePage({ params }: PageProps) {
       </Link>
 
       <div className="mt-8 hairline-border p-6 md:p-8">
-        <div className="flex flex-wrap items-start gap-3">
-          <h1 className="text-headline-lg">{photographer.displayName}</h1>
-          {photographer.isVerified && (
-            <span className="inline-flex items-center gap-1 text-sm text-primary">
-              <BadgeCheck className="h-4 w-4" />
-              Verificado
-            </span>
-          )}
-        </div>
-        {photographer.bio && (
-          <p className="mt-4 max-w-2xl text-on-surface-variant">{photographer.bio}</p>
-        )}
-        <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          {photographer.instagramHandle && (
-            <span className="text-on-surface-variant">{photographer.instagramHandle}</span>
-          )}
-          {photographer.websiteUrl && (
-            <a
-              href={photographer.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline"
-            >
-              Sitio web
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="relative mx-auto h-32 w-32 shrink-0 overflow-hidden rounded-full bg-surface-container sm:mx-0 sm:h-40 sm:w-40">
+            <PhotographerAvatar
+              userId={photographer.id}
+              displayName={photographer.displayName}
+              hasAvatar={photographer.hasAvatar}
+              className="rounded-full"
+              imageClassName="rounded-full"
+              sizes="160px"
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start gap-3">
+              <h1 className="text-headline-lg">{photographer.displayName}</h1>
+              {photographer.isVerified && (
+                <span className="inline-flex items-center gap-1 text-sm text-primary">
+                  <BadgeCheck className="h-4 w-4" />
+                  Verificado
+                </span>
+              )}
+            </div>
+            {photographer.bio && (
+              <p className="mt-4 max-w-2xl text-on-surface-variant">{photographer.bio}</p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              {photographer.instagramHandle && (
+                <span className="text-on-surface-variant">{photographer.instagramHandle}</span>
+              )}
+              {photographer.websiteUrl && (
+                <a
+                  href={photographer.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline"
+                >
+                  Sitio web
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

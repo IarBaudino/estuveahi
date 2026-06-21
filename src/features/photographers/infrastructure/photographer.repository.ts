@@ -1,12 +1,13 @@
 import { getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
-import type { EventDoc, PhotographerProfileDoc } from "@/infrastructure/firebase/documents";
+import type { EventDoc, PhotographerProfileDoc, ProfileDoc } from "@/infrastructure/firebase/documents";
 import { mapEvent } from "@/infrastructure/mappers/event.mapper";
 import type { PublicPhotographer } from "@/domain/entities/public-photographer";
 import type { Event } from "@/domain/entities/event";
 import { EventStatus } from "@/domain/enums/event-status";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { Role } from "@/domain/enums/roles";
+import { hasAvatar } from "@/shared/lib/avatar-url";
 
 function isPublicListing(data: EventDoc): boolean {
   return data.isPublic !== false;
@@ -22,6 +23,7 @@ function mapPublicPhotographer(
   id: string,
   data: PhotographerProfileDoc,
   publishedEventCount: number,
+  profileAvatarUrl: string | null | undefined,
 ): PublicPhotographer {
   return {
     id,
@@ -31,6 +33,7 @@ function mapPublicPhotographer(
     instagramHandle: data.instagramHandle,
     isVerified: data.isVerified,
     publishedEventCount,
+    hasAvatar: hasAvatar(profileAvatarUrl),
   };
 }
 
@@ -71,8 +74,12 @@ export async function searchPublicPhotographers(input: {
       countPublishedEventsByPhotographer(),
     ]);
 
+    const profileById = new Map(
+      profileSnap.docs.map((doc) => [doc.id, doc.data() as ProfileDoc]),
+    );
+
     const photographerIds = profileSnap.docs
-      .filter((doc) => !(doc.data() as { isBlocked?: boolean }).isBlocked)
+      .filter((doc) => !profileById.get(doc.id)?.isBlocked)
       .map((doc) => doc.id);
 
     const photographerSnaps = await Promise.all(
@@ -110,9 +117,16 @@ export async function searchPublicPhotographers(input: {
     const offset = (page - 1) * limit;
     const pageRows = rows.slice(offset, offset + limit);
 
-    const photographers = pageRows.map((row) =>
-      mapPublicPhotographer(row.id, row.data, eventCounts.get(row.id) ?? 0),
-    );
+    const photographers = pageRows.map((row) => {
+      const profile = profileById.get(row.id);
+
+      return mapPublicPhotographer(
+        row.id,
+        row.data,
+        eventCounts.get(row.id) ?? 0,
+        profile?.avatarUrl,
+      );
+    });
 
     return { photographers, total };
   } catch (error) {
@@ -135,15 +149,20 @@ export async function getPublicPhotographerById(
 
     if (!profileDoc.exists || !photographerDoc.exists) return null;
 
-    const profile = profileDoc.data() as { role: string; isBlocked?: boolean };
-    if (profile.role !== Role.PHOTOGRAPHER || profile.isBlocked) return null;
+    const profileData = profileDoc.data() as ProfileDoc;
+    if (profileData.role !== Role.PHOTOGRAPHER || profileData.isBlocked) return null;
 
     const data = photographerDoc.data() as PhotographerProfileDoc;
     if (!isListedPhotographer(data)) return null;
 
     const events = await getPublicEventsByPhotographer(id);
 
-    return mapPublicPhotographer(id, data, events.length);
+    return mapPublicPhotographer(
+      id,
+      data,
+      events.length,
+      profileData.avatarUrl,
+    );
   } catch (error) {
     console.error("[getPublicPhotographerById]", error);
     return null;

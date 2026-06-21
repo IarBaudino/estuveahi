@@ -6,4 +6,6 @@ export interface PublicPhotographer {
   instagramHandle: string | null;
   isVerified: boolean;
   publishedEventCount: number;
+  /** true si el perfil tiene avatar en Firestore */
+  hasAvatar: boolean;
 }

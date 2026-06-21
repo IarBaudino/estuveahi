@@ -3,7 +3,7 @@ import Link from "next/link";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { searchPublicPhotographers } from "@/features/photographers/infrastructure/photographer.repository";
-import { BadgeCheck } from "lucide-react";
+import { PhotographerCard } from "@/features/photographers/presentation/components/photographer-card";
 
 export const metadata: Metadata = {
   title: `${PHOTOGRAPHER_LABEL.pluralCap} en EstuveAhí`,
@@ -62,34 +62,9 @@ export default async function PhotographersPage({ searchParams }: PageProps) {
           <p className="mb-4 text-sm text-on-surface-variant">
             {total} {total === 1 ? PHOTOGRAPHER_LABEL.singular : PHOTOGRAPHER_LABEL.plural}
           </p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {photographers.map((photographer) => (
-              <Link
-                key={photographer.id}
-                href={routes.photographerPublic(photographer.id)}
-                className="block hairline-border p-5 transition-colors hover:bg-white/5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-headline-md line-clamp-1">{photographer.displayName}</h2>
-                  {photographer.isVerified && (
-                    <BadgeCheck className="h-5 w-5 shrink-0 text-primary" aria-label="Verificado" />
-                  )}
-                </div>
-                {photographer.bio && (
-                  <p className="mt-2 line-clamp-3 text-sm text-on-surface-variant">
-                    {photographer.bio}
-                  </p>
-                )}
-                <p className="mt-4 text-sm text-on-surface-variant">
-                  {photographer.publishedEventCount}{" "}
-                  {photographer.publishedEventCount === 1 ? "evento publicado" : "eventos publicados"}
-                </p>
-                {photographer.instagramHandle && (
-                  <p className="mt-1 text-sm text-on-surface-variant/70">
-                    {photographer.instagramHandle}
-                  </p>
-                )}
-              </Link>
+              <PhotographerCard key={photographer.id} photographer={photographer} />
             ))}
           </div>
           {totalPages > 1 && (
