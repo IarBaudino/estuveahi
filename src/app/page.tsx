@@ -1,55 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { LandingNav } from "@/features/marketing/presentation/components/landing-nav";
 import { LandingFooter } from "@/features/marketing/presentation/components/landing-footer";
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
+import { LandingCategoriesSection } from "@/features/marketing/presentation/components/landing-categories-section";
+import { FeaturedEventsSection } from "@/features/marketing/presentation/components/featured-events-section";
 import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
-import type { LandingImages } from "@/config/landing.defaults";
 import { cn } from "@/shared/lib/utils";
-
-function buildCategories(images: LandingImages) {
-  return [
-    {
-      key: "festivales" as const,
-      title: "Festivales",
-      subtitle: "248 galerías activas",
-      image: images.festivales,
-      href: `${routes.events}?category=festival`,
-      span: "md:col-span-8",
-      titleClass: "text-headline-lg",
-    },
-    {
-      key: "recitales" as const,
-      title: "Recitales",
-      subtitle: "Boutique & Arena",
-      image: images.recitales,
-      href: `${routes.events}?category=concert`,
-      span: "md:col-span-4",
-      titleClass: "text-headline-md",
-    },
-    {
-      key: "teatro" as const,
-      title: "Teatro",
-      subtitle: "Obras & Musicales",
-      image: images.teatro,
-      href: `${routes.events}?category=theater`,
-      span: "md:col-span-4",
-      titleClass: "text-headline-md",
-    },
-    {
-      key: "deportes" as const,
-      title: "Deportes",
-      subtitle: "Fútbol, Tenis & más",
-      image: images.deportes,
-      href: `${routes.events}?category=sports`,
-      span: "md:col-span-8",
-      titleClass: "text-headline-lg",
-    },
-  ];
-}
 
 const FAQ = [
   {
@@ -74,8 +35,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function HomePage() {
-  const { images: IMAGES, grayscale: GRAYSCALE } = await getLandingSettings();
-  const CATEGORIES = buildCategories(IMAGES);
+  const settings = await getLandingSettings();
+  const { images: IMAGES, grayscale: GRAYSCALE, featuredCategories, featuredEventIds } =
+    settings;
 
   return (
     <>
@@ -157,59 +119,14 @@ export default async function HomePage() {
 
       {/* Categories grid */}
       <LandingFadeIn>
-        <section className="bg-surface-container-lowest px-margin-mobile py-section-gap md:px-margin-desktop">
-          <div className="mx-auto max-w-container-max">
-            <div className="mb-16 flex items-end justify-between">
-              <div>
-                <span className="text-label-sm mb-4 block tracking-[0.3em] text-on-surface-variant/50">
-                  Catálogo
-                </span>
-                <h2 className="text-headline-lg">Categorías Destacadas</h2>
-              </div>
-              <Link
-                href={routes.events}
-                className="text-label-sm hidden border-b border-white/20 pb-1 tracking-widest transition-all hover:border-white md:block"
-              >
-                Ver todo el archivo
-              </Link>
-            </div>
-
-            <div className="grid h-auto grid-cols-1 gap-6 md:h-[800px] md:grid-cols-12">
-              {CATEGORIES.map((cat) => (
-                <Link
-                  key={cat.title}
-                  href={cat.href}
-                  className={`group relative min-h-[280px] cursor-pointer overflow-hidden md:min-h-0 ${cat.span}`}
-                >
-                  <Image
-                    src={cat.image}
-                    alt={cat.title}
-                    fill
-                    unoptimized
-                    className={cn(
-                      "object-cover transition-transform duration-700 group-hover:scale-105",
-                      GRAYSCALE[cat.key] && "grayscale-filter",
-                    )}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-                  <div className="absolute bottom-10 left-10">
-                    <h4 className={cat.titleClass}>{cat.title}</h4>
-                    <p className="text-label-sm tracking-widest text-on-surface-variant">
-                      {cat.subtitle}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+        <LandingCategoriesSection categories={featuredCategories} images={IMAGES} />
       </LandingFadeIn>
 
-      {/* Recent events from DB — desactivado: EventCard async rompe SSR en Vercel */}
-      {/* <Suspense fallback={null}>
-        <RecentEventsSection />
-      </Suspense> */}
+      {featuredEventIds.length > 0 && (
+        <Suspense fallback={null}>
+          <FeaturedEventsSection eventIds={featuredEventIds} />
+        </Suspense>
+      )}
 
       {/* For photographers */}
       <LandingFadeIn>

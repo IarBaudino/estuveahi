@@ -93,5 +93,20 @@ export interface PurchaseRequestDoc {
 export interface LandingSettingsDoc {
   images: Record<string, string>;
   grayscale?: Record<string, boolean>;
+  featuredCategories?: LandingFeaturedCategoryDoc[];
+  featuredEventIds?: string[];
   updatedAt: Timestamp | Date;
+}
+
+export interface LandingFeaturedCategoryDoc {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl?: string | null;
+  imageKey?: string | null;
+  eventCategory?: string | null;
+  href?: string | null;
+  layout: "wide" | "narrow";
+  grayscale: boolean;
+  sortOrder: number;
 }

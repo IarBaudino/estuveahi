@@ -52,4 +52,66 @@ export type LandingGrayscale = Record<LandingImageKey, boolean>;
 export interface LandingSettings {
   images: LandingImages;
   grayscale: LandingGrayscale;
+  featuredCategories: LandingFeaturedCategory[];
+  featuredEventIds: string[];
 }
+
+export type LandingCategoryLayout = "wide" | "narrow";
+
+export interface LandingFeaturedCategory {
+  id: string;
+  title: string;
+  subtitle: string;
+  /** Imagen propia subida desde admin */
+  imageUrl?: string | null;
+  /** Imagen del set legacy (hero, festivales, etc.) */
+  imageKey?: LandingImageKey | null;
+  eventCategory?: string | null;
+  href?: string | null;
+  layout: LandingCategoryLayout;
+  grayscale: boolean;
+  sortOrder: number;
+}
+
+export const DEFAULT_FEATURED_CATEGORIES: LandingFeaturedCategory[] = [
+  {
+    id: "festivales",
+    title: "Festivales",
+    subtitle: "248 galerías activas",
+    imageKey: "festivales",
+    eventCategory: "festival",
+    layout: "wide",
+    grayscale: true,
+    sortOrder: 0,
+  },
+  {
+    id: "recitales",
+    title: "Recitales",
+    subtitle: "Boutique & Arena",
+    imageKey: "recitales",
+    eventCategory: "concert",
+    layout: "narrow",
+    grayscale: true,
+    sortOrder: 1,
+  },
+  {
+    id: "teatro",
+    title: "Teatro",
+    subtitle: "Obras & Musicales",
+    imageKey: "teatro",
+    eventCategory: "theater",
+    layout: "narrow",
+    grayscale: true,
+    sortOrder: 2,
+  },
+  {
+    id: "deportes",
+    title: "Deportes",
+    subtitle: "Fútbol, Tenis & más",
+    imageKey: "deportes",
+    eventCategory: "sports",
+    layout: "wide",
+    grayscale: true,
+    sortOrder: 3,
+  },
+];

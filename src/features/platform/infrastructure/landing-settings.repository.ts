@@ -1,11 +1,17 @@
 import { FieldValue } from "firebase-admin/firestore";
+import { randomUUID } from "crypto";
 import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
-import type { LandingSettingsDoc } from "@/infrastructure/firebase/documents";
+import type {
+  LandingFeaturedCategoryDoc,
+  LandingSettingsDoc,
+} from "@/infrastructure/firebase/documents";
 import {
+  DEFAULT_FEATURED_CATEGORIES,
   DEFAULT_LANDING_GRAYSCALE,
   DEFAULT_LANDING_IMAGES,
   LANDING_IMAGE_KEYS,
+  type LandingFeaturedCategory,
   type LandingImageKey,
   type LandingImages,
   type LandingGrayscale,
@@ -40,11 +46,42 @@ function mergeGrayscale(partial?: Record<string, boolean>): LandingGrayscale {
   return merged;
 }
 
-function mapSettings(data?: Pick<LandingSettingsDoc, "images" | "grayscale">): LandingSettings {
+function mapFeaturedCategory(doc: LandingFeaturedCategoryDoc): LandingFeaturedCategory {
+  return {
+    id: doc.id,
+    title: doc.title,
+    subtitle: doc.subtitle ?? "",
+    imageUrl: doc.imageUrl ?? null,
+    imageKey: (doc.imageKey as LandingImageKey | null) ?? null,
+    eventCategory: doc.eventCategory ?? null,
+    href: doc.href ?? null,
+    layout: doc.layout,
+    grayscale: doc.grayscale,
+    sortOrder: doc.sortOrder,
+  };
+}
+
+function mergeFeaturedCategories(
+  partial?: LandingFeaturedCategoryDoc[],
+): LandingFeaturedCategory[] {
+  if (!partial?.length) return DEFAULT_FEATURED_CATEGORIES;
+  return partial.map(mapFeaturedCategory).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function mapSettings(
+  data?: Pick<LandingSettingsDoc, "images" | "grayscale" | "featuredCategories" | "featuredEventIds">,
+): LandingSettings {
   return {
     images: mergeImages(data?.images),
     grayscale: mergeGrayscale(data?.grayscale),
+    featuredCategories: mergeFeaturedCategories(data?.featuredCategories),
+    featuredEventIds: data?.featuredEventIds ?? [],
   };
+}
+
+async function getLandingDocRef() {
+  const db = getDb();
+  return db.collection(COLLECTIONS.platformSettings).doc(LANDING_DOC_ID);
 }
 
 export async function getLandingSettings(): Promise<LandingSettings> {
@@ -53,6 +90,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
     return {
       images: DEFAULT_LANDING_IMAGES,
       grayscale: DEFAULT_LANDING_GRAYSCALE,
+      featuredCategories: DEFAULT_FEATURED_CATEGORIES,
+      featuredEventIds: [],
     };
   }
 
@@ -66,6 +105,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
       return {
         images: DEFAULT_LANDING_IMAGES,
         grayscale: DEFAULT_LANDING_GRAYSCALE,
+        featuredCategories: DEFAULT_FEATURED_CATEGORIES,
+        featuredEventIds: [],
       };
     }
 
@@ -75,6 +116,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
     return {
       images: DEFAULT_LANDING_IMAGES,
       grayscale: DEFAULT_LANDING_GRAYSCALE,
+      featuredCategories: DEFAULT_FEATURED_CATEGORIES,
+      featuredEventIds: [],
     };
   }
 }
@@ -111,8 +154,7 @@ async function setLandingImageUrl(
   url: string,
   grayscale: boolean,
 ): Promise<void> {
-  const db = getDb();
-  const ref = db.collection(COLLECTIONS.platformSettings).doc(LANDING_DOC_ID);
+  const ref = await getLandingDocRef();
   const doc = await ref.get();
   const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
   const currentImages = data?.images ?? {};
@@ -132,8 +174,7 @@ export async function setLandingImageGrayscale(
   key: LandingImageKey,
   grayscale: boolean,
 ): Promise<LandingGrayscale> {
-  const db = getDb();
-  const ref = db.collection(COLLECTIONS.platformSettings).doc(LANDING_DOC_ID);
+  const ref = await getLandingDocRef();
   const doc = await ref.get();
   const currentGrayscale = doc.exists
     ? { ...(doc.data() as LandingSettingsDoc).grayscale }
@@ -151,8 +192,7 @@ export async function setLandingImageGrayscale(
 }
 
 export async function resetLandingImage(key: LandingImageKey): Promise<LandingSettings> {
-  const db = getDb();
-  const ref = db.collection(COLLECTIONS.platformSettings).doc(LANDING_DOC_ID);
+  const ref = await getLandingDocRef();
   const doc = await ref.get();
   const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
   const currentImages = data?.images ? { ...data.images } : {};
@@ -171,6 +211,112 @@ export async function resetLandingImage(key: LandingImageKey): Promise<LandingSe
   );
 
   return mapSettings({ images: currentImages, grayscale: currentGrayscale });
+}
+
+export async function saveFeaturedCategory(
+  input: Omit<LandingFeaturedCategory, "id"> & { id?: string },
+): Promise<LandingFeaturedCategory> {
+  const ref = await getLandingDocRef();
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
+  const current = mergeFeaturedCategories(data?.featuredCategories);
+
+  const id = input.id?.trim() || randomUUID();
+  const category: LandingFeaturedCategory = {
+    id,
+    title: input.title.trim(),
+    subtitle: input.subtitle.trim(),
+    imageUrl: input.imageUrl ?? null,
+    imageKey: input.imageKey ?? null,
+    eventCategory: input.eventCategory ?? null,
+    href: input.href ?? null,
+    layout: input.layout,
+    grayscale: input.grayscale,
+    sortOrder: input.sortOrder,
+  };
+
+  const next = [...current.filter((item) => item.id !== id), category].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  await ref.set(
+    {
+      featuredCategories: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return category;
+}
+
+export async function deleteFeaturedCategory(categoryId: string): Promise<LandingFeaturedCategory[]> {
+  const ref = await getLandingDocRef();
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
+  const current = mergeFeaturedCategories(data?.featuredCategories);
+  const next = current.filter((item) => item.id !== categoryId);
+
+  await ref.set(
+    {
+      featuredCategories: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return next;
+}
+
+export async function uploadFeaturedCategoryImage(
+  categoryId: string,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<string> {
+  const ext = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+  const path = `landing/categories/${categoryId}.${ext}`;
+
+  await uploadFile(
+    STORAGE_BUCKETS.covers,
+    path,
+    buffer,
+    mimeType,
+    "public, max-age=86400",
+  );
+
+  const url = `${getPublicUrl(STORAGE_BUCKETS.covers, path)}?t=${Date.now()}`;
+  const ref = await getLandingDocRef();
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
+  const current = mergeFeaturedCategories(data?.featuredCategories);
+  const existing = current.find((item) => item.id === categoryId);
+
+  if (!existing) {
+    throw new Error("Categoría no encontrada");
+  }
+
+  await saveFeaturedCategory({
+    ...existing,
+    imageUrl: url,
+    imageKey: null,
+  });
+
+  return url;
+}
+
+export async function setFeaturedEventIds(eventIds: string[]): Promise<string[]> {
+  const ref = await getLandingDocRef();
+  const unique = [...new Set(eventIds)];
+
+  await ref.set(
+    {
+      featuredEventIds: unique,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return unique;
 }
 
 export async function getLandingSettingsForAdmin(): Promise<LandingSettings> {

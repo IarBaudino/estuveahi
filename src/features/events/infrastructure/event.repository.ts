@@ -487,3 +487,81 @@ export async function getPhotographersForAdmin(): Promise<AdminPhotographerOptio
     };
   });
 }
+
+export interface PublishedEventPickerItem {
+  id: string;
+  title: string;
+  slug: string;
+  eventDate: Date;
+  photoCount: number;
+}
+
+export async function getPublishedEventsForPicker(): Promise<PublishedEventPickerItem[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  try {
+    const snap = await db
+      .collection(COLLECTIONS.events)
+      .where("status", "==", EventStatus.PUBLISHED)
+      .limit(100)
+      .get();
+
+    return snap.docs
+      .map((doc) => {
+        const data = doc.data() as EventDoc;
+        if (data.isPublic === false) return null;
+        return {
+          id: doc.id,
+          title: data.title,
+          slug: data.slug,
+          eventDate: toDate(data.eventDate),
+          photoCount: data.photoCount,
+        };
+      })
+      .filter((item): item is PublishedEventPickerItem => item !== null)
+      .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+  } catch (error) {
+    console.error("[getPublishedEventsForPicker]", error);
+    return [];
+  }
+}
+
+export async function getFeaturedEventsByIds(
+  eventIds: string[],
+): Promise<EventWithPhotographer[]> {
+  if (eventIds.length === 0) return [];
+
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  try {
+    const snaps = await Promise.all(
+      eventIds.map((id) => db.collection(COLLECTIONS.events).doc(id).get()),
+    );
+
+    const rows = snaps
+      .filter((doc) => doc.exists)
+      .map((doc) => ({
+        id: doc.id,
+        data: doc.data() as EventDoc,
+      }))
+      .filter(
+        (row) =>
+          row.data.status === EventStatus.PUBLISHED && row.data.isPublic !== false,
+      );
+
+    const order = new Map(eventIds.map((id, index) => [id, index]));
+    rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
+    return Promise.all(
+      rows.map(async (row) => {
+        const photographer = await getPhotographerSummary(row.data.photographerId);
+        return mapEventWithPhotographer(row.id, row.data, photographer);
+      }),
+    );
+  } catch (error) {
+    console.error("[getFeaturedEventsByIds]", error);
+    return [];
+  }
+}
