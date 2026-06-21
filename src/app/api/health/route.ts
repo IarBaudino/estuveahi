@@ -192,7 +192,7 @@ export async function GET(request: Request) {
     const steps: Record<string, { ok: boolean; detail?: string }> = {};
 
     try {
-      const sharp = (await import("sharp")).default;
+      const sharp = (await import("@/infrastructure/storage/sharp")).default;
       const test = await sharp({
         create: { width: 8, height: 8, channels: 3, background: "#ffffff" },
       })
