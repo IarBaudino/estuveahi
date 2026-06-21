@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/infrastructure/auth";
+import { getServerSessionUser } from "@/infrastructure/auth/session";
 import { getPhotographerApplicationStatus } from "@/features/auth/infrastructure/auth.repository";
 import { getPhotographerEvents } from "@/features/events/infrastructure/event.repository";
 import { getPendingRequestCount } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
@@ -12,18 +12,22 @@ import Link from "next/link";
 import { routes } from "@/config/routes";
 import { Button } from "@/shared/ui/button";
 
-export default async function PhotographerDashboardPage() {
-  const session = await auth();
-  if (!session?.user) redirect(routes.login);
+export const dynamic = "force-dynamic";
 
-  if (session.user.role === "client") {
-    const status = await getPhotographerApplicationStatus(session.user.id);
-    if (status === PhotographerApplicationStatus.PENDING) {
-      return <PhotographerPendingReview />;
+export default async function PhotographerDashboardPage() {
+  const user = await getServerSessionUser();
+  if (!user) redirect(routes.login);
+
+  if (user.role === "client") {
+    try {
+      const status = await getPhotographerApplicationStatus(user.id);
+      if (status === PhotographerApplicationStatus.PENDING) {
+        return <PhotographerPendingReview />;
+      }
+    } catch (error) {
+      console.error("[PhotographerDashboard] application status:", error);
     }
   }
-
-  const userId = session.user.id;
 
   let events: Awaited<ReturnType<typeof getPhotographerEvents>> = [];
   let pendingRequests = 0;
@@ -31,9 +35,9 @@ export default async function PhotographerDashboardPage() {
 
   try {
     [events, pendingRequests, photoCount] = await Promise.all([
-      getPhotographerEvents(userId),
-      getPendingRequestCount(userId),
-      getPhotographerPhotoCount(userId),
+      getPhotographerEvents(user.id),
+      getPendingRequestCount(user.id),
+      getPhotographerPhotoCount(user.id),
     ]);
   } catch (error) {
     console.error("[PhotographerDashboard] data load failed:", error);
@@ -93,7 +97,9 @@ export default async function PhotographerDashboardPage() {
                   </p>
                 </div>
                 <Link href={routes.photographer.event(event.id)}>
-                  <Button variant="outline" size="sm">Gestionar</Button>
+                  <Button variant="outline" size="sm">
+                    Gestionar
+                  </Button>
                 </Link>
               </li>
             ))}

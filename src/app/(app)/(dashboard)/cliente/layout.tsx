@@ -1,27 +1,17 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/infrastructure/auth";
-import { ClientNav } from "@/shared/components/client-nav";
+import { getServerSessionUser } from "@/infrastructure/auth/session";
+import { ClientDashboardShell } from "@/shared/components/client-shell";
 import { routes } from "@/config/routes";
+
+export const dynamic = "force-dynamic";
 
 export default async function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  let session = null;
-  try {
-    session = await auth();
-  } catch (error) {
-    console.error("[ClientLayout] auth:", error);
-    redirect(routes.login);
-  }
+  const user = await getServerSessionUser();
+  if (!user) redirect(routes.login);
 
-  if (!session?.user) redirect(routes.login);
-
-  return (
-    <div className="mx-auto flex max-w-7xl gap-0 px-0 sm:px-6">
-      <ClientNav />
-      <div className="min-w-0 flex-1 px-4 py-8 pb-24 sm:px-0 md:pb-8">{children}</div>
-    </div>
-  );
+  return <ClientDashboardShell>{children}</ClientDashboardShell>;
 }

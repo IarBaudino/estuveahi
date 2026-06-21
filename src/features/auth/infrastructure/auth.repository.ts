@@ -84,6 +84,8 @@ export async function submitPhotographerApplication(
 export async function getPhotographerApplicationStatus(
   userId: string,
 ): Promise<PhotographerApplicationStatus | null> {
+  if (!userId?.trim()) return null;
+
   const db = getDbIfConfigured();
   if (!db) return null;
 

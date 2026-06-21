@@ -18,19 +18,24 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = (user as { role?: UserRole }).role ?? "client";
-        token.id = user.id;
+        const authUser = user as { id?: string; sub?: string; role?: UserRole };
+        token.role = authUser.role ?? "client";
+        token.id = authUser.id ?? authUser.sub ?? token.sub;
       }
 
       if (trigger === "update" && session?.role) {
         token.role = session.role as UserRole;
       }
 
+      if (!token.id && token.sub) {
+        token.id = token.sub;
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = (token.id ?? token.sub) as string;
         session.user.role = (token.role as UserRole) ?? "client";
       }
       return session;
