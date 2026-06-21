@@ -19,12 +19,17 @@ export default async function PhotographerLayout({
   const pathname = headersList.get("x-pathname") ?? "/fotografo";
   const isOnboardingRoute = pathname.startsWith(routes.photographer.onboarding);
 
-  if (session.user.role === "client" && !isOnboardingRoute) {
+  if (session.user.role === "client") {
     const status = await getPhotographerApplicationStatus(session.user.id);
+
     if (status === PhotographerApplicationStatus.PENDING) {
-      redirect(routes.photographer.onboardingPending);
+      const isDashboard = pathname === routes.photographer.dashboard;
+      if (!isDashboard && !isOnboardingRoute) {
+        redirect(routes.photographer.dashboard);
+      }
+    } else if (!isOnboardingRoute) {
+      redirect(routes.photographer.onboarding);
     }
-    redirect(routes.photographer.onboarding);
   }
 
   return (

@@ -29,10 +29,11 @@ export async function middleware(request: NextRequest) {
 
       if (route === "/fotografo") {
         const isOnboarding = pathname.startsWith("/fotografo/onboarding");
+        const isDashboard = pathname === "/fotografo";
 
         if (session.user.role === "client") {
-          if (!isOnboarding) {
-            return NextResponse.redirect(new URL("/fotografo/onboarding", request.url));
+          if (!isOnboarding && !isDashboard) {
+            return NextResponse.redirect(new URL("/fotografo", request.url));
           }
           break;
         }

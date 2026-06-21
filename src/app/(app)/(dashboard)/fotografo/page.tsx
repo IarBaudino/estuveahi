@@ -1,7 +1,11 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/infrastructure/auth";
+import { getPhotographerApplicationStatus } from "@/features/auth/infrastructure/auth.repository";
 import { getPhotographerEvents } from "@/features/events/infrastructure/event.repository";
 import { getPendingRequestCount } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
 import { getPhotographerPhotoCount } from "@/features/photos/infrastructure/photo.repository";
+import { PhotographerPendingReview } from "@/features/auth/presentation/components/photographer-pending-review";
+import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Calendar, Camera, ShoppingBag } from "lucide-react";
 import Link from "next/link";
@@ -10,7 +14,16 @@ import { Button } from "@/shared/ui/button";
 
 export default async function PhotographerDashboardPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user) redirect(routes.login);
+
+  if (session.user.role === "client") {
+    const status = await getPhotographerApplicationStatus(session.user.id);
+    if (status === PhotographerApplicationStatus.PENDING) {
+      return <PhotographerPendingReview />;
+    }
+  }
+
+  const userId = session.user.id;
 
   const [events, pendingRequests, photoCount] = await Promise.all([
     getPhotographerEvents(userId),

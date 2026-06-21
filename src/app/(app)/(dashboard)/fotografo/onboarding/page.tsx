@@ -27,7 +27,7 @@ export default function PhotographerOnboardingPage() {
 
   const { execute, isExecuting, result } = useAction(becomePhotographerAction, {
     onSuccess: () => {
-      router.push(routes.photographer.onboardingPending);
+      router.push(routes.photographer.dashboard);
       router.refresh();
     },
   });

@@ -22,7 +22,7 @@ export default async function OnboardingLayout({
     const status = await getPhotographerApplicationStatus(session.user.id);
 
     if (status === PhotographerApplicationStatus.PENDING) {
-      redirect(routes.photographer.onboardingPending);
+      redirect(routes.photographer.dashboard);
     }
   }
 
