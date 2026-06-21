@@ -26,7 +26,7 @@ export function EventManageClient({ event, photos: initialPhotos }: EventManageC
   useEffect(() => {
     setPhotos(initialPhotos);
     setPhotoCount(event.photoCount);
-  }, [initialPhotos, event.photoCount]);
+  }, [initialPhotos, event.id, event.photoCount]);
 
   const handlePhotoUploaded = useCallback((photo: PhotoDTO) => {
     const mapped = fromPhotoDTO(photo);

@@ -56,7 +56,16 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
                 : undefined,
           });
 
-          if (result?.serverError) {
+          if (!result) {
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.name === file.name ? { ...u, status: "Error al subir" } : u,
+              ),
+            );
+            continue;
+          }
+
+          if (result.serverError) {
             setUploads((prev) =>
               prev.map((u) =>
                 u.name === file.name ? { ...u, status: result.serverError! } : u,
@@ -65,16 +74,22 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
             continue;
           }
 
-          if (result?.validationErrors) {
+          if (result.validationErrors) {
+            const detail = Object.values(result.validationErrors)
+              .flatMap((field) => (Array.isArray(field) ? field : field?._errors ?? []))
+              .filter(Boolean)
+              .join(", ");
             setUploads((prev) =>
               prev.map((u) =>
-                u.name === file.name ? { ...u, status: "Archivo inválido" } : u,
+                u.name === file.name
+                  ? { ...u, status: detail || "Archivo inválido" }
+                  : u,
               ),
             );
             continue;
           }
 
-          if (result?.data?.photo) {
+          if (result.data?.photo) {
             onPhotoUploaded?.(result.data.photo);
           }
 
@@ -84,8 +99,11 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
             ),
           );
         } catch (error) {
+          console.error("[PhotoUploader]", error);
           const message =
-            error instanceof Error ? error.message : "Error al subir";
+            error instanceof Error && !/Server Components render/i.test(error.message)
+              ? error.message
+              : "Error al subir. Probá de nuevo o recargá la página.";
           setUploads((prev) =>
             prev.map((u) =>
               u.name === file.name ? { ...u, status: message } : u,

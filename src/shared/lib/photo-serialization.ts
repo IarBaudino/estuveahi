@@ -7,10 +7,15 @@ export type PhotoDTO = Omit<Photo, "capturedAt" | "createdAt"> & {
 };
 
 export function toPhotoDTO(photo: Photo): PhotoDTO {
+  const createdAt =
+    photo.createdAt instanceof Date && !Number.isNaN(photo.createdAt.getTime())
+      ? photo.createdAt
+      : new Date();
+
   return {
     ...photo,
     capturedAt: photo.capturedAt?.toISOString() ?? null,
-    createdAt: photo.createdAt.toISOString(),
+    createdAt: createdAt.toISOString(),
   };
 }
 
