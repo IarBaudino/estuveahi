@@ -90,7 +90,7 @@ export default async function ClientDashboardPage() {
                 puedas crear eventos.
               </p>
               <Link
-                href={routes.photographer.onboarding}
+                href={routes.becomePhotographer}
                 className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline"
               >
                 Convertirme en {PHOTOGRAPHER_LABEL.singular}
@@ -146,13 +146,24 @@ export default async function ClientDashboardPage() {
         </div>
       )}
 
-      <div className="mt-10">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2">
         <Link
           href={routes.events}
-          className="inline-flex items-center gap-2 text-sm underline"
+          className="hairline-border bg-surface-container p-5 transition-colors hover:bg-surface-container-high"
         >
-          Explorar eventos
-          <ArrowRight className="h-4 w-4" />
+          <p className="font-medium">Explorar eventos</p>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Galerías publicadas de recitales, festivales y más
+          </p>
+        </Link>
+        <Link
+          href={routes.photographers}
+          className="hairline-border bg-surface-container p-5 transition-colors hover:bg-surface-container-high"
+        >
+          <p className="font-medium">Ver {PHOTOGRAPHER_LABEL.plural}</p>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Conocé quién captura cada evento
+          </p>
         </Link>
       </div>
     </div>

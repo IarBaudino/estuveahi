@@ -14,15 +14,14 @@ export function PhotographerAccessGuard({
   const pathname = usePathname();
   const router = useRouter();
   const isDashboard = pathname === routes.photographer.dashboard;
-  const isOnboarding = pathname.startsWith(routes.photographer.onboarding);
 
   useEffect(() => {
-    if (isPending && !isDashboard && !isOnboarding) {
+    if (isPending && !isDashboard) {
       router.replace(routes.photographer.dashboard);
     }
-  }, [isPending, isDashboard, isOnboarding, router]);
+  }, [isPending, isDashboard, router]);
 
-  if (isPending && !isDashboard && !isOnboarding) {
+  if (isPending && !isDashboard) {
     return null;
   }
 

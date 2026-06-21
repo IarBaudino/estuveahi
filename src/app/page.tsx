@@ -115,7 +115,7 @@ export default async function HomePage() {
               Explorar eventos
             </Link>
             <Link
-              href={routes.photographer.onboarding}
+              href={routes.becomePhotographer}
               className="text-label-sm w-full border border-white/30 px-10 py-4 tracking-widest text-primary transition-all hover:bg-white/5 md:w-auto"
             >
               Soy {PHOTOGRAPHER_LABEL.singular}
@@ -255,7 +255,7 @@ export default async function HomePage() {
               ))}
             </div>
             <Link
-              href={routes.photographer.onboarding}
+              href={routes.becomePhotographer}
               className="text-label-sm inline-block bg-primary px-10 py-4 tracking-widest text-background transition-all hover:opacity-90"
             >
               Sumarme como {PHOTOGRAPHER_LABEL.singular}

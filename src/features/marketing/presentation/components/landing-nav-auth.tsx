@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export function LandingNavAuth() {
   const { data: session, status } = useSession();
@@ -22,10 +23,10 @@ export function LandingNavAuth() {
       <div className="flex items-center gap-3">
         {isClient && (
           <Link
-            href={routes.photographer.onboarding}
+            href={routes.becomePhotographer}
             className="text-label-sm hidden tracking-widest text-on-surface-variant transition-colors hover:text-primary sm:inline"
           >
-            Ser fotógrafo
+            Ser {PHOTOGRAPHER_LABEL.singular}
           </Link>
         )}
         <Link

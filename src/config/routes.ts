@@ -1,6 +1,9 @@
 export const routes = {
   home: "/",
   events: "/eventos",
+  photographers: "/fotografxs",
+  photographerPublic: (id: string) => `/fotografxs/${id}`,
+  becomePhotographer: "/ser-fotografx",
   event: (slug: string) => `/eventos/${slug}`,
   eventPhoto: (slug: string, photoId: string) => `/eventos/${slug}/${photoId}`,
   qr: (code: string) => `/e/${code}`,
@@ -15,7 +18,9 @@ export const routes = {
     requests: "/fotografo/solicitudes",
     profile: "/fotografo/perfil",
     settings: "/fotografo/ajustes",
-    onboarding: "/fotografo/onboarding",
+    /** @deprecated Usar routes.becomePhotographer */
+    onboarding: "/ser-fotografx",
+    /** @deprecated Redirige al dashboard */
     onboardingPending: "/fotografo/onboarding/pendiente",
   },
   client: {

@@ -38,7 +38,7 @@ export async function resolvePhotoMediaAccess(
   }
 
   const isPublicEvent =
-    event?.status === EventStatus.PUBLISHED && event?.isPublic === true;
+    event?.status === EventStatus.PUBLISHED && event?.isPublic !== false;
 
   if (!photo.isVisible && !isOwner && !isAdmin) return null;
   if (!isPublicEvent && !isOwner && !isAdmin) return null;

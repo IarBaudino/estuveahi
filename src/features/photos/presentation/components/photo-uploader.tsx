@@ -4,16 +4,17 @@ import { useCallback, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { Upload } from "lucide-react";
 import { uploadPhotoAction } from "@/features/photos/presentation/actions/photo.actions";
+import type { PhotoDTO } from "@/shared/lib/photo-serialization";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from "@/infrastructure/storage/storage.constants";
 
 interface PhotoUploaderProps {
   eventId: string;
-  onUploadComplete?: () => void;
+  onPhotoUploaded?: (photo: PhotoDTO) => void;
 }
 
-export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps) {
+export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) {
   const [dragOver, setDragOver] = useState(false);
   const [defaultPricePesos, setDefaultPricePesos] = useState("");
   const [uploads, setUploads] = useState<{ name: string; status: string }[]>([]);
@@ -64,12 +65,24 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
             continue;
           }
 
+          if (result?.validationErrors) {
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.name === file.name ? { ...u, status: "Archivo inválido" } : u,
+              ),
+            );
+            continue;
+          }
+
+          if (result?.data?.photo) {
+            onPhotoUploaded?.(result.data.photo);
+          }
+
           setUploads((prev) =>
             prev.map((u) =>
               u.name === file.name ? { ...u, status: "Completado" } : u,
             ),
           );
-          onUploadComplete?.();
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Error al subir";
@@ -81,7 +94,7 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
         }
       }
     },
-    [eventId, executeAsync, onUploadComplete, defaultPriceCents],
+    [eventId, executeAsync, onPhotoUploaded, defaultPriceCents],
   );
 
   return (

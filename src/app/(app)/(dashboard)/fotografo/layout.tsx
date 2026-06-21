@@ -29,8 +29,10 @@ export default async function PhotographerLayout({
     if (status === PhotographerApplicationStatus.PENDING) {
       isPending = true;
     } else if (status !== PhotographerApplicationStatus.APPROVED) {
-      redirect(routes.photographer.onboarding);
+      redirect(routes.becomePhotographer);
     }
+  } else if (user.role !== "photographer" && user.role !== "admin") {
+    redirect(routes.home);
   }
 
   return (

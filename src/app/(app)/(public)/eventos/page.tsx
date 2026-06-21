@@ -108,8 +108,19 @@ export default async function EventsPage({ searchParams }: PageProps) {
       ) : (
         <div className="mt-12 text-center">
           <p className="text-on-surface-variant">
-            No se encontraron eventos con esos filtros.
+            {params.q || params.category || params.city
+              ? "No se encontraron eventos con esos filtros."
+              : "Todavía no hay eventos publicados en el catálogo."}
           </p>
+          {!params.q && !params.category && !params.city && (
+            <p className="mt-3 text-sm text-on-surface-variant/80">
+              Los eventos aparecen acá cuando un fotografx los publica desde su panel
+              (botón &quot;Publicar evento&quot;).
+            </p>
+          )}
+          <Link href={routes.photographers} className="mt-4 inline-block text-sm underline">
+            Ver fotografxs
+          </Link>
         </div>
       )}
     </div>

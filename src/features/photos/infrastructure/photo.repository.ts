@@ -60,11 +60,27 @@ export async function uploadPhoto(
   const ext = getExtension(input.mimeType);
   const paths = buildPhotoPaths(photographerId, input.eventId, photoId, ext);
 
-  await uploadOriginal(fileBuffer, paths.original, input.mimeType);
-  const { width, height } = await processAndUploadVariants(fileBuffer, {
-    preview: paths.preview,
-    thumbnail: paths.thumbnail,
-  }, photoId);
+  let width: number;
+  let height: number;
+
+  try {
+    await uploadOriginal(fileBuffer, paths.original, input.mimeType);
+    ({ width, height } = await processAndUploadVariants(
+      fileBuffer,
+      {
+        preview: paths.preview,
+        thumbnail: paths.thumbnail,
+      },
+      photoId,
+    ));
+  } catch (error) {
+    console.error("[uploadPhoto] storage:", error);
+    const message =
+      error instanceof Error && /bucket|not found|404/i.test(error.message)
+        ? "Almacenamiento no configurado. Contactá al administrador."
+        : "No se pudo procesar la imagen. Probá con JPG, PNG o WebP.";
+    throw new ValidationError(message);
+  }
 
   const photosSnap = await db
     .collection(COLLECTIONS.photos)
@@ -112,7 +128,12 @@ export async function uploadPhoto(
 
   await eventRef.update(updates);
 
-  return mapPhoto(photoId, photoData);
+  const saved = await db.collection(COLLECTIONS.photos).doc(photoId).get();
+  if (!saved.exists) {
+    throw new ValidationError("No se pudo guardar la foto");
+  }
+
+  return mapPhoto(saved.id, saved.data() as PhotoDoc);
 }
 
 export async function deletePhoto(

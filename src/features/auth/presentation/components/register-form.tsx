@@ -93,7 +93,7 @@ export function RegisterForm() {
         </p>
         <p className="text-center text-sm text-zinc-500">
           ¿Querés publicar fotos de eventos?{" "}
-          <Link href={routes.photographer.onboarding} className="font-medium text-zinc-900 dark:text-white">
+          <Link href={routes.becomePhotographer} className="font-medium text-zinc-900 dark:text-white">
             Creá tu perfil de fotógrafo
           </Link>
         </p>

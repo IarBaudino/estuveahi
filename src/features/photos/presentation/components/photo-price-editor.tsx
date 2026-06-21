@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
-import { useRouter } from "next/navigation";
 import type { Photo } from "@/domain/entities/photo";
+import type { PhotoDTO } from "@/shared/lib/photo-serialization";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
 import { formatCurrency } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
@@ -16,10 +16,16 @@ import { Trash2 } from "lucide-react";
 interface PhotoPriceEditorProps {
   photos: Photo[];
   eventId: string;
+  onPhotoRemoved?: (photoId: string) => void;
+  onPhotoUpdated?: (photo: PhotoDTO) => void;
 }
 
-export function PhotoPriceEditor({ photos, eventId }: PhotoPriceEditorProps) {
-  const router = useRouter();
+export function PhotoPriceEditor({
+  photos,
+  eventId,
+  onPhotoRemoved,
+  onPhotoUpdated,
+}: PhotoPriceEditorProps) {
   const [prices, setPrices] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       photos.map((p) => [
@@ -30,14 +36,8 @@ export function PhotoPriceEditor({ photos, eventId }: PhotoPriceEditorProps) {
   );
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const { executeAsync } = useAction(updatePhotoPriceAction, {
-    onSuccess: () => router.refresh(),
-  });
-
-  const { executeAsync: deletePhoto, isExecuting: deleting } = useAction(
-    deletePhotoAction,
-    { onSuccess: () => router.refresh() },
-  );
+  const { executeAsync: savePriceAction } = useAction(updatePhotoPriceAction);
+  const { executeAsync: deletePhoto, isExecuting: deleting } = useAction(deletePhotoAction);
 
   async function savePrice(photoId: string) {
     const raw = prices[photoId]?.trim();
@@ -50,7 +50,12 @@ export function PhotoPriceEditor({ photos, eventId }: PhotoPriceEditorProps) {
 
     setSavingId(photoId);
     try {
-      await executeAsync({ photoId, eventId, priceCents });
+      const result = await savePriceAction({ photoId, eventId, priceCents });
+      if (result?.data?.photo) {
+        onPhotoUpdated?.(result.data.photo);
+      } else if (result?.serverError) {
+        window.alert(result.serverError);
+      }
     } finally {
       setSavingId(null);
     }
@@ -108,13 +113,18 @@ export function PhotoPriceEditor({ photos, eventId }: PhotoPriceEditorProps) {
                 variant="destructive"
                 className="shrink-0 px-2"
                 isLoading={deleting}
-                onClick={() => {
+                onClick={async () => {
                   if (
                     confirm(
                       `¿Eliminar la foto ${formatPhotoNumber(photo.sortOrder)}?`,
                     )
                   ) {
-                    deletePhoto({ photoId: photo.id, eventId });
+                    const result = await deletePhoto({ photoId: photo.id, eventId });
+                    if (result?.serverError) {
+                      window.alert(result.serverError);
+                      return;
+                    }
+                    onPhotoRemoved?.(photo.id);
                   }
                 }}
                 aria-label="Eliminar foto"

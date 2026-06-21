@@ -1,16 +1,19 @@
 import Link from "next/link";
-import { auth, signOut } from "@/infrastructure/auth";
+import { getServerSessionUser } from "@/infrastructure/auth/session";
+import { signOut } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { MaterialIcon } from "@/shared/components/icon";
 
 export async function Header() {
-  let session = null;
+  let user = null;
   try {
-    session = await auth();
+    user = await getServerSessionUser();
   } catch (error) {
     console.error("[Header] auth:", error);
   }
+
+  const isPhotographer = user?.role === "photographer" || user?.role === "admin";
 
   return (
     <header className="glass-nav fixed top-0 z-50 w-full border-b border-white/10">
@@ -29,7 +32,13 @@ export async function Header() {
           >
             Eventos
           </Link>
-          {session?.user?.role === "photographer" && (
+          <Link
+            href={routes.photographers}
+            className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
+          >
+            {PHOTOGRAPHER_LABEL.pluralCap}
+          </Link>
+          {isPhotographer && (
             <Link
               href={routes.photographer.dashboard}
               className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
@@ -37,7 +46,7 @@ export async function Header() {
               {PHOTOGRAPHER_LABEL.panel}
             </Link>
           )}
-          {session?.user?.role === "admin" && (
+          {user?.role === "admin" && (
             <Link
               href={routes.admin.dashboard}
               className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
@@ -45,7 +54,7 @@ export async function Header() {
               Admin
             </Link>
           )}
-          {session?.user && (
+          {user && (
             <Link
               href={routes.client.dashboard}
               className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
@@ -59,7 +68,7 @@ export async function Header() {
           <Link href={routes.events} aria-label="Buscar">
             <MaterialIcon name="search" className="text-primary" />
           </Link>
-          {session?.user ? (
+          {user ? (
             <>
               <Link
                 href={routes.client.favorites}

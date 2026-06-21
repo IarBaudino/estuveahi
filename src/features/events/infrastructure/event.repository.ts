@@ -171,7 +171,7 @@ export async function searchPublicEvents(
         id: doc.id,
         data: doc.data() as EventDoc,
       }))
-      .filter((row) => row.data.isPublic === true);
+      .filter((row) => row.data.isPublic !== false);
 
     if (input.category) {
       rows = rows.filter((row) => row.data.category === input.category);

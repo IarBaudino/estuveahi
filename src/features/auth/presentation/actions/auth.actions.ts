@@ -76,8 +76,7 @@ export const becomePhotographerAction = authActionClient
     }
 
     await submitPhotographerApplication(ctx.user.id, parsedInput);
-    revalidatePath(routes.photographer.onboarding);
-    revalidatePath(routes.photographer.onboardingPending);
+    revalidatePath(routes.becomePhotographer);
     revalidatePath(routes.admin.photographers);
     return { success: true, status: "pending" as const };
   });

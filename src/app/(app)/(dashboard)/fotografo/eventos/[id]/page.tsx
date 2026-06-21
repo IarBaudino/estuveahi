@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/infrastructure/auth";
+import { getServerSessionUser } from "@/infrastructure/auth/session";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
 import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { EventManageClient } from "@/features/events/presentation/components/event-manage-client";
@@ -11,14 +11,10 @@ interface PageProps {
 
 export default async function EventManagePage({ params }: PageProps) {
   const { id } = await params;
-  const session = await auth();
+  const user = await getServerSessionUser();
   const event = await getEventById(id);
 
-  if (
-    !event ||
-    !session?.user?.id ||
-    !canManageEvent(event, session.user.id, session.user.role)
-  ) {
+  if (!event || !user || !canManageEvent(event, user.id, user.role)) {
     notFound();
   }
 

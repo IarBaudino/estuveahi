@@ -5,7 +5,7 @@ import {
 import { auth } from "@/infrastructure/auth";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { DomainError } from "@/domain/errors/domain-errors";
-import { isUserBlocked } from "@/features/profile/infrastructure/profile.repository";
+import { isUserBlocked, getProfileById } from "@/features/profile/infrastructure/profile.repository";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
@@ -27,10 +27,22 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
 export const photographerActionClient = authActionClient.use(
   async ({ next, ctx }) => {
-    if (ctx.user.role !== "photographer" && ctx.user.role !== "admin") {
+    let role = ctx.user.role;
+
+    try {
+      const profile = await getProfileById(ctx.user.id);
+      if (profile) {
+        role = profile.role;
+      }
+    } catch (error) {
+      console.error("[photographerActionClient] profile lookup:", error);
+    }
+
+    if (role !== "photographer" && role !== "admin") {
       throw new DomainError(`Acceso solo para ${PHOTOGRAPHER_LABEL.plural}`, "FORBIDDEN");
     }
-    return next({ ctx });
+
+    return next({ ctx: { user: { ...ctx.user, role } } });
   },
 );
 

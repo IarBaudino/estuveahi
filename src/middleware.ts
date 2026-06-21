@@ -12,6 +12,11 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   response.headers.set("x-pathname", pathname);
 
+  if (pathname.startsWith("/fotografo/onboarding")) {
+    const target = pathname.includes("pendiente") ? "/fotografo" : "/ser-fotografx";
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
   let session = null;
   try {
     session = await edgeAuth();
@@ -29,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
       if (route === "/fotografo") {
         if (session.user.role === "client") {
-          // Clientes pueden acceder al panel; el layout valida pending vs aprobado.
+          // Solicitudes pendientes o aprobadas: el layout valida el acceso al panel.
           break;
         }
 

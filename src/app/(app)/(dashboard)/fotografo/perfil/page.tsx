@@ -15,7 +15,7 @@ export default async function PhotographerProfilePage() {
   ]);
 
   if (!photographerProfile || !accountProfile) {
-    redirect(routes.photographer.onboarding);
+    redirect(routes.becomePhotographer);
   }
 
   return (

@@ -37,7 +37,7 @@ export default async function EventGalleryPage({ params }: PageProps) {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
 
-  if (!event || event.status !== "published" || !event.isPublic) {
+  if (!event || event.status !== "published" || event.isPublic === false) {
     notFound();
   }
 
