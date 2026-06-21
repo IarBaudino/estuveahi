@@ -29,9 +29,6 @@ export const uploadPhotoAction = photographerActionClient
     const { fileBase64, ...input } = parsedInput;
     const buffer = Buffer.from(fileBase64, "base64");
     const photo = await uploadPhoto(ctx.user.id, input, buffer, ctx.user.role);
-
-    await revalidatePublicGallery(input.eventId);
-
     return { photo: toPhotoDTO(photo) };
   });
 

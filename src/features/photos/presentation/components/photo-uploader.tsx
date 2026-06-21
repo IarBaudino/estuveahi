@@ -7,11 +7,68 @@ import { uploadPhotoAction } from "@/features/photos/presentation/actions/photo.
 import type { PhotoDTO } from "@/shared/lib/photo-serialization";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from "@/infrastructure/storage/storage.constants";
+import {
+  ALLOWED_MIME_TYPES,
+  MAX_FILE_SIZE,
+} from "@/infrastructure/storage/storage.constants";
+
+/** Límite aproximado de body en route handlers de Vercel (~4.5 MB). */
+const API_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
 
 interface PhotoUploaderProps {
   eventId: string;
   onPhotoUploaded?: (photo: PhotoDTO) => void;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("No se pudo leer el archivo"));
+        return;
+      }
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("No se pudo leer el archivo"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadViaApi(
+  file: File,
+  eventId: string,
+  priceCents: number | undefined,
+): Promise<{ photo?: PhotoDTO; error?: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("eventId", eventId);
+  formData.append("filename", file.name);
+  formData.append("mimeType", file.type);
+  if (priceCents !== undefined) {
+    formData.append("priceCents", String(priceCents));
+  }
+
+  const response = await fetch("/api/photos/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | { photo?: PhotoDTO; error?: string }
+    | null;
+
+  if (!response.ok) {
+    return { error: payload?.error ?? "Error al subir" };
+  }
+
+  if (!payload?.photo) {
+    return { error: "Respuesta inválida del servidor" };
+  }
+
+  return { photo: payload.photo };
 }
 
 export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) {
@@ -40,20 +97,44 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
 
         setUploads((prev) => [...prev, { name: file.name, status: "Subiendo..." }]);
 
-        const buffer = await file.arrayBuffer();
-        const base64 = Buffer.from(buffer).toString("base64");
+        const priceCents =
+          defaultPriceCents !== undefined && !Number.isNaN(defaultPriceCents)
+            ? defaultPriceCents
+            : undefined;
 
         try {
+          if (file.size <= API_UPLOAD_MAX_BYTES) {
+            const apiResult = await uploadViaApi(file, eventId, priceCents);
+
+            if (apiResult.error) {
+              setUploads((prev) =>
+                prev.map((u) =>
+                  u.name === file.name ? { ...u, status: apiResult.error! } : u,
+                ),
+              );
+              continue;
+            }
+
+            if (apiResult.photo) {
+              onPhotoUploaded?.(apiResult.photo);
+            }
+
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.name === file.name ? { ...u, status: "Completado" } : u,
+              ),
+            );
+            continue;
+          }
+
+          const base64 = await fileToBase64(file);
           const result = await executeAsync({
             eventId,
             filename: file.name,
             mimeType: file.type as (typeof ALLOWED_MIME_TYPES)[number],
             fileSize: file.size,
             fileBase64: base64,
-            priceCents:
-              defaultPriceCents !== undefined && !Number.isNaN(defaultPriceCents)
-                ? defaultPriceCents
-                : undefined,
+            priceCents,
           });
 
           if (!result) {

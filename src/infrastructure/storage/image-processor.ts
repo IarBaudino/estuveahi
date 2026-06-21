@@ -1,4 +1,3 @@
-import sharp from "sharp";
 import {
   getBucketAndPath,
   PREVIEW_MAX_PX,
@@ -9,12 +8,17 @@ import {
 import { createWatermarkSvg, shortPhotoLabel } from "./watermark";
 import { uploadFile } from "@/infrastructure/supabase/storage";
 
+async function getSharp() {
+  return (await import("sharp")).default;
+}
+
 async function applyVariant(
   originalBuffer: Buffer,
   maxPx: number,
   quality: number,
   watermarkLabel: string,
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const sharp = await getSharp();
   const resized = sharp(originalBuffer)
     .rotate()
     .resize(maxPx, maxPx, { fit: "inside", withoutEnlargement: true })
@@ -68,6 +72,7 @@ export async function uploadOriginal(
   fullPath: string,
   mimeType: string,
 ): Promise<void> {
+  const sharp = await getSharp();
   const stripped = await sharp(buffer).rotate().toBuffer();
   const { bucket, path } = getBucketAndPath(fullPath);
   await uploadFile(bucket, path, stripped, mimeType);

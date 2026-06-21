@@ -188,5 +188,32 @@ export async function GET(request: Request) {
     payload.fotografo = await runFotografoDiagnostic();
   }
 
+  if (check === "upload") {
+    const steps: Record<string, { ok: boolean; detail?: string }> = {};
+
+    try {
+      const sharp = (await import("sharp")).default;
+      const test = await sharp({
+        create: { width: 8, height: 8, channels: 3, background: "#ffffff" },
+      })
+        .webp()
+        .toBuffer();
+      steps.sharp = { ok: test.length > 0, detail: `${test.length} bytes webp` };
+    } catch (error) {
+      steps.sharp = {
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    const { isSupabaseStorageConfigured } = await import("@/infrastructure/supabase/config");
+    steps.supabase = {
+      ok: isSupabaseStorageConfigured(),
+      detail: isSupabaseStorageConfigured() ? "configured" : "missing env",
+    };
+
+    payload.upload = { ok: Object.values(steps).every((step) => step.ok), steps };
+  }
+
   return NextResponse.json(payload);
 }

@@ -10,6 +10,7 @@ import { isUserBlocked, getProfileById } from "@/features/profile/infrastructure
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
     if (e instanceof DomainError) return e.message;
+    console.error("[safe-action]", e);
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },
 });
