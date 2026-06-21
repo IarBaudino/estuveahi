@@ -12,7 +12,7 @@ import { ProtectedImage } from "@/shared/components/protected-image";
 import { useGalleryProtection } from "@/shared/hooks/use-gallery-protection";
 import { toggleFavoriteAction } from "@/features/favorites/presentation/actions/favorite.actions";
 import { PurchaseRequestDialog } from "@/features/purchase-requests/presentation/components/purchase-request-dialog";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
 
 interface PhotoGalleryProps {
@@ -30,12 +30,26 @@ export function PhotoGallery({
   const [favorites, setFavorites] = useState(new Set(initialFavorites));
   const [purchasePhoto, setPurchasePhoto] = useState<PublicPhoto | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useGalleryProtection(photos.length > 0);
 
+  function goToLogin() {
+    const callback = pathname ? `${pathname}${window.location.search}` : routes.events;
+    router.push(`${routes.login}?callbackUrl=${encodeURIComponent(callback)}`);
+  }
+
+  function startPurchase(photo: PublicPhoto) {
+    if (!isAuthenticated) {
+      goToLogin();
+      return;
+    }
+    setPurchasePhoto(photo);
+  }
+
   async function handleToggleFavorite(photoId: string) {
     if (!isAuthenticated) {
-      router.push(routes.login);
+      goToLogin();
       return;
     }
     const result = await toggleFavoriteAction({ photoId });
@@ -60,32 +74,78 @@ export function PhotoGallery({
   return (
     <>
       <div
-        className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-4 lg:grid-cols-4"
+        className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-on-surface-variant"
+        role="note"
+      >
+        <p className="font-medium text-on-surface">¿Cómo pedir una foto?</p>
+        <p className="mt-1">
+          Tocá <strong className="text-on-surface">Pedir esta foto</strong> en la que te interese.
+          Enviás tu solicitud al fotógrafo y coordinan pago y entrega en alta por WhatsApp, email u
+          otro medio.
+        </p>
+      </div>
+
+      <div
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         onContextMenu={(e) => e.preventDefault()}
       >
         {photos.map((photo) => (
-          <button
+          <article
             key={photo.id}
-            type="button"
-            onClick={() => setSelectedPhoto(photo)}
-            className="group relative aspect-square overflow-hidden bg-surface-container"
+            className="overflow-hidden rounded-xl border border-white/10 bg-surface-container"
           >
-            <ProtectedImage
-              src={getSecureMediaUrl(photo.id, "thumbnail")}
-              alt="Fotografía de evento"
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 768px) 50vw, 25vw"
-            />
-            <span className="absolute left-2 top-2 z-20 rounded bg-black/60 px-1.5 py-0.5 font-mono text-[10px] text-white">
-              {formatPhotoNumber(photo.sortOrder)}
-            </span>
-            {photo.priceCents && (
-              <span className="absolute bottom-2 right-2 z-20 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
-                {formatCurrency(photo.priceCents, photo.currency)}
+            <button
+              type="button"
+              onClick={() => setSelectedPhoto(photo)}
+              className="group relative block aspect-square w-full overflow-hidden bg-zinc-900"
+              aria-label={`Ver foto ${formatPhotoNumber(photo.sortOrder)} en grande`}
+            >
+              <ProtectedImage
+                src={getSecureMediaUrl(photo.id, "thumbnail")}
+                alt={`Foto ${formatPhotoNumber(photo.sortOrder)}`}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
+              <span className="absolute left-2 top-2 z-20 rounded bg-black/70 px-2 py-0.5 font-mono text-xs text-white">
+                {formatPhotoNumber(photo.sortOrder)}
               </span>
-            )}
-          </button>
+              {photo.priceCents != null && photo.priceCents > 0 && (
+                <span className="absolute right-2 top-2 z-20 rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-white">
+                  {formatCurrency(photo.priceCents, photo.currency)}
+                </span>
+              )}
+              <span className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-left text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                Ver en grande
+              </span>
+            </button>
+
+            <div className="flex items-center gap-2 p-3">
+              <Button
+                type="button"
+                size="sm"
+                className="min-h-10 flex-1 gap-1.5 text-sm"
+                onClick={() => startPurchase(photo)}
+              >
+                <ShoppingBag className="h-4 w-4 shrink-0" />
+                Pedir esta foto
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-10 shrink-0 px-3"
+                onClick={() => handleToggleFavorite(photo.id)}
+                aria-label={
+                  favorites.has(photo.id) ? "Quitar de favoritos" : "Agregar a favoritos"
+                }
+              >
+                <Heart
+                  className={`h-4 w-4 ${favorites.has(photo.id) ? "fill-red-500 text-red-500" : ""}`}
+                />
+              </Button>
+            </div>
+          </article>
         ))}
       </div>
 
@@ -103,17 +163,18 @@ export function PhotoGallery({
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
-              className="relative max-h-[90vh] max-w-5xl"
+              className="relative max-h-[90vh] w-full max-w-5xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
                 className="absolute -top-12 right-0 text-white hover:text-zinc-300"
+                aria-label="Cerrar vista ampliada"
               >
                 <X className="h-8 w-8" />
               </button>
-              <div className="relative aspect-[4/3] w-full max-w-5xl overflow-hidden rounded-lg">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
                 <ProtectedImage
                   src={getSecureMediaUrl(selectedPhoto.id, "preview")}
                   alt="Vista previa"
@@ -128,40 +189,38 @@ export function PhotoGallery({
                   <p className="font-mono text-sm text-zinc-300">
                     Foto {formatPhotoNumber(selectedPhoto.sortOrder)}
                   </p>
-                  {selectedPhoto.priceCents && (
+                  {selectedPhoto.priceCents != null && selectedPhoto.priceCents > 0 && (
                     <p className="text-zinc-400">
                       {formatCurrency(selectedPhoto.priceCents, selectedPhoto.currency)}
                     </p>
                   )}
                   <p className="text-caption text-on-surface-variant/60">
-                    Vista previa con marca de agua · el fotógrafo envía el original en alta tras el acuerdo
+                    Vista previa con marca de agua · el fotógrafo envía el original en alta tras el
+                    acuerdo
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      startPurchase(selectedPhoto);
+                      setSelectedPhoto(null);
+                    }}
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    Pedir esta foto
+                  </Button>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="border-white/30 text-white hover:bg-white/10"
+                    size="lg"
+                    className="w-full border-white/30 text-white hover:bg-white/10 sm:w-auto"
                     onClick={() => handleToggleFavorite(selectedPhoto.id)}
                   >
                     <Heart
                       className={`h-4 w-4 ${favorites.has(selectedPhoto.id) ? "fill-red-500 text-red-500" : ""}`}
                     />
                     Favorito
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        router.push(routes.login);
-                        return;
-                      }
-                      setPurchasePhoto(selectedPhoto);
-                      setSelectedPhoto(null);
-                    }}
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                    Solicitar compra
                   </Button>
                 </div>
               </div>

@@ -35,6 +35,7 @@ export function ClientNav() {
     (item) =>
       item.href === routes.client.dashboard ||
       item.href === routes.events ||
+      item.href === routes.client.requests ||
       item.href === routes.client.favorites ||
       item.href === routes.client.profile,
   );
@@ -69,12 +70,14 @@ export function ClientNav() {
               key={href}
               href={href}
               className={cn(
-                "flex flex-col items-center gap-0.5 px-2 py-1 text-xs",
+                "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[10px] sm:text-xs",
                 isActive(currentPath, href) ? "font-medium text-white" : "text-on-surface-variant",
               )}
             >
-              <Icon className="h-5 w-5" />
-              {label}
+              <Icon className="h-5 w-5 shrink-0" />
+              <span className="truncate">
+                {href === routes.client.requests ? "Mis pedidos" : label}
+              </span>
             </Link>
           ))}
         </div>

@@ -13,9 +13,9 @@ export default async function ClientRequestsPage() {
 
   return (
     <div>
-      <h1 className="text-headline-md">Mis solicitudes</h1>
+      <h1 className="text-headline-md">Mis pedidos</h1>
       <p className="text-on-surface-variant">
-        Seguimiento de tus pedidos a fotógrafos
+        Acá ves el estado de cada foto que pediste a un fotógrafo
       </p>
       <p className="text-caption mt-2 text-on-surface-variant/80">
         {businessConfig.deliveryDescription}

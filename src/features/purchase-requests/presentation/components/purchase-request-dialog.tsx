@@ -57,7 +57,7 @@ export function PurchaseRequestDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md hairline-border bg-surface-container p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-headline-md">Solicitar foto {formatPhotoNumber(photoNumber)}</h3>
+          <h3 className="text-headline-md">Pedir foto {formatPhotoNumber(photoNumber)}</h3>
           <button type="button" onClick={onClose}>
             <X className="h-5 w-5" />
           </button>
