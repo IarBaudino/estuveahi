@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
-import { getEventPhotos } from "@/features/photos/infrastructure/photo.repository";
+import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { EventManageClient } from "@/features/events/presentation/components/event-manage-client";
 import { routes } from "@/config/routes";
 

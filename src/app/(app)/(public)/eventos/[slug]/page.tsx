@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Calendar, MapPin, QrCode } from "lucide-react";
 import { getEventBySlug } from "@/features/events/infrastructure/event.repository";
-import { getEventPhotos } from "@/features/photos/infrastructure/photo.repository";
+import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { toPublicPhotos } from "@/domain/dto/public-photo";
 import { PhotoGallery } from "@/features/photos/presentation/components/photo-gallery";
 import { formatDate } from "@/shared/lib/utils";

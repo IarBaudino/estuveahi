@@ -5,7 +5,7 @@ import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 import { formatDate } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { routes } from "@/config/routes";
-import { getEventPhotos } from "@/features/photos/infrastructure/photo.repository";
+import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { ProtectedImage } from "@/shared/components/protected-image";
 
 const HERO_IMAGE =

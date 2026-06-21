@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
-import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
+import { getDb } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type { PhotoDoc, EventDoc } from "@/infrastructure/firebase/documents";
 import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
@@ -18,6 +18,12 @@ import type { Photo } from "@/domain/entities/photo";
 import { NotFoundError, ValidationError } from "@/domain/errors/domain-errors";
 import type { UploadPhotoInput } from "../application/schemas/photo.schema";
 
+export {
+  getEventPhotos,
+  getPhotoById,
+  getPhotographerPhotoCount,
+} from "./photo-read.repository";
+
 function getExtension(mimeType: string): string {
   const map: Record<string, string> = {
     "image/jpeg": "jpg",
@@ -25,40 +31,6 @@ function getExtension(mimeType: string): string {
     "image/webp": "webp",
   };
   return map[mimeType] ?? "jpg";
-}
-
-export async function getEventPhotos(
-  eventId: string,
-  limit = 50,
-  offset = 0,
-): Promise<Photo[]> {
-  try {
-    const db = getDbIfConfigured();
-    if (!db) return [];
-
-    const snap = await db
-      .collection(COLLECTIONS.photos)
-      .where("eventId", "==", eventId)
-      .get();
-
-    return snap.docs
-      .map((doc) => mapPhoto(doc.id, doc.data() as PhotoDoc))
-      .filter((photo) => photo.isVisible)
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .slice(offset, offset + limit);
-  } catch (error) {
-    console.error("[getEventPhotos]", error);
-    return [];
-  }
-}
-
-export async function getPhotoById(photoId: string): Promise<Photo | null> {
-  const db = getDbIfConfigured();
-  if (!db) return null;
-
-  const doc = await db.collection(COLLECTIONS.photos).doc(photoId).get();
-  if (!doc.exists) return null;
-  return mapPhoto(doc.id, doc.data() as PhotoDoc);
 }
 
 export async function uploadPhoto(
@@ -201,31 +173,3 @@ export async function updatePhotoPrice(
   return mapPhoto(updated.id, updated.data() as PhotoDoc);
 }
 
-export async function getPhotographerPhotoCount(photographerId: string): Promise<number> {
-  const db = getDbIfConfigured();
-  if (!db) return 0;
-
-  try {
-    const snap = await db
-      .collection(COLLECTIONS.photos)
-      .where("photographerId", "==", photographerId)
-      .count()
-      .get();
-
-    return snap.data().count;
-  } catch (error) {
-    console.error("[getPhotographerPhotoCount] count query failed:", error);
-
-    try {
-      const snap = await db
-        .collection(COLLECTIONS.photos)
-        .where("photographerId", "==", photographerId)
-        .get();
-
-      return snap.size;
-    } catch (fallbackError) {
-      console.error("[getPhotographerPhotoCount] fallback failed:", fallbackError);
-      return 0;
-    }
-  }
-}

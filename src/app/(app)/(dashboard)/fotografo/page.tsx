@@ -3,7 +3,7 @@ import { getServerSessionUser } from "@/infrastructure/auth/session";
 import { getPhotographerApplicationStatus } from "@/features/auth/infrastructure/auth.repository";
 import { getPhotographerEvents } from "@/features/events/infrastructure/event.repository";
 import { getPendingRequestCount } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
-import { getPhotographerPhotoCount } from "@/features/photos/infrastructure/photo.repository";
+import { getPhotographerPhotoCount } from "@/features/photos/infrastructure/photo-read.repository";
 import { PhotographerPendingReview } from "@/features/auth/presentation/components/photographer-pending-review";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";

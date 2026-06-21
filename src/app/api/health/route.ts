@@ -4,8 +4,101 @@ import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import { EventStatus } from "@/domain/enums/event-status";
 import { diagnoseFirebasePrivateKey, isFirebaseConfigured } from "@/infrastructure/firebase/config";
 
+export const runtime = "nodejs";
+
+function trimEnv(value: string | undefined | null): string | null {
+  if (!value) return null;
+  return value.trim() || null;
+}
+
+async function runFotografoDiagnostic() {
+  const steps: Record<string, { ok: boolean; detail?: string }> = {};
+
+  try {
+    const { auth } = await import("@/infrastructure/auth");
+    const session = await auth();
+    steps.auth = {
+      ok: Boolean(session?.user),
+      detail: session?.user
+        ? `role=${session.user.role}, id=${session.user.id ? "yes" : "missing"}`
+        : "no session",
+    };
+
+    const userId = session?.user?.id?.trim();
+    if (!userId) {
+      return { ok: false, steps };
+    }
+
+    const { getProfileById } = await import(
+      "@/features/profile/infrastructure/profile.repository"
+    );
+    const { getPhotographerApplicationStatus } = await import(
+      "@/features/auth/infrastructure/auth.repository"
+    );
+    const { getPhotographerEvents } = await import(
+      "@/features/events/infrastructure/event.repository"
+    );
+    const { getPendingRequestCount } = await import(
+      "@/features/purchase-requests/infrastructure/purchase-request.repository"
+    );
+    const { getPhotographerPhotoCount } = await import(
+      "@/features/photos/infrastructure/photo-read.repository"
+    );
+
+    try {
+      const profile = await getProfileById(userId);
+      steps.profile = {
+        ok: Boolean(profile),
+        detail: profile ? `role=${profile.role}` : "not found",
+      };
+    } catch (error) {
+      steps.profile = {
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    try {
+      const status = await getPhotographerApplicationStatus(userId);
+      steps.application = { ok: true, detail: status ?? "none" };
+    } catch (error) {
+      steps.application = {
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    try {
+      const [events, pending, photos] = await Promise.all([
+        getPhotographerEvents(userId),
+        getPendingRequestCount(userId),
+        getPhotographerPhotoCount(userId),
+      ]);
+      steps.dashboard = {
+        ok: true,
+        detail: `events=${events.length}, pending=${pending}, photos=${photos}`,
+      };
+    } catch (error) {
+      steps.dashboard = {
+        ok: false,
+        detail: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    return { ok: Object.values(steps).every((step) => step.ok), steps };
+  } catch (error) {
+    return {
+      ok: false,
+      steps,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 /** Diagnóstico rápido en Vercel — no expone secretos, solo si están definidos. */
-export async function GET() {
+export async function GET(request: Request) {
+  const check = new URL(request.url).searchParams.get("check");
+
   const flags = {
     FIREBASE_PROJECT_ID: Boolean(process.env.FIREBASE_PROJECT_ID),
     FIREBASE_CLIENT_EMAIL: Boolean(process.env.FIREBASE_CLIENT_EMAIL),
@@ -16,8 +109,8 @@ export async function GET() {
     SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     AUTH_SECRET: Boolean(process.env.AUTH_SECRET),
     NEXTAUTH_SECRET: Boolean(process.env.NEXTAUTH_SECRET),
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? null,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? null,
+    NEXTAUTH_URL: trimEnv(process.env.NEXTAUTH_URL),
+    NEXT_PUBLIC_APP_URL: trimEnv(process.env.NEXT_PUBLIC_APP_URL),
     VERCEL_URL: process.env.VERCEL_URL ?? null,
   };
 
@@ -37,7 +130,7 @@ export async function GET() {
     if (key === "FIREBASE_PRIVATE_KEY" && flags.FIREBASE_SERVICE_ACCOUNT_JSON) {
       return false;
     }
-    return !flags[key];
+    return !flags[key as keyof typeof flags];
   });
 
   const privateKeyCheck = diagnoseFirebasePrivateKey();
@@ -80,7 +173,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({
+  const payload: Record<string, unknown> = {
     ok:
       missing.length === 0 &&
       (flags.AUTH_SECRET || flags.NEXTAUTH_SECRET) &&
@@ -89,5 +182,11 @@ export async function GET() {
     flags,
     privateKey: privateKeyCheck.ok ? { ok: true } : privateKeyCheck,
     firebase,
-  });
+  };
+
+  if (check === "fotografo") {
+    payload.fotografo = await runFotografoDiagnostic();
+  }
+
+  return NextResponse.json(payload);
 }
