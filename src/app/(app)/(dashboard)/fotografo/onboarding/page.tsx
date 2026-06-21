@@ -14,6 +14,7 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export default function PhotographerOnboardingPage() {
   const router = useRouter();
@@ -36,10 +37,10 @@ export default function PhotographerOnboardingPage() {
     <div className="mx-auto max-w-lg px-4 py-12">
       <Card>
         <CardHeader>
-          <CardTitle>Convertite en fotógrafo</CardTitle>
+          <CardTitle>Convertite en {PHOTOGRAPHER_LABEL.singular}</CardTitle>
           <CardDescription>
             Completá tu perfil. Un administrador revisará tu solicitud antes de activar tu
-            panel de fotógrafo.
+            {` ${PHOTOGRAPHER_LABEL.panel.toLowerCase()}.`}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">

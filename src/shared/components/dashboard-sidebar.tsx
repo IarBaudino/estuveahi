@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 interface NavItem {
   href: string;
@@ -70,7 +71,7 @@ const adminNav: NavItem[] = [
   },
   {
     href: routes.admin.photographers,
-    label: "Fotógrafos",
+    label: PHOTOGRAPHER_LABEL.pluralCap,
     icon: <UserCheck className="h-4 w-4" />,
   },
   {
@@ -114,7 +115,7 @@ export function DashboardSidebar({
     <aside className="hidden w-56 shrink-0 border-r border-white/10 p-4 md:block">
       <div className="mb-6 flex items-center gap-2 font-semibold">
         <Camera className="h-5 w-5" />
-        {type === "photographer" ? "Fotógrafo" : "Admin"}
+        {type === "photographer" ? PHOTOGRAPHER_LABEL.singularCap : "Admin"}
       </div>
       <nav className="space-y-1">
         {items.map((item) => (

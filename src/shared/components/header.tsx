@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { MaterialIcon } from "@/shared/components/icon";
 
 export async function Header() {
@@ -33,7 +34,7 @@ export async function Header() {
               href={routes.photographer.dashboard}
               className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
             >
-              Panel fotógrafo
+              {PHOTOGRAPHER_LABEL.panel}
             </Link>
           )}
           {session?.user?.role === "admin" && (

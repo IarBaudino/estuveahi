@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export default function PhotographerError({
   error,
@@ -19,7 +20,7 @@ export default function PhotographerError({
     <div className="mx-auto max-w-lg py-12 text-center">
       <h1 className="text-xl font-bold">No se pudo cargar el panel</h1>
       <p className="mt-2 text-sm text-on-surface-variant">
-        Hubo un error al cargar el panel de fotógrafo. Probá recargar o volver a iniciar sesión.
+        Hubo un error al cargar el {PHOTOGRAPHER_LABEL.panel.toLowerCase()}. Probá recargar o volver a iniciar sesión.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <button

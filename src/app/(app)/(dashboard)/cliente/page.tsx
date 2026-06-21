@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getUserFavorites } from "@/features/favorites/infrastructure/favorite.repository";
 import { getClientRequests } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
 import { getProfileById } from "@/features/profile/infrastructure/profile.repository";
@@ -42,7 +43,7 @@ export default async function ClientDashboardPage() {
       icon: ShoppingBag,
       label: "Solicitudes",
       value: requests.length,
-      hint: pendingRequests > 0 ? `${pendingRequests} pendientes` : "Pedidos a fotógrafos",
+      hint: pendingRequests > 0 ? `${pendingRequests} pendientes` : `Pedidos a ${PHOTOGRAPHER_LABEL.plural}`,
     },
     {
       href: routes.client.profile,
@@ -92,7 +93,7 @@ export default async function ClientDashboardPage() {
                 href={routes.photographer.onboarding}
                 className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline"
               >
-                Convertirme en fotógrafo
+                Convertirme en {PHOTOGRAPHER_LABEL.singular}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

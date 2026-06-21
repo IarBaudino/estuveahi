@@ -3,6 +3,7 @@ import {
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action";
 import { auth } from "@/infrastructure/auth";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { DomainError } from "@/domain/errors/domain-errors";
 import { isUserBlocked } from "@/features/profile/infrastructure/profile.repository";
 
@@ -27,7 +28,7 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 export const photographerActionClient = authActionClient.use(
   async ({ next, ctx }) => {
     if (ctx.user.role !== "photographer" && ctx.user.role !== "admin") {
-      throw new DomainError("Acceso solo para fotógrafos", "FORBIDDEN");
+      throw new DomainError(`Acceso solo para ${PHOTOGRAPHER_LABEL.plural}`, "FORBIDDEN");
     }
     return next({ ctx });
   },

@@ -4,6 +4,7 @@ import { LandingNav } from "@/features/marketing/presentation/components/landing
 import { LandingFooter } from "@/features/marketing/presentation/components/landing-footer";
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
 import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
 import type { LandingImages } from "@/config/landing.defaults";
@@ -57,15 +58,15 @@ const FAQ = [
   },
   {
     q: "¿En qué formato recibo los archivos?",
-    a: "El fotógrafo te envía la imagen en alta resolución (JPEG u otro formato acordado) directamente, sin marca de agua, una vez confirmado el pago entre ustedes.",
+    a: `El ${PHOTOGRAPHER_LABEL.singular} te envía la imagen en alta resolución (JPEG u otro formato acordado) directamente, sin marca de agua, una vez confirmado el pago entre ustedes.`,
   },
   {
     q: "¿EstuveAhí se queda con una comisión?",
-    a: "No. En esta etapa la plataforma no cobra comisión por venta: el 100 % del acuerdo es para el fotógrafo. Vos pagás directamente a quien tomó la foto.",
+    a: `No. En esta etapa la plataforma no cobra comisión por venta: el 100 % del acuerdo es para el ${PHOTOGRAPHER_LABEL.singular}. Vos pagás directamente a quien tomó la foto.`,
   },
   {
-    q: "¿Soy fotógrafo, cómo puedo publicar?",
-    a: 'Hacé clic en "Soy fotógrafo", completá tu perfil y empezá a subir tus galerías de eventos.',
+    q: `¿Soy ${PHOTOGRAPHER_LABEL.singular}, cómo puedo publicar?`,
+    a: `Hacé clic en "Soy ${PHOTOGRAPHER_LABEL.singular}", completá tu perfil y empezá a subir tus galerías de eventos.`,
   },
 ];
 
@@ -117,7 +118,7 @@ export default async function HomePage() {
               href={routes.photographer.onboarding}
               className="text-label-sm w-full border border-white/30 px-10 py-4 tracking-widest text-primary transition-all hover:bg-white/5 md:w-auto"
             >
-              Soy fotógrafo
+              Soy {PHOTOGRAPHER_LABEL.singular}
             </Link>
           </div>
         </div>
@@ -139,8 +140,8 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 gap-16 md:grid-cols-3">
             {[
               { icon: "search", title: "Buscá", text: "Ingresá el nombre del evento, la fecha o el recinto para localizar tu galería personalizada." },
-              { icon: "grid_view", title: "Explorá", text: "Navegá entre cientos de tomas profesionales capturadas por los mejores fotógrafos de la escena." },
-              { icon: "shopping_bag", title: "Comprá", text: "Solicitá la foto, acordá el precio con el fotógrafo y recibí el archivo en alta directamente de quien la capturó." },
+              { icon: "grid_view", title: "Explorá", text: `Navegá entre cientos de tomas profesionales capturadas por los mejores ${PHOTOGRAPHER_LABEL.plural} de la escena.` },
+              { icon: "shopping_bag", title: "Comprá", text: `Solicitá la foto, acordá el precio con el ${PHOTOGRAPHER_LABEL.singular} y recibí el archivo en alta directamente de quien la capturó.` },
             ].map((step) => (
               <div key={step.title} className="group flex flex-col items-center space-y-6 text-center">
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full hairline-border transition-colors duration-500 group-hover:bg-white/5">
@@ -217,7 +218,7 @@ export default async function HomePage() {
             <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg hairline-border">
               <Image
                 src={IMAGES.photographer}
-                alt="Fotógrafo trabajando"
+                alt={`${PHOTOGRAPHER_LABEL.singularCap} trabajando`}
                 fill
                 unoptimized
                 className={cn("object-cover", GRAYSCALE.photographer && "grayscale")}
@@ -257,7 +258,7 @@ export default async function HomePage() {
               href={routes.photographer.onboarding}
               className="text-label-sm inline-block bg-primary px-10 py-4 tracking-widest text-background transition-all hover:opacity-90"
             >
-              Sumarme como fotógrafo
+              Sumarme como {PHOTOGRAPHER_LABEL.singular}
             </Link>
           </div>
         </section>
@@ -269,7 +270,7 @@ export default async function HomePage() {
           {[
             { value: "450k", label: "Fotos capturadas" },
             { value: "1.2k", label: "Eventos anuales" },
-            { value: "350", label: "Fotógrafos pro" },
+            { value: "350", label: `${PHOTOGRAPHER_LABEL.pluralCap} pro` },
             { value: "15k", label: "Usuarios felices" },
           ].map((stat) => (
             <div key={stat.label}>
@@ -294,7 +295,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {[
               { quote: "Encontrar la foto exacta de mi primer Luna Park con una calidad increíble fue algo que no esperaba. EstuveAhí capturó la emoción que sentí esa noche.", name: "Mariana V.", role: "Asistente a eventos" },
-              { quote: "Como fotógrafo documental, esta plataforma me permite llegar a quienes realmente aprecian mi trabajo y monetizar cada disparo sin complicaciones técnicas.", name: "Julián R.", role: "Fotógrafo Profesional" },
+              { quote: `Como ${PHOTOGRAPHER_LABEL.singular} documental, esta plataforma me permite llegar a quienes realmente aprecian mi trabajo y monetizar cada disparo sin complicaciones técnicas.`, name: "Julián R.", role: `${PHOTOGRAPHER_LABEL.singularCap} profesional` },
             ].map((t) => (
               <div key={t.name} className="space-y-8 bg-white/5 p-12 hairline-border">
                 <p className="text-headline-md italic leading-relaxed text-primary">

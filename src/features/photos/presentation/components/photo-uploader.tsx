@@ -43,7 +43,7 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
         const base64 = Buffer.from(buffer).toString("base64");
 
         try {
-          await executeAsync({
+          const result = await executeAsync({
             eventId,
             filename: file.name,
             mimeType: file.type as (typeof ALLOWED_MIME_TYPES)[number],
@@ -54,16 +54,28 @@ export function PhotoUploader({ eventId, onUploadComplete }: PhotoUploaderProps)
                 ? defaultPriceCents
                 : undefined,
           });
+
+          if (result?.serverError) {
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.name === file.name ? { ...u, status: result.serverError! } : u,
+              ),
+            );
+            continue;
+          }
+
           setUploads((prev) =>
             prev.map((u) =>
               u.name === file.name ? { ...u, status: "Completado" } : u,
             ),
           );
           onUploadComplete?.();
-        } catch {
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Error al subir";
           setUploads((prev) =>
             prev.map((u) =>
-              u.name === file.name ? { ...u, status: "Error" } : u,
+              u.name === file.name ? { ...u, status: message } : u,
             ),
           );
         }

@@ -32,7 +32,7 @@ import { canManageEvent } from "./event-access";
 
 async function getPhotographerSummary(photographerId: string) {
   const db = getDbIfConfigured();
-  if (!db) return { id: photographerId, displayName: "Fotógrafo", isVerified: false };
+  if (!db) return { id: photographerId, displayName: "Fotografx", isVerified: false };
 
   const doc = await db
     .collection(COLLECTIONS.photographerProfiles)
@@ -40,7 +40,7 @@ async function getPhotographerSummary(photographerId: string) {
     .get();
 
   if (!doc.exists) {
-    return { id: photographerId, displayName: "Fotógrafo", isVerified: false };
+    return { id: photographerId, displayName: "Fotografx", isVerified: false };
   }
 
   return mapPhotographerSummary(doc.id, doc.data() as PhotographerProfileDoc);

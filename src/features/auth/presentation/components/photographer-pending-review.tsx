@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Clock } from "lucide-react";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 
 export function PhotographerPendingReview() {
@@ -8,7 +9,7 @@ export function PhotographerPendingReview() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Panel de fotógrafo</h1>
+          <h1 className="text-2xl font-bold">{PHOTOGRAPHER_LABEL.panel}</h1>
           <p className="text-on-surface-variant">Tu solicitud está siendo evaluada</p>
         </div>
         <span className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200">

@@ -19,17 +19,8 @@ import {
   searchPublicEvents,
   updateEvent,
 } from "../../infrastructure/event.repository";
+import { revalidateEventPaths } from "@/shared/lib/revalidate-event";
 import { routes } from "@/config/routes";
-
-function revalidateEventPaths(event: { id: string; slug: string; status: string }) {
-  revalidatePath(routes.photographer.event(event.id));
-  revalidatePath(routes.admin.event(event.id));
-  revalidatePath(routes.photographer.events);
-  revalidatePath(routes.admin.events);
-  if (event.status === "published") {
-    revalidatePath(routes.event(event.slug));
-  }
-}
 
 export const createEventAction = photographerActionClient
   .schema(createEventSchema)

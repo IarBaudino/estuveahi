@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { photographerActionClient } from "@/shared/lib/safe-action";
+import { revalidateEventPaths } from "@/shared/lib/revalidate-event";
 import { uploadPhotoSchema, updatePhotoPriceSchema } from "../../application/schemas/photo.schema";
 import { deletePhoto, uploadPhoto, updatePhotoPrice } from "../../infrastructure/photo.repository";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
-import { routes } from "@/config/routes";
 
 export const uploadPhotoAction = photographerActionClient
   .schema(
@@ -21,9 +21,7 @@ export const uploadPhotoAction = photographerActionClient
 
     const event = await getEventById(input.eventId);
     if (event) {
-      revalidatePath(routes.event(event.slug));
-      revalidatePath(routes.photographer.event(event.id));
-      revalidatePath(routes.admin.event(event.id));
+      revalidateEventPaths(event);
     }
 
     return { photo };
@@ -35,9 +33,7 @@ export const deletePhotoAction = photographerActionClient
     await deletePhoto(parsedInput.photoId, ctx.user.id, ctx.user.role);
     const event = await getEventById(parsedInput.eventId);
     if (event) {
-      revalidatePath(routes.event(event.slug));
-      revalidatePath(routes.photographer.event(event.id));
-      revalidatePath(routes.admin.event(event.id));
+      revalidateEventPaths(event);
     }
     return { success: true };
   });
@@ -54,9 +50,7 @@ export const updatePhotoPriceAction = photographerActionClient
     );
     const event = await getEventById(parsedInput.eventId);
     if (event) {
-      revalidatePath(routes.event(event.slug));
-      revalidatePath(routes.photographer.event(event.id));
-      revalidatePath(routes.admin.event(event.id));
+      revalidateEventPaths(event);
     }
     return { photo };
   });
