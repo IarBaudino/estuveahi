@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/infrastructure/auth";
 import { isSupabaseStorageConfigured } from "@/infrastructure/supabase/config";
 import { downloadFile } from "@/infrastructure/supabase/storage";
 import { resolvePhotoMediaAccess } from "@/features/photos/infrastructure/media-access";
 import type { MediaVariant } from "@/shared/lib/media-url";
 import { siteConfig } from "@/config/site";
+import { getServerSessionUser } from "@/infrastructure/auth/session";
+
+export const runtime = "nodejs";
 
 const VALID_VARIANTS = new Set<MediaVariant>(["thumbnail", "preview", "original"]);
 
@@ -36,10 +38,8 @@ export async function GET(
     return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
   }
 
-  const session = await auth();
-  const viewer = session?.user?.id
-    ? { id: session.user.id, role: session.user.role }
-    : undefined;
+  const user = await getServerSessionUser();
+  const viewer = user ? { id: user.id, role: user.role } : undefined;
 
   const access = await resolvePhotoMediaAccess(
     photoId,

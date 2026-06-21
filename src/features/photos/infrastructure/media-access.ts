@@ -5,6 +5,7 @@ import { EventStatus } from "@/domain/enums/event-status";
 import type { UserRole } from "@/domain/enums/roles";
 import type { MediaVariant } from "@/shared/lib/media-url";
 import { getBucketAndPath } from "@/infrastructure/storage/storage.constants";
+import { canManageEvent } from "@/features/events/infrastructure/event-access";
 
 export interface MediaAccessResult {
   bucket: string;
@@ -30,9 +31,12 @@ export async function resolvePhotoMediaAccess(
 
   const isOwner = viewer?.id === photo.photographerId;
   const isAdmin = viewer?.role === "admin";
+  const canManage =
+    viewer && event ? canManageEvent(event, viewer.id, viewer.role) : false;
+  const canViewPrivate = isOwner || isAdmin || canManage;
 
   if (variant === "original") {
-    if (!isOwner && !isAdmin) return null;
+    if (!canViewPrivate) return null;
     const { bucket, path } = getBucketAndPath(photo.storagePath);
     return { bucket, path, contentType: photo.mimeType };
   }
@@ -40,8 +44,8 @@ export async function resolvePhotoMediaAccess(
   const isPublicEvent =
     event?.status === EventStatus.PUBLISHED && event?.isPublic !== false;
 
-  if (!photo.isVisible && !isOwner && !isAdmin) return null;
-  if (!isPublicEvent && !isOwner && !isAdmin) return null;
+  if (!photo.isVisible && !canViewPrivate) return null;
+  if (!isPublicEvent && !canViewPrivate) return null;
 
   const fullPath =
     variant === "preview" ? photo.previewPath : photo.thumbnailPath;
