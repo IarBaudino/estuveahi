@@ -26,6 +26,7 @@ import { Role } from "@/domain/enums/roles";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { z } from "zod";
 import { AuthError } from "next-auth";
+import { firebaseUserIdSchema } from "@/shared/schemas/firebase.schema";
 
 export const registerAction = actionClient
   .schema(registerSchema)
@@ -82,7 +83,7 @@ export const becomePhotographerAction = authActionClient
   });
 
 export const approvePhotographerApplicationAction = adminActionClient
-  .schema(z.object({ userId: z.string().min(1) }))
+  .schema(z.object({ userId: firebaseUserIdSchema }))
   .action(async ({ parsedInput }) => {
     await approvePhotographerApplication(parsedInput.userId);
     revalidatePath(routes.admin.photographers);
@@ -91,7 +92,7 @@ export const approvePhotographerApplicationAction = adminActionClient
   });
 
 export const rejectPhotographerApplicationAction = adminActionClient
-  .schema(z.object({ userId: z.string().min(1) }))
+  .schema(z.object({ userId: firebaseUserIdSchema }))
   .action(async ({ parsedInput }) => {
     await rejectPhotographerApplication(parsedInput.userId);
     revalidatePath(routes.admin.photographers);
@@ -101,18 +102,19 @@ export const rejectPhotographerApplicationAction = adminActionClient
 export const updateUserRoleAction = adminActionClient
   .schema(
     z.object({
-      userId: z.string().uuid(),
+      userId: firebaseUserIdSchema,
       role: z.enum(["client", "photographer", "admin"]),
     }),
   )
   .action(async ({ parsedInput }) => {
     await updateUserRole(parsedInput.userId, parsedInput.role);
     revalidatePath(routes.admin.users);
+    revalidatePath(routes.admin.photographers);
     return { success: true };
   });
 
 export const verifyPhotographerAction = adminActionClient
-  .schema(z.object({ userId: z.string().uuid() }))
+  .schema(z.object({ userId: firebaseUserIdSchema }))
   .action(async ({ parsedInput }) => {
     await verifyPhotographer(parsedInput.userId);
     revalidatePath(routes.admin.users);
@@ -120,7 +122,7 @@ export const verifyPhotographerAction = adminActionClient
   });
 
 export const unverifyPhotographerAction = adminActionClient
-  .schema(z.object({ userId: z.string().uuid() }))
+  .schema(z.object({ userId: firebaseUserIdSchema }))
   .action(async ({ parsedInput }) => {
     await unverifyPhotographer(parsedInput.userId);
     revalidatePath(routes.admin.users);

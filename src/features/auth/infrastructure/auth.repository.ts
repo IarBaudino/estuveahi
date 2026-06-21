@@ -207,26 +207,73 @@ export async function becomePhotographer(
 
 export async function updateUserRole(userId: string, role: UserRole) {
   const db = getDb();
-  await db.collection(COLLECTIONS.profiles).doc(userId).update({
+  const profileRef = db.collection(COLLECTIONS.profiles).doc(userId);
+  const profileDoc = await profileRef.get();
+
+  if (!profileDoc.exists) {
+    throw new Error("Usuario no encontrado");
+  }
+
+  await profileRef.update({
     role,
     updatedAt: FieldValue.serverTimestamp(),
   });
 
   if (role === Role.PHOTOGRAPHER) {
-    const photographerRef = db.collection(COLLECTIONS.photographerProfiles).doc(userId);
-    const doc = await photographerRef.get();
-    if (doc.exists) {
-      await photographerRef.update({
-        applicationStatus: PhotographerApplicationStatus.APPROVED,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-    }
+    await ensurePhotographerProfileApproved(
+      userId,
+      profileDoc.data() as ProfileDoc,
+    );
   }
+}
+
+async function ensurePhotographerProfileApproved(
+  userId: string,
+  profile: ProfileDoc,
+): Promise<void> {
+  const db = getDb();
+  const photographerRef = db.collection(COLLECTIONS.photographerProfiles).doc(userId);
+  const doc = await photographerRef.get();
+
+  const displayName =
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+    profile.fullName ||
+    profile.email.split("@")[0] ||
+    "Fotografx";
+
+  if (doc.exists) {
+    await photographerRef.update({
+      applicationStatus: PhotographerApplicationStatus.APPROVED,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return;
+  }
+
+  const photographerData: PhotographerProfileDoc = {
+    displayName,
+    bio: null,
+    websiteUrl: null,
+    instagramHandle: null,
+    portfolioUrl: null,
+    isVerified: false,
+    applicationStatus: PhotographerApplicationStatus.APPROVED,
+    createdAt: FieldValue.serverTimestamp() as unknown as Date,
+    updatedAt: FieldValue.serverTimestamp() as unknown as Date,
+  };
+
+  await photographerRef.set(photographerData);
 }
 
 export async function verifyPhotographer(userId: string) {
   const db = getDb();
-  await db.collection(COLLECTIONS.photographerProfiles).doc(userId).update({
+  const ref = db.collection(COLLECTIONS.photographerProfiles).doc(userId);
+  const doc = await ref.get();
+
+  if (!doc.exists) {
+    throw new Error("El usuario no tiene perfil de fotografx");
+  }
+
+  await ref.update({
     isVerified: true,
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -234,7 +281,14 @@ export async function verifyPhotographer(userId: string) {
 
 export async function unverifyPhotographer(userId: string) {
   const db = getDb();
-  await db.collection(COLLECTIONS.photographerProfiles).doc(userId).update({
+  const ref = db.collection(COLLECTIONS.photographerProfiles).doc(userId);
+  const doc = await ref.get();
+
+  if (!doc.exists) {
+    throw new Error("El usuario no tiene perfil de fotografx");
+  }
+
+  await ref.update({
     isVerified: false,
     updatedAt: FieldValue.serverTimestamp(),
   });

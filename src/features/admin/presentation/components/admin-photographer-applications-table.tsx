@@ -10,6 +10,8 @@ import {
 import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/utils";
 import { getDisplayName } from "@/shared/lib/profile";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
+import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
 
 export function AdminPhotographerApplicationsTable({
   applications,
@@ -17,18 +19,26 @@ export function AdminPhotographerApplicationsTable({
   applications: PhotographerApplicationForAdmin[];
 }) {
   const router = useRouter();
+  const actionOptions = {
+    onSuccess: () => router.refresh(),
+    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
+      showAdminActionError(error),
+  };
+
   const { execute: approve, isExecuting: approving } = useAction(
     approvePhotographerApplicationAction,
-    { onSuccess: () => router.refresh() },
+    actionOptions,
   );
   const { execute: reject, isExecuting: rejecting } = useAction(
     rejectPhotographerApplicationAction,
-    { onSuccess: () => router.refresh() },
+    actionOptions,
   );
 
   if (applications.length === 0) {
     return (
-      <p className="text-on-surface-variant">No hay solicitudes de fotógrafos pendientes.</p>
+      <p className="text-on-surface-variant">
+        No hay solicitudes de {PHOTOGRAPHER_LABEL.plural} pendientes.
+      </p>
     );
   }
 
@@ -78,7 +88,7 @@ export function AdminPhotographerApplicationsTable({
                     onClick={() => {
                       if (
                         confirm(
-                          `¿Aprobar a "${app.displayName}" como fotógrafo? Podrá crear eventos y subir fotos.`,
+                          `¿Aprobar a "${app.displayName}" como ${PHOTOGRAPHER_LABEL.singular}? Podrá crear eventos y subir fotos.`,
                         )
                       ) {
                         approve({ userId: app.userId });

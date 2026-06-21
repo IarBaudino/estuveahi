@@ -18,6 +18,7 @@ import {
 } from "../../infrastructure/profile.repository";
 import { routes } from "@/config/routes";
 import { z } from "zod";
+import { firebaseUserIdSchema } from "@/shared/schemas/firebase.schema";
 
 export const updateProfileAction = authActionClient
   .schema(updateProfileSchema)
@@ -50,7 +51,7 @@ export const getMyProfileAction = authActionClient.action(async ({ ctx }) => {
 export const setUserBlockedAction = adminActionClient
   .schema(
     z.object({
-      userId: z.string().uuid(),
+      userId: firebaseUserIdSchema,
       blocked: z.boolean(),
     }),
   )

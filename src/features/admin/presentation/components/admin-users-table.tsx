@@ -11,23 +11,44 @@ import {
 } from "@/features/auth/presentation/actions/auth.actions";
 import { setUserBlockedAction } from "@/features/profile/presentation/actions/profile.actions";
 import type { Profile } from "@/domain/entities/user";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getDisplayName } from "@/shared/lib/profile";
+import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
+
+const ROLE_LABELS: Record<Profile["role"], string> = {
+  client: "Cliente",
+  photographer: PHOTOGRAPHER_LABEL.singularCap,
+  admin: "Admin",
+};
 
 export function AdminUsersTable({ users }: { users: Profile[] }) {
   const router = useRouter();
-  const { execute: updateRole } = useAction(updateUserRoleAction, {
+  const actionOptions = {
     onSuccess: () => router.refresh(),
-  });
-  const { execute: verify } = useAction(verifyPhotographerAction, {
-    onSuccess: () => router.refresh(),
-  });
-  const { execute: unverify } = useAction(unverifyPhotographerAction, {
-    onSuccess: () => router.refresh(),
-  });
+    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
+      showAdminActionError(error),
+  };
+
+  const { execute: updateRole, isExecuting: updatingRole } = useAction(
+    updateUserRoleAction,
+    actionOptions,
+  );
+  const { execute: verify, isExecuting: verifying } = useAction(
+    verifyPhotographerAction,
+    actionOptions,
+  );
+  const { execute: unverify, isExecuting: unverifying } = useAction(
+    unverifyPhotographerAction,
+    actionOptions,
+  );
   const { execute: setBlocked, isExecuting: blocking } = useAction(
     setUserBlockedAction,
-    { onSuccess: () => router.refresh() },
+    actionOptions,
   );
+
+  if (users.length === 0) {
+    return <p className="text-on-surface-variant">No hay usuarios registrados.</p>;
+  }
 
   return (
     <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -56,7 +77,7 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
               <td className="px-4 py-3">{user.email}</td>
               <td className="px-4 py-3">{user.phone ?? "—"}</td>
               <td className="px-4 py-3">
-                <Badge>{user.role}</Badge>
+                <Badge>{ROLE_LABELS[user.role]}</Badge>
               </td>
               <td className="px-4 py-3">
                 {user.isBlocked ? (
@@ -72,11 +93,24 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                       size="sm"
                       variant="outline"
                       disabled={user.isBlocked}
-                      onClick={() =>
-                        updateRole({ userId: user.id, role: "photographer" })
-                      }
+                      isLoading={updatingRole}
+                      onClick={() => {
+                        const name = getDisplayName({
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          email: user.email,
+                          phone: user.phone,
+                        });
+                        if (
+                          confirm(
+                            `¿Convertir a ${name} en ${PHOTOGRAPHER_LABEL.singular}? Podrá crear eventos y subir fotos.`,
+                          )
+                        ) {
+                          updateRole({ userId: user.id, role: "photographer" });
+                        }
+                      }}
                     >
-                      Hacer fotógrafo
+                      Hacer {PHOTOGRAPHER_LABEL.singular}
                     </Button>
                   )}
                   {user.role === "photographer" && !user.isBlocked && (
@@ -84,6 +118,7 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                       <Button
                         size="sm"
                         variant="outline"
+                        isLoading={verifying}
                         onClick={() => verify({ userId: user.id })}
                       >
                         Verificar
@@ -91,6 +126,7 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                       <Button
                         size="sm"
                         variant="outline"
+                        isLoading={unverifying}
                         onClick={() => unverify({ userId: user.id })}
                       >
                         Quitar verificación
@@ -101,9 +137,18 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        updateRole({ userId: user.id, role: "admin" })
-                      }
+                      isLoading={updatingRole}
+                      onClick={() => {
+                        const name = getDisplayName({
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          email: user.email,
+                          phone: user.phone,
+                        });
+                        if (confirm(`¿Dar permisos de administrador a ${name}?`)) {
+                          updateRole({ userId: user.id, role: "admin" });
+                        }
+                      }}
                     >
                       Hacer admin
                     </Button>

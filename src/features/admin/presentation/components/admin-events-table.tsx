@@ -11,6 +11,8 @@ import {
   adminArchiveEventAction,
   adminDeleteEventAction,
 } from "@/features/admin/presentation/actions/admin.actions";
+import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export interface AdminEventRow {
   id: string;
@@ -25,13 +27,19 @@ export interface AdminEventRow {
 
 export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
   const router = useRouter();
+  const actionOptions = {
+    onSuccess: () => router.refresh(),
+    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
+      showAdminActionError(error),
+  };
+
   const { execute: archive, isExecuting: archiving } = useAction(
     adminArchiveEventAction,
-    { onSuccess: () => router.refresh() },
+    actionOptions,
   );
   const { execute: remove, isExecuting: removing } = useAction(
     adminDeleteEventAction,
-    { onSuccess: () => router.refresh() },
+    actionOptions,
   );
 
   if (events.length === 0) {
@@ -44,7 +52,7 @@ export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
         <thead className="border-b border-white/10 bg-surface-container">
           <tr>
             <th className="px-4 py-3 text-left font-medium">Título</th>
-            <th className="px-4 py-3 text-left font-medium">Fotógrafo</th>
+            <th className="px-4 py-3 text-left font-medium">{PHOTOGRAPHER_LABEL.singularCap}</th>
             <th className="px-4 py-3 text-left font-medium">Fecha</th>
             <th className="px-4 py-3 text-left font-medium">Estado</th>
             <th className="px-4 py-3 text-left font-medium">Fotos</th>
