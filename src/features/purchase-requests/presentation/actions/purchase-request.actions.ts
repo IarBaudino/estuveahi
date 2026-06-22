@@ -20,7 +20,7 @@ export const createPurchaseRequestAction = authActionClient
     const request = await createPurchaseRequest(ctx.user.id, parsedInput);
     revalidatePath(routes.client.requests);
     revalidatePath(routes.photographer.requests);
-    return { request };
+    return { success: true as const, requestId: request.id };
   });
 
 export const approvePurchaseRequestAction = photographerActionClient
