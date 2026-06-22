@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/shared/components/providers";
+import { PageViewTracker } from "@/shared/components/page-view-tracker";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
@@ -56,7 +57,10 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-black text-body-md antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <PageViewTracker />
+          {children}
+        </Providers>
       </body>
     </html>
   );

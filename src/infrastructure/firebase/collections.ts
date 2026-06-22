@@ -6,4 +6,5 @@ export const COLLECTIONS = {
   favorites: "favorites",
   purchaseRequests: "purchaseRequests",
   platformSettings: "platformSettings",
+  analytics: "analytics",
 } as const;
