@@ -1,5 +1,4 @@
 export const STORAGE_BUCKETS = {
-  original: "photos-original",
   preview: "photos-preview",
   thumbnail: "photos-thumbnail",
   avatars: "avatars",
@@ -21,11 +20,10 @@ export function buildPhotoPaths(
   photographerId: string,
   eventId: string,
   photoId: string,
-  ext: string,
+  _ext: string,
 ) {
   const base = `${photographerId}/${eventId}/${photoId}`;
   return {
-    original: `${STORAGE_BUCKETS.original}/${base}/original.${ext}`,
     preview: `${STORAGE_BUCKETS.preview}/${base}/preview.webp`,
     thumbnail: `${STORAGE_BUCKETS.thumbnail}/${base}/thumb.webp`,
   };

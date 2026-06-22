@@ -12,7 +12,6 @@ import {
 } from "@/infrastructure/storage/storage.constants";
 import {
   processAndUploadVariants,
-  uploadOriginal,
 } from "@/infrastructure/storage/image-processor";
 import type { Photo } from "@/domain/entities/photo";
 import { NotFoundError, ValidationError } from "@/domain/errors/domain-errors";
@@ -23,15 +22,6 @@ export {
   getPhotoById,
   getPhotographerPhotoCount,
 } from "./photo-read.repository";
-
-function getExtension(mimeType: string): string {
-  const map: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-  };
-  return map[mimeType] ?? "jpg";
-}
 
 export async function uploadPhoto(
   actorId: string,
@@ -57,14 +47,12 @@ export async function uploadPhoto(
   const photographerId = eventData.photographerId;
 
   const photoId = randomUUID();
-  const ext = getExtension(input.mimeType);
-  const paths = buildPhotoPaths(photographerId, input.eventId, photoId, ext);
+  const paths = buildPhotoPaths(photographerId, input.eventId, photoId, "");
 
   let width: number;
   let height: number;
 
   try {
-    await uploadOriginal(fileBuffer, paths.original, input.mimeType);
     ({ width, height } = await processAndUploadVariants(
       fileBuffer,
       {
@@ -97,7 +85,7 @@ export async function uploadPhoto(
   const photoData: PhotoDoc = {
     eventId: input.eventId,
     photographerId,
-    storagePath: paths.original,
+    storagePath: "",
     thumbnailPath: paths.thumbnail,
     previewPath: paths.preview,
     originalFilename: input.filename,

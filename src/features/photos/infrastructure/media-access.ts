@@ -35,10 +35,8 @@ export async function resolvePhotoMediaAccess(
     viewer && event ? canManageEvent(event, viewer.id, viewer.role) : false;
   const canViewPrivate = isOwner || isAdmin || canManage;
 
-  if (variant === "original") {
-    if (!canViewPrivate) return null;
-    const { bucket, path } = getBucketAndPath(photo.storagePath);
-    return { bucket, path, contentType: photo.mimeType };
+  if (variant !== "preview" && variant !== "thumbnail") {
+    return null;
   }
 
   const isPublicEvent =

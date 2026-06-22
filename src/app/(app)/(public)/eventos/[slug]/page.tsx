@@ -87,6 +87,10 @@ export default async function EventGalleryPage({ params }: PageProps) {
           )}
           <span>{event.photoCount} fotografías</span>
         </div>
+        <p className="mt-4 max-w-3xl text-sm text-zinc-500">
+          Explorá la galería para encontrarte. Todas las imágenes llevan marca de agua; el archivo en
+          alta lo gestiona la fotografx del evento.
+        </p>
       </div>
 
       <PhotoGallery

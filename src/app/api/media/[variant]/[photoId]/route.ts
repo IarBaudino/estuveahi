@@ -8,7 +8,7 @@ import { getServerSessionUser } from "@/infrastructure/auth/session";
 
 export const runtime = "nodejs";
 
-const VALID_VARIANTS = new Set<MediaVariant>(["thumbnail", "preview", "original"]);
+const VALID_VARIANTS = new Set<MediaVariant>(["thumbnail", "preview"]);
 
 function isAllowedReferer(request: NextRequest): boolean {
   const referer = request.headers.get("referer");

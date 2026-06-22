@@ -8,7 +8,7 @@ export const businessConfig = {
   /** La plataforma no envía archivos HD; lo hace cada fotógrafo */
   manualDeliveryByPhotographer: true,
   deliveryDescription:
-    "Cada fotógrafo coordina el pago con el cliente y envía la imagen en alta resolución por el medio que acuerden (email, WhatsApp, etc.).",
+    "Cada fotografx guarda sus archivos en alta en su equipo y los envía al cliente por el medio que acuerden (WhatsApp, email, etc.). En la web solo hay vistas previa con marca de agua.",
   noPlatformFeeMessage:
     "En esta etapa EstuveAhí no cobra comisión: el 100 % de la venta es para el fotógrafo.",
 } as const;

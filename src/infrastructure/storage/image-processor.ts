@@ -62,13 +62,3 @@ export async function processAndUploadVariants(
 
   return { width: preview.width, height: preview.height };
 }
-
-export async function uploadOriginal(
-  buffer: Buffer,
-  fullPath: string,
-  mimeType: string,
-): Promise<void> {
-  const stripped = await sharp(buffer).rotate().toBuffer();
-  const { bucket, path } = getBucketAndPath(fullPath);
-  await uploadFile(bucket, path, stripped, mimeType);
-}

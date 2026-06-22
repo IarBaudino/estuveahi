@@ -14,6 +14,7 @@ import { toggleFavoriteAction } from "@/features/favorites/presentation/actions/
 import { PurchaseRequestDialog } from "@/features/purchase-requests/presentation/components/purchase-request-dialog";
 import { usePathname, useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 interface PhotoGalleryProps {
   photos: PublicPhoto[];
@@ -77,11 +78,12 @@ export function PhotoGallery({
         className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-on-surface-variant"
         role="note"
       >
-        <p className="font-medium text-on-surface">¿Cómo pedir una foto?</p>
+        <p className="font-medium text-on-surface">Encontrate en el evento</p>
         <p className="mt-1">
-          Tocá <strong className="text-on-surface">Pedir esta foto</strong> en la que te interese.
-          Enviás tu solicitud al fotógrafo y coordinan pago y entrega en alta por WhatsApp, email u
-          otro medio.
+          Recorré las fotos hasta darte con la tuya. Son vistas previa con marca de agua en diagonal;
+          si querés el archivo en alta, tocá <strong className="text-on-surface">Pedir esta foto</strong>{" "}
+          y la {PHOTOGRAPHER_LABEL.singular} te contacta (el material en alta lo guarda y envía
+          desde su equipo).
         </p>
       </div>
 
@@ -195,8 +197,8 @@ export function PhotoGallery({
                     </p>
                   )}
                   <p className="text-caption text-on-surface-variant/60">
-                    Vista previa con marca de agua · el fotógrafo envía el original en alta tras el
-                    acuerdo
+                    Vista previa protegida · la {PHOTOGRAPHER_LABEL.singular} envía el archivo en alta
+                    desde su material original
                   </p>
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
