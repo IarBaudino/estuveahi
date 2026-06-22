@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import Link from "next/link";
 import { CheckCircle2, X } from "lucide-react";
@@ -30,12 +30,6 @@ export function PurchaseRequestDialog({
   const [submitted, setSubmitted] = useState(false);
 
   const { executeAsync, isExecuting, result } = useAction(createPurchaseRequestAction);
-
-  useEffect(() => {
-    if (!submitted) return;
-    const timer = window.setTimeout(onClose, 5000);
-    return () => window.clearTimeout(timer);
-  }, [submitted, onClose]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,9 +78,6 @@ export function PurchaseRequestDialog({
               Ver mis pedidos
             </Link>
           </div>
-          <p className="mt-3 text-xs text-on-surface-variant/60">
-            Este mensaje se cerrará solo en unos segundos.
-          </p>
         </div>
       </div>
     );
