@@ -8,8 +8,11 @@ import {
 } from "@/shared/lib/safe-action";
 import { createPurchaseRequestSchema } from "../../application/schemas/purchase-request.schema";
 import {
+  archiveRequest,
   cancelRequest,
   createPurchaseRequest,
+  deleteRequest,
+  unarchiveRequest,
   updateRequestStatus,
 } from "../../infrastructure/purchase-request.repository";
 import { routes } from "@/config/routes";
@@ -71,5 +74,32 @@ export const cancelPurchaseRequestAction = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     await cancelRequest(parsedInput.requestId, ctx.user.id);
     revalidatePath(routes.client.requests);
-    return { success: true };
+    return { success: true as const };
+  });
+
+const requestIdSchema = z.object({ requestId: z.string().uuid() });
+
+export const archivePurchaseRequestAction = photographerActionClient
+  .schema(requestIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await archiveRequest(parsedInput.requestId, ctx.user.id);
+    revalidatePath(routes.photographer.requests);
+    return { success: true as const };
+  });
+
+export const unarchivePurchaseRequestAction = photographerActionClient
+  .schema(requestIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await unarchiveRequest(parsedInput.requestId, ctx.user.id);
+    revalidatePath(routes.photographer.requests);
+    return { success: true as const };
+  });
+
+export const deletePurchaseRequestAction = photographerActionClient
+  .schema(requestIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await deleteRequest(parsedInput.requestId, ctx.user.id);
+    revalidatePath(routes.photographer.requests);
+    revalidatePath(routes.client.requests);
+    return { success: true as const };
   });

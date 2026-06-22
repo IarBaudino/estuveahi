@@ -11,7 +11,8 @@ export default async function PhotographerRequestsPage() {
     <div>
       <h1 className="text-headline-md">Solicitudes de compra</h1>
       <p className="text-on-surface-variant">
-        Cotizá, cobrá directamente al cliente y enviá la foto en alta.
+        Cotizá, cobrá directamente al cliente y enviá la foto en alta. Podés ocultar o eliminar
+        pedidos de prueba desde esta pantalla.
       </p>
       <p className="text-caption mt-2 text-on-surface-variant/80">
         {businessConfig.noPlatformFeeMessage}

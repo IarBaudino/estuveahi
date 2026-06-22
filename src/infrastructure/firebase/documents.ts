@@ -86,6 +86,7 @@ export interface PurchaseRequestDoc {
   message: string | null;
   quotedPriceCents: number | null;
   currency: string;
+  photographerArchivedAt?: Timestamp | Date | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

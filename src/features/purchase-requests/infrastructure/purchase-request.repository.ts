@@ -36,6 +36,7 @@ export interface PurchaseRequestRow {
   currency: string;
   created_at: string;
   updated_at: string;
+  photographer_archived_at: string | null;
   photos?: {
     id: string;
     thumbnail_path: string;
@@ -64,6 +65,9 @@ function mapRequestRow(
     currency: data.currency,
     created_at: toDate(data.createdAt).toISOString(),
     updated_at: toDate(data.updatedAt).toISOString(),
+    photographer_archived_at: data.photographerArchivedAt
+      ? toDate(data.photographerArchivedAt).toISOString()
+      : null,
   };
 }
 
@@ -279,6 +283,39 @@ export async function cancelRequest(requestId: string, clientId: string) {
     status: "cancelled",
     updatedAt: FieldValue.serverTimestamp(),
   });
+}
+
+async function assertPhotographerRequest(requestId: string, photographerId: string) {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.purchaseRequests).doc(requestId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as PurchaseRequestDoc).photographerId !== photographerId) {
+    throw new NotFoundError("Solicitud no encontrada");
+  }
+
+  return ref;
+}
+
+export async function archiveRequest(requestId: string, photographerId: string): Promise<void> {
+  const ref = await assertPhotographerRequest(requestId, photographerId);
+  await ref.update({
+    photographerArchivedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function unarchiveRequest(requestId: string, photographerId: string): Promise<void> {
+  const ref = await assertPhotographerRequest(requestId, photographerId);
+  await ref.update({
+    photographerArchivedAt: null,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function deleteRequest(requestId: string, photographerId: string): Promise<void> {
+  const ref = await assertPhotographerRequest(requestId, photographerId);
+  await ref.delete();
 }
 
 export async function getPendingRequestCount(photographerId: string): Promise<number> {
