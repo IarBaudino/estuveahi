@@ -7,7 +7,6 @@ import { CheckCircle2, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
-import { businessConfig } from "@/config/business";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
 import { formatCurrency } from "@/shared/lib/utils";
 import { routes } from "@/config/routes";
@@ -60,11 +59,7 @@ export function PurchaseRequestDialog({
           </h3>
           <p className="mt-3 text-sm text-on-surface-variant">
             Foto {formatPhotoNumber(photoNumber)} — la {PHOTOGRAPHER_LABEL.singular} recibió tu
-            pedido con tus datos de contacto y se pondrá en contacto en breve para coordinar el
-            pago y la entrega en alta.
-          </p>
-          <p className="mt-2 text-xs text-on-surface-variant/80">
-            {businessConfig.deliveryDescription}
+            pedido y se pondrá en contacto en breve.
           </p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
             <Button className="flex-1" onClick={onClose}>

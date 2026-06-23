@@ -30,7 +30,7 @@ export default function AdminConfigPage() {
             {businessConfig.noPlatformFeeMessage}
           </p>
           <p className="mt-2 text-sm text-on-surface-variant">
-            {businessConfig.deliveryDescription}
+            {businessConfig.photographerDeliveryNote}
           </p>
         </section>
 

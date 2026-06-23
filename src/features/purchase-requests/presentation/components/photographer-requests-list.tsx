@@ -318,7 +318,7 @@ export function PhotographerRequestsList({
       )}
 
       <p className="text-caption text-on-surface-variant/70">
-        {businessConfig.noPlatformFeeMessage} {businessConfig.deliveryDescription}
+        {businessConfig.noPlatformFeeMessage} {businessConfig.photographerDeliveryNote}
       </p>
     </div>
   );

@@ -32,7 +32,7 @@ export default function PhotographerSettingsPage() {
             <h2 className="font-semibold">Entrega de fotos</h2>
           </div>
           <p className="mt-3 text-sm text-on-surface-variant">
-            {businessConfig.deliveryDescription}
+            {businessConfig.photographerDeliveryNote}
           </p>
         </div>
 

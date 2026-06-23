@@ -14,7 +14,6 @@ import { toggleFavoriteAction } from "@/features/favorites/presentation/actions/
 import { PurchaseRequestDialog } from "@/features/purchase-requests/presentation/components/purchase-request-dialog";
 import { usePathname, useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
-import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 interface PhotoGalleryProps {
   photos: PublicPhoto[];
@@ -74,6 +73,11 @@ export function PhotoGallery({
 
   return (
     <>
+      <p className="mb-4 text-sm text-on-surface-variant">
+        Recorré las fotos hasta encontrarte. Cuando veas la tuya, tocá{" "}
+        <strong className="text-on-surface">Pedir esta foto</strong>.
+      </p>
+
       <div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         onContextMenu={(e) => e.preventDefault()}
@@ -184,8 +188,7 @@ export function PhotoGallery({
                     </p>
                   )}
                   <p className="text-caption text-on-surface-variant/60">
-                    Vista previa protegida · la {PHOTOGRAPHER_LABEL.singular} envía el archivo en alta
-                    desde su material original
+                    Vista previa con marca de agua
                   </p>
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
