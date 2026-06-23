@@ -16,6 +16,8 @@ interface PhotoPriceEditorProps {
   prices: Record<string, string>;
   onPriceChange: (photoId: string, value: string) => void;
   onPhotoRemoved?: (photoId: string) => void;
+  currentUserId: string;
+  isEventOwner: boolean;
 }
 
 export function PhotoPriceEditor({
@@ -24,12 +26,18 @@ export function PhotoPriceEditor({
   prices,
   onPriceChange,
   onPhotoRemoved,
+  currentUserId,
+  isEventOwner,
 }: PhotoPriceEditorProps) {
   const { executeAsync: deletePhoto, isExecuting: deleting } = useAction(deletePhotoAction);
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {photos.map((photo) => (
+      {photos.map((photo) => {
+        const isMine = photo.photographerId === currentUserId;
+        const canManage = isEventOwner || isMine;
+
+        return (
         <div key={photo.id} className="flex gap-3 hairline-border p-3">
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
             <ProtectedImage
@@ -44,7 +52,18 @@ export function PhotoPriceEditor({
             </span>
           </div>
           <div className="min-w-0 flex-1 space-y-2">
-            <p className="truncate text-xs text-zinc-500">{photo.originalFilename}</p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-xs text-zinc-500">{photo.originalFilename}</p>
+              {isMine ? (
+                <span className="shrink-0 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                  Tuya
+                </span>
+              ) : (
+                <span className="shrink-0 rounded bg-zinc-500/15 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+                  Otrx fotografx
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <Input
                 type="number"
@@ -54,7 +73,9 @@ export function PhotoPriceEditor({
                 className="h-8 text-sm"
                 value={prices[photo.id] ?? ""}
                 onChange={(e) => onPriceChange(photo.id, e.target.value)}
+                disabled={!canManage}
               />
+              {canManage && (
               <Button
                 size="sm"
                 variant="destructive"
@@ -76,10 +97,12 @@ export function PhotoPriceEditor({
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
+              )}
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

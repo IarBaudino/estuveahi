@@ -9,14 +9,17 @@ import { Plus } from "lucide-react";
 
 export default async function PhotographerEventsPage() {
   const session = await auth();
-  const events = await getPhotographerEvents(session!.user.id);
+  const userId = session!.user.id;
+  const events = await getPhotographerEvents(userId);
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Mis eventos</h1>
-          <p className="text-zinc-500">{events.length} eventos</p>
+          <h1 className="text-2xl font-bold">Eventos</h1>
+          <p className="text-zinc-500">
+            {events.length} eventos · incluye los tuyos y los publicados por otrxs fotografxs
+          </p>
         </div>
         <Link href={routes.photographer.newEvent}>
           <Button>
@@ -30,7 +33,9 @@ export default async function PhotographerEventsPage() {
         {events.length === 0 ? (
           <p className="text-zinc-500">No tienes eventos aún.</p>
         ) : (
-          events.map((event) => (
+          events.map((event) => {
+            const isOwn = event.photographerId === userId;
+            return (
             <div
               key={event.id}
               className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
@@ -41,6 +46,9 @@ export default async function PhotographerEventsPage() {
                   <Badge variant={event.status === "published" ? "success" : "default"}>
                     {event.status}
                   </Badge>
+                  {!isOwn && (
+                    <Badge variant="outline">Colaborativo</Badge>
+                  )}
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">
                   {formatDate(event.eventDate)} · {event.photoCount} fotos · QR: {event.qrCode}
@@ -48,7 +56,9 @@ export default async function PhotographerEventsPage() {
               </div>
               <div className="flex gap-2">
                 <Link href={routes.photographer.event(event.id)}>
-                  <Button variant="outline" size="sm">Gestionar</Button>
+                  <Button variant="outline" size="sm">
+                    {isOwn ? "Gestionar" : "Colaborar"}
+                  </Button>
                 </Link>
                 {event.status === "published" && (
                   <Link href={routes.event(event.slug)} target="_blank">
@@ -57,7 +67,8 @@ export default async function PhotographerEventsPage() {
                 )}
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

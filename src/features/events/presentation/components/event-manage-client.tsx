@@ -31,6 +31,9 @@ import { Button } from "@/shared/ui/button";
 interface EventManageClientProps {
   event: Event;
   photos: Photo[];
+  isOwner: boolean;
+  canUpload: boolean;
+  currentUserId: string;
 }
 
 function buildPriceDraft(photos: Photo[]): Record<string, string> {
@@ -42,7 +45,13 @@ function buildPriceDraft(photos: Photo[]): Record<string, string> {
   );
 }
 
-export function EventManageClient({ event, photos: initialPhotos }: EventManageClientProps) {
+export function EventManageClient({
+  event,
+  photos: initialPhotos,
+  isOwner,
+  canUpload,
+  currentUserId,
+}: EventManageClientProps) {
   const router = useRouter();
   const [photos, setPhotos] = useState(initialPhotos);
   const [photoCount, setPhotoCount] = useState(event.photoCount);
@@ -138,10 +147,12 @@ export function EventManageClient({ event, photos: initialPhotos }: EventManageC
       }
     }
 
-    const eventResult = await updateEvent({ id: event.id, ...eventData });
-    if (eventResult?.serverError) {
-      setSaveError(eventResult.serverError);
-      return;
+    if (isOwner) {
+      const eventResult = await updateEvent({ id: event.id, ...eventData });
+      if (eventResult?.serverError) {
+        setSaveError(eventResult.serverError);
+        return;
+      }
     }
 
     if (priceUpdates.length > 0) {
@@ -179,51 +190,70 @@ export function EventManageClient({ event, photos: initialPhotos }: EventManageC
           <p className="text-zinc-500">
             Estado: {event.status} · {photoCount} fotos
           </p>
-          {event.status === "draft" && (
+          {event.status === "draft" && isOwner && (
             <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
               Este evento está en borrador y no aparece en el catálogo público. Usá
               &quot;Publicar evento&quot; cuando esté listo.
             </p>
           )}
+          {!isOwner && (
+            <p className="mt-2 text-sm text-zinc-500">
+              Evento colaborativo: podés subir tus fotos y gestionar solo las tuyas. Las ventas
+              de cada foto van al fotógrafo que la subió.
+            </p>
+          )}
         </div>
-        <EventActions eventId={event.id} status={event.status} />
+        {isOwner && <EventActions eventId={event.id} status={event.status} />}
       </div>
 
       <form onSubmit={onSaveAll} className="mt-6 space-y-8">
-        <section className="hairline-border space-y-4 p-4">
-          <h2 className="font-semibold">Información del evento</h2>
-          <EventFormFields register={register} errors={errors} />
-        </section>
+        {isOwner && (
+          <section className="hairline-border space-y-4 p-4">
+            <h2 className="font-semibold">Información del evento</h2>
+            <EventFormFields register={register} errors={errors} />
+          </section>
+        )}
 
-        <section className="hairline-border p-4">
-          <div className="flex items-center gap-2 font-medium">
-            <QrCode className="h-5 w-5" />
-            Acceso QR
-          </div>
-          <p className="mt-2 font-mono text-sm">{event.qrCode}</p>
-          <p className="mt-1 text-sm text-zinc-500 break-all">{qrUrl}</p>
-          {event.status === "published" && (
-            <Link href={routes.event(event.slug)} target="_blank" className="mt-3 inline-block">
-              <Button type="button" variant="outline" size="sm">
-                Ver galería pública
-              </Button>
-            </Link>
-          )}
-        </section>
+        {isOwner && (
+          <section className="hairline-border p-4">
+            <div className="flex items-center gap-2 font-medium">
+              <QrCode className="h-5 w-5" />
+              Acceso QR
+            </div>
+            <p className="mt-2 font-mono text-sm">{event.qrCode}</p>
+            <p className="mt-1 text-sm text-zinc-500 break-all">{qrUrl}</p>
+            {event.status === "published" && (
+              <Link href={routes.event(event.slug)} target="_blank" className="mt-3 inline-block">
+                <Button type="button" variant="outline" size="sm">
+                  Ver galería pública
+                </Button>
+              </Link>
+            )}
+          </section>
+        )}
 
-        <section>
-          <h2 className="text-lg font-semibold">Subir fotografías</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Las fotos se suben al instante. Los precios los editás abajo y guardás todo junto.
-          </p>
-          <div className="mt-4">
-            <PhotoUploader eventId={event.id} onPhotoUploaded={handlePhotoUploaded} />
-          </div>
-        </section>
+        {canUpload && (
+          <section>
+            <h2 className="text-lg font-semibold">Subir fotografías</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Las fotos se suben al instante. Los precios los editás abajo y guardás todo junto.
+            </p>
+            <div className="mt-4">
+              <PhotoUploader eventId={event.id} onPhotoUploaded={handlePhotoUploaded} />
+            </div>
+          </section>
+        )}
 
         {photos.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold">Fotografías ({photos.length})</h2>
+            <h2 className="text-lg font-semibold">
+              Fotografías ({photos.length})
+              {!isOwner && (
+                <span className="ml-2 text-sm font-normal text-zinc-500">
+                  — editás solo las tuyas
+                </span>
+              )}
+            </h2>
             <p className="mt-1 text-sm text-zinc-500">
               Cada foto tiene un número (#1, #2…) que el cliente verá al pedirla.
             </p>
@@ -234,18 +264,22 @@ export function EventManageClient({ event, photos: initialPhotos }: EventManageC
                 prices={draftPrices}
                 onPriceChange={handlePriceChange}
                 onPhotoRemoved={handlePhotoRemoved}
+                currentUserId={currentUserId}
+                isEventOwner={isOwner}
               />
             </div>
           </section>
         )}
 
-        <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-black/90 p-4 backdrop-blur-md">
-          <Button type="submit" size="lg" isLoading={isSaving}>
-            Guardar cambios
-          </Button>
-          {saveMessage && <p className="text-sm text-emerald-500">{saveMessage}</p>}
-          {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-        </div>
+        {(isOwner || photos.some((p) => p.photographerId === currentUserId)) && (
+          <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-black/90 p-4 backdrop-blur-md">
+            <Button type="submit" size="lg" isLoading={isSaving}>
+              Guardar cambios
+            </Button>
+            {saveMessage && <p className="text-sm text-emerald-500">{saveMessage}</p>}
+            {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+          </div>
+        )}
       </form>
     </div>
   );

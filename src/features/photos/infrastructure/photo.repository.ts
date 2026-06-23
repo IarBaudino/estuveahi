@@ -5,7 +5,7 @@ import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type { PhotoDoc, EventDoc } from "@/infrastructure/firebase/documents";
 import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
 import type { UserRole } from "@/domain/enums/roles";
-import { canManageEvent } from "@/features/events/infrastructure/event-access";
+import { canContributeToEvent, canManageEvent, canManagePhoto } from "@/features/events/infrastructure/event-access";
 import {
   buildPhotoPaths,
   ALLOWED_MIME_TYPES,
@@ -40,11 +40,11 @@ export async function uploadPhoto(
   if (!eventDoc.exists) throw new NotFoundError("Evento no encontrado");
 
   const eventData = eventDoc.data() as EventDoc;
-  if (!canManageEvent(eventData, actorId, role)) {
+  if (!canContributeToEvent(eventData, actorId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
 
-  const photographerId = eventData.photographerId;
+  const photographerId = actorId;
 
   const photoId = randomUUID();
   const paths = buildPhotoPaths(photographerId, input.eventId, photoId, "");
@@ -136,16 +136,20 @@ export async function deletePhoto(
   if (!doc.exists) throw new NotFoundError("Foto no encontrada");
 
   const photo = doc.data() as PhotoDoc;
+
   const eventDoc = await db.collection(COLLECTIONS.events).doc(photo.eventId).get();
+  const eventData = eventDoc.exists ? (eventDoc.data() as EventDoc) : null;
 
   if (
-    !eventDoc.exists ||
-    !canManageEvent(eventDoc.data() as EventDoc, actorId, role)
+    !canManagePhoto(photo, actorId, role) &&
+    !(eventData && canManageEvent(eventData, actorId, role))
   ) {
     throw new NotFoundError("Foto no encontrada");
   }
 
   await ref.delete();
+
+  if (!eventDoc.exists) return;
 
   const currentCount = (eventDoc.data() as EventDoc).photoCount;
   await db.collection(COLLECTIONS.events).doc(photo.eventId).update({
@@ -169,10 +173,14 @@ export async function updatePhotoPrice(
     throw new NotFoundError("Foto no encontrada");
   }
 
+  const photo = doc.data() as PhotoDoc;
+
   const eventDoc = await db.collection(COLLECTIONS.events).doc(eventId).get();
+  const eventData = eventDoc.exists ? (eventDoc.data() as EventDoc) : null;
+
   if (
-    !eventDoc.exists ||
-    !canManageEvent(eventDoc.data() as EventDoc, actorId, role)
+    !canManagePhoto(photo, actorId, role) &&
+    !(eventData && canManageEvent(eventData, actorId, role))
   ) {
     throw new NotFoundError("Foto no encontrada");
   }

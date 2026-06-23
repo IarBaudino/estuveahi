@@ -88,21 +88,25 @@ export default async function PhotographerDashboardPage() {
           <p className="mt-4 text-zinc-500">Aún no tienes eventos. ¡Crea el primero!</p>
         ) : (
           <ul className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800">
-            {events.slice(0, 5).map((event) => (
+            {events.slice(0, 5).map((event) => {
+              const isOwn = event.photographerId === user.id;
+              return (
               <li key={event.id} className="flex items-center justify-between py-3">
                 <div>
                   <p className="font-medium">{event.title}</p>
                   <p className="text-sm text-zinc-500">
                     {event.photoCount} fotos · {event.status}
+                    {!isOwn && " · colaborativo"}
                   </p>
                 </div>
                 <Link href={routes.photographer.event(event.id)}>
                   <Button variant="outline" size="sm">
-                    Gestionar
+                    {isOwn ? "Gestionar" : "Colaborar"}
                   </Button>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

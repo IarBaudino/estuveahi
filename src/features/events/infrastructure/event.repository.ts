@@ -131,22 +131,37 @@ export async function getPhotographerEvents(photographerId: string): Promise<Eve
   if (!db) return [];
 
   try {
-    const snap = await db
-      .collection(COLLECTIONS.events)
-      .where("photographerId", "==", photographerId)
-      .get();
+    const [ownSnap, publishedSnap] = await Promise.all([
+      db.collection(COLLECTIONS.events).where("photographerId", "==", photographerId).get(),
+      db
+        .collection(COLLECTIONS.events)
+        .where("status", "==", EventStatus.PUBLISHED)
+        .get(),
+    ]);
 
-    return snap.docs
-      .map((doc) => {
-        try {
-          return mapEvent(doc.id, doc.data() as EventDoc);
-        } catch (error) {
-          console.error("[getPhotographerEvents] skip invalid event:", doc.id, error);
-          return null;
-        }
-      })
-      .filter((event): event is Event => event !== null)
-      .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+    const events = new Map<string, Event>();
+
+    for (const doc of ownSnap.docs) {
+      try {
+        events.set(doc.id, mapEvent(doc.id, doc.data() as EventDoc));
+      } catch (error) {
+        console.error("[getPhotographerEvents] skip invalid own event:", doc.id, error);
+      }
+    }
+
+    for (const doc of publishedSnap.docs) {
+      const data = doc.data() as EventDoc;
+      if (data.photographerId === photographerId) continue;
+      try {
+        events.set(doc.id, mapEvent(doc.id, data));
+      } catch (error) {
+        console.error("[getPhotographerEvents] skip invalid published event:", doc.id, error);
+      }
+    }
+
+    return [...events.values()].sort(
+      (a, b) => b.eventDate.getTime() - a.eventDate.getTime(),
+    );
   } catch (error) {
     console.error("[getPhotographerEvents] query failed:", error);
     return [];
