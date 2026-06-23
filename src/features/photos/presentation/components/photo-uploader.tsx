@@ -1,19 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
-import { Upload } from "lucide-react";
+import { Camera, ImagePlus, Upload } from "lucide-react";
 import { uploadPhotoAction } from "@/features/photos/presentation/actions/photo.actions";
 import type { PhotoDTO } from "@/shared/lib/photo-serialization";
+import { resolveImageMimeType, isAllowedUploadImage, UPLOAD_PREPARE_MAX_BYTES } from "@/shared/lib/image-upload";
+import { prepareClientImageUpload } from "@/shared/lib/prepare-client-image-upload";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import {
-  ALLOWED_MIME_TYPES,
-  MAX_FILE_SIZE,
-} from "@/infrastructure/storage/storage.constants";
-
-/** Límite aproximado de body en route handlers de Vercel (~4.5 MB). */
-const API_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+import { MAX_FILE_SIZE } from "@/infrastructure/storage/storage.constants";
 
 interface PhotoUploaderProps {
   eventId: string;
@@ -46,7 +42,7 @@ async function uploadViaApi(
   formData.append("file", file);
   formData.append("eventId", eventId);
   formData.append("filename", file.name);
-  formData.append("mimeType", file.type);
+  formData.append("mimeType", resolveImageMimeType(file));
   if (priceCents !== undefined) {
     formData.append("priceCents", String(priceCents));
   }
@@ -71,7 +67,13 @@ async function uploadViaApi(
   return { photo: payload.photo };
 }
 
+function resetFileInput(input: HTMLInputElement | null) {
+  if (input) input.value = "";
+}
+
 export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) {
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [defaultPricePesos, setDefaultPricePesos] = useState("");
   const [uploads, setUploads] = useState<{ name: string; status: string }[]>([]);
@@ -85,31 +87,57 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
     async (files: FileList | File[]) => {
       const fileArray = Array.from(files);
 
-      for (const file of fileArray) {
-        if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
-          setUploads((prev) => [...prev, { name: file.name, status: "Tipo no permitido" }]);
-          continue;
-        }
-        if (file.size > MAX_FILE_SIZE) {
-          setUploads((prev) => [...prev, { name: file.name, status: "Archivo muy grande" }]);
+      for (const rawFile of fileArray) {
+        const displayName = rawFile.name || "foto";
+
+        if (!isAllowedUploadImage(rawFile)) {
+          setUploads((prev) => [
+            ...prev,
+            { name: displayName, status: "Tipo no permitido" },
+          ]);
           continue;
         }
 
-        setUploads((prev) => [...prev, { name: file.name, status: "Subiendo..." }]);
+        if (rawFile.size > MAX_FILE_SIZE) {
+          setUploads((prev) => [
+            ...prev,
+            { name: displayName, status: "Archivo muy grande" },
+          ]);
+          continue;
+        }
+
+        setUploads((prev) => [...prev, { name: displayName, status: "Preparando..." }]);
 
         const priceCents =
           defaultPriceCents !== undefined && !Number.isNaN(defaultPriceCents)
             ? defaultPriceCents
             : undefined;
 
+        let file: File;
         try {
-          if (file.size <= API_UPLOAD_MAX_BYTES) {
+          file = await prepareClientImageUpload(rawFile);
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "No se pudo preparar la imagen";
+          setUploads((prev) =>
+            prev.map((u) => (u.name === displayName ? { ...u, status: message } : u)),
+          );
+          continue;
+        }
+
+        const mimeType = resolveImageMimeType(file);
+        setUploads((prev) =>
+          prev.map((u) => (u.name === displayName ? { ...u, status: "Subiendo..." } : u)),
+        );
+
+        try {
+          if (file.size <= UPLOAD_PREPARE_MAX_BYTES) {
             const apiResult = await uploadViaApi(file, eventId, priceCents);
 
             if (apiResult.error) {
               setUploads((prev) =>
                 prev.map((u) =>
-                  u.name === file.name ? { ...u, status: apiResult.error! } : u,
+                  u.name === displayName ? { ...u, status: apiResult.error! } : u,
                 ),
               );
               continue;
@@ -121,7 +149,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
 
             setUploads((prev) =>
               prev.map((u) =>
-                u.name === file.name ? { ...u, status: "Completado" } : u,
+                u.name === displayName ? { ...u, status: "Completado" } : u,
               ),
             );
             continue;
@@ -131,7 +159,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
           const result = await executeAsync({
             eventId,
             filename: file.name,
-            mimeType: file.type as (typeof ALLOWED_MIME_TYPES)[number],
+            mimeType: mimeType as "image/jpeg" | "image/png" | "image/webp",
             fileSize: file.size,
             fileBase64: base64,
             priceCents,
@@ -140,7 +168,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
           if (!result) {
             setUploads((prev) =>
               prev.map((u) =>
-                u.name === file.name ? { ...u, status: "Error al subir" } : u,
+                u.name === displayName ? { ...u, status: "Error al subir" } : u,
               ),
             );
             continue;
@@ -149,7 +177,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
           if (result.serverError) {
             setUploads((prev) =>
               prev.map((u) =>
-                u.name === file.name ? { ...u, status: result.serverError! } : u,
+                u.name === displayName ? { ...u, status: result.serverError! } : u,
               ),
             );
             continue;
@@ -162,7 +190,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
               .join(", ");
             setUploads((prev) =>
               prev.map((u) =>
-                u.name === file.name
+                u.name === displayName
                   ? { ...u, status: detail || "Archivo inválido" }
                   : u,
               ),
@@ -176,7 +204,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
 
           setUploads((prev) =>
             prev.map((u) =>
-              u.name === file.name ? { ...u, status: "Completado" } : u,
+              u.name === displayName ? { ...u, status: "Completado" } : u,
             ),
           );
         } catch (error) {
@@ -186,14 +214,23 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
               ? error.message
               : "Error al subir. Probá de nuevo o recargá la página.";
           setUploads((prev) =>
-            prev.map((u) =>
-              u.name === file.name ? { ...u, status: message } : u,
-            ),
+            prev.map((u) => (u.name === displayName ? { ...u, status: message } : u)),
           );
         }
       }
     },
     [eventId, executeAsync, onPhotoUploaded, defaultPriceCents],
+  );
+
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files?.length) {
+        void processFiles(files);
+      }
+      resetFileInput(event.target);
+    },
+    [processFiles],
   );
 
   return (
@@ -208,6 +245,23 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
         onChange={(e) => setDefaultPricePesos(e.target.value)}
       />
 
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        multiple
+        className="sr-only"
+        onChange={handleInputChange}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        onChange={handleInputChange}
+      />
+
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -217,7 +271,7 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
         onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
-          processFiles(e.dataTransfer.files);
+          void processFiles(e.dataTransfer.files);
         }}
         className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
           dragOver
@@ -226,25 +280,36 @@ export function PhotoUploader({ eventId, onPhotoUploaded }: PhotoUploaderProps) 
         }`}
       >
         <Upload className="mx-auto h-10 w-10 text-zinc-400" />
-        <p className="mt-4 font-medium">Arrastra tus fotos aquí</p>
-        <p className="mt-1 text-sm text-zinc-500">JPG, PNG o WebP · Máx 25MB</p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.multiple = true;
-            input.accept = "image/jpeg,image/png,image/webp";
-            input.onchange = (e) => {
-              const files = (e.target as HTMLInputElement).files;
-              if (files) processFiles(files);
-            };
-            input.click();
-          }}
-        >
-          Seleccionar archivos
-        </Button>
+        <p className="mt-4 font-medium">Subí tus fotos</p>
+        <p className="mt-1 text-sm text-zinc-500">
+          Desde el celular o la compu · JPG, PNG, WebP y fotos de iPhone (HEIC)
+        </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <Camera className="h-4 w-4" />
+            Tomar foto
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => galleryInputRef.current?.click()}
+          >
+            <ImagePlus className="h-4 w-4" />
+            Elegir de galería
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="hidden sm:inline-flex"
+            onClick={() => galleryInputRef.current?.click()}
+          >
+            Seleccionar archivos
+          </Button>
+        </div>
       </div>
 
       {uploads.length > 0 && (

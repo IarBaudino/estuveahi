@@ -5,6 +5,7 @@ import { uploadPhotoSchema } from "@/features/photos/application/schemas/photo.s
 import { assertPhotographerUploadAccess } from "@/features/photos/infrastructure/upload-auth";
 import { uploadPhoto } from "@/features/photos/infrastructure/photo.repository";
 import { toPhotoDTO } from "@/shared/lib/photo-serialization";
+import { resolveImageMimeType } from "@/shared/lib/image-upload";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -41,7 +42,11 @@ export async function POST(request: Request) {
     const parsed = formSchema.safeParse({
       eventId: formData.get("eventId"),
       filename: formData.get("filename") ?? file.name,
-      mimeType: formData.get("mimeType") ?? file.type,
+      mimeType:
+        resolveImageMimeType({
+          name: String(formData.get("filename") ?? file.name),
+          type: String(formData.get("mimeType") ?? file.type),
+        }) || file.type,
       priceCents: formData.get("priceCents") ?? undefined,
     });
 
