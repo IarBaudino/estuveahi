@@ -75,19 +75,6 @@ export function PhotoGallery({
   return (
     <>
       <div
-        className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-on-surface-variant"
-        role="note"
-      >
-        <p className="font-medium text-on-surface">Encontrate en el evento</p>
-        <p className="mt-1">
-          Recorré las fotos hasta darte con la tuya. Son vistas previa con marca de agua en diagonal;
-          si querés el archivo en alta, tocá <strong className="text-on-surface">Pedir esta foto</strong>{" "}
-          y la {PHOTOGRAPHER_LABEL.singular} te contacta (el material en alta lo guarda y envía
-          desde su equipo).
-        </p>
-      </div>
-
-      <div
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         onContextMenu={(e) => e.preventDefault()}
       >
