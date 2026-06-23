@@ -447,7 +447,11 @@ export async function adminDeleteEvent(eventId: string): Promise<void> {
   await ref.delete();
 }
 
-export async function getAllUsersForAdmin(): Promise<Profile[]> {
+export interface AdminUserListItem extends Profile {
+  photographerIsVerified: boolean | null;
+}
+
+export async function getAllUsersForAdmin(): Promise<AdminUserListItem[]> {
   const db = getDbIfConfigured();
   if (!db) return [];
 
@@ -457,7 +461,37 @@ export async function getAllUsersForAdmin(): Promise<Profile[]> {
     .limit(50)
     .get();
 
-  return snap.docs.map((doc) => mapProfile(doc.id, doc.data() as ProfileDoc));
+  const profiles = snap.docs.map((doc) => mapProfile(doc.id, doc.data() as ProfileDoc));
+  const photographerIds = profiles
+    .filter((profile) => profile.role === Role.PHOTOGRAPHER)
+    .map((profile) => profile.id);
+
+  const photographerSnaps =
+    photographerIds.length > 0
+      ? await Promise.all(
+          photographerIds.map((id) =>
+            db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+          ),
+        )
+      : [];
+
+  const verifiedByUserId = new Map(
+    photographerIds.map((id, index) => {
+      const doc = photographerSnaps[index];
+      const isVerified = doc?.exists
+        ? Boolean((doc.data() as PhotographerProfileDoc).isVerified)
+        : false;
+      return [id, isVerified] as const;
+    }),
+  );
+
+  return profiles.map((profile) => ({
+    ...profile,
+    photographerIsVerified:
+      profile.role === Role.PHOTOGRAPHER
+        ? (verifiedByUserId.get(profile.id) ?? false)
+        : null,
+  }));
 }
 
 export interface AdminPhotographerOption {

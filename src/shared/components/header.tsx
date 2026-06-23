@@ -4,6 +4,7 @@ import { signOut } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { MaterialIcon } from "@/shared/components/icon";
+import { DASHBOARD_LINK_LABEL, getDashboardRoute } from "@/shared/lib/dashboard-route";
 
 export async function Header() {
   let user = null;
@@ -13,7 +14,7 @@ export async function Header() {
     console.error("[Header] auth:", error);
   }
 
-  const isPhotographer = user?.role === "photographer" || user?.role === "admin";
+  const dashboardHref = user ? getDashboardRoute(user.role) : null;
 
   return (
     <header className="glass-nav fixed top-0 z-50 w-full border-b border-white/10">
@@ -38,38 +39,22 @@ export async function Header() {
           >
             {PHOTOGRAPHER_LABEL.pluralCap}
           </Link>
-          {isPhotographer && (
-            <Link
-              href={routes.photographer.dashboard}
-              className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
-            >
-              {PHOTOGRAPHER_LABEL.panel}
-            </Link>
-          )}
-          {user?.role === "admin" && (
-            <Link
-              href={routes.admin.dashboard}
-              className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
-            >
-              Admin
-            </Link>
-          )}
-          {user && (
-            <Link
-              href={routes.client.dashboard}
-              className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
-            >
-              Mi cuenta
-            </Link>
-          )}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href={routes.events} aria-label="Buscar">
             <MaterialIcon name="search" className="text-primary" />
           </Link>
-          {user ? (
+          {user && dashboardHref ? (
             <>
+              <Link
+                href={dashboardHref}
+                className="text-label-sm inline-flex items-center gap-1.5 border border-primary/40 bg-primary/10 px-3 py-2 tracking-widest text-primary transition-colors hover:bg-primary/20"
+                aria-label={DASHBOARD_LINK_LABEL}
+              >
+                <MaterialIcon name="dashboard" className="text-base sm:hidden" />
+                <span>{DASHBOARD_LINK_LABEL}</span>
+              </Link>
               <Link
                 href={routes.client.favorites}
                 className="text-label-sm hidden tracking-widest text-on-surface-variant hover:text-primary sm:inline"
@@ -84,7 +69,7 @@ export async function Header() {
               >
                 <button
                   type="submit"
-                  className="text-label-sm border border-white/20 px-4 py-2 tracking-widest text-primary transition-colors hover:bg-white/5"
+                  className="text-label-sm border border-white/20 px-3 py-2 tracking-widest text-primary transition-colors hover:bg-white/5 sm:px-4"
                 >
                   Salir
                 </button>

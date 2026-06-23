@@ -10,18 +10,18 @@ import {
   unverifyPhotographerAction,
 } from "@/features/auth/presentation/actions/auth.actions";
 import { setUserBlockedAction } from "@/features/profile/presentation/actions/profile.actions";
-import type { Profile } from "@/domain/entities/user";
+import type { AdminUserListItem } from "@/features/events/infrastructure/event.repository";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getDisplayName } from "@/shared/lib/profile";
 import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
 
-const ROLE_LABELS: Record<Profile["role"], string> = {
+const ROLE_LABELS: Record<AdminUserListItem["role"], string> = {
   client: "Cliente",
   photographer: PHOTOGRAPHER_LABEL.singularCap,
   admin: "Admin",
 };
 
-export function AdminUsersTable({ users }: { users: Profile[] }) {
+export function AdminUsersTable({ users }: { users: AdminUserListItem[] }) {
   const router = useRouter();
   const actionOptions = {
     onSuccess: () => router.refresh(),
@@ -80,11 +80,16 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                 <Badge>{ROLE_LABELS[user.role]}</Badge>
               </td>
               <td className="px-4 py-3">
-                {user.isBlocked ? (
-                  <Badge variant="destructive">Bloqueado</Badge>
-                ) : (
-                  <Badge variant="outline">Activo</Badge>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {user.isBlocked ? (
+                    <Badge variant="destructive">Bloqueado</Badge>
+                  ) : (
+                    <Badge variant="outline">Activo</Badge>
+                  )}
+                  {user.role === "photographer" && user.photographerIsVerified && (
+                    <Badge variant="success">Verificado</Badge>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
@@ -114,7 +119,26 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                     </Button>
                   )}
                   {user.role === "photographer" && !user.isBlocked && (
-                    <>
+                    user.photographerIsVerified ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        isLoading={unverifying}
+                        onClick={() => {
+                          const name = getDisplayName({
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                            email: user.email,
+                            phone: user.phone,
+                          });
+                          if (confirm(`¿Quitar la verificación de ${name}?`)) {
+                            unverify({ userId: user.id });
+                          }
+                        }}
+                      >
+                        Quitar verificación
+                      </Button>
+                    ) : (
                       <Button
                         size="sm"
                         variant="outline"
@@ -123,15 +147,7 @@ export function AdminUsersTable({ users }: { users: Profile[] }) {
                       >
                         Verificar
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        isLoading={unverifying}
-                        onClick={() => unverify({ userId: user.id })}
-                      >
-                        Quitar verificación
-                      </Button>
-                    </>
+                    )
                   )}
                   {user.role === "client" && !user.isBlocked && (
                     <Button
