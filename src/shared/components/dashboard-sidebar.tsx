@@ -2,106 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Camera, Heart, Shield } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import {
-  Calendar,
-  Camera,
-  Heart,
-  ImageIcon,
-  LayoutDashboard,
-  QrCode,
-  Settings,
-  ShoppingBag,
-  SlidersHorizontal,
-  UserCheck,
-  Users,
-} from "lucide-react";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-}
-
-const photographerNav: NavItem[] = [
-  {
-    href: routes.photographer.dashboard,
-    label: "Dashboard",
-    icon: <LayoutDashboard className="h-4 w-4" />,
-  },
-  {
-    href: routes.photographer.events,
-    label: "Eventos",
-    icon: <Calendar className="h-4 w-4" />,
-  },
-  {
-    href: routes.photographer.requests,
-    label: "Solicitudes",
-    icon: <ShoppingBag className="h-4 w-4" />,
-  },
-  {
-    href: routes.photographer.profile,
-    label: "Perfil",
-    icon: <Settings className="h-4 w-4" />,
-  },
-  {
-    href: routes.photographer.settings,
-    label: "Ajustes",
-    icon: <SlidersHorizontal className="h-4 w-4" />,
-  },
-];
-
-const adminNav: NavItem[] = [
-  {
-    href: routes.admin.dashboard,
-    label: "Dashboard",
-    icon: <LayoutDashboard className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.users,
-    label: "Usuarios",
-    icon: <Users className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.events,
-    label: "Eventos",
-    icon: <Calendar className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.photographers,
-    label: PHOTOGRAPHER_LABEL.pluralCap,
-    icon: <UserCheck className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.content,
-    label: "Contenido",
-    icon: <ImageIcon className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.requests,
-    label: "Solicitudes",
-    icon: <ShoppingBag className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.qr,
-    label: "QR web",
-    icon: <QrCode className="h-4 w-4" />,
-  },
-  {
-    href: routes.admin.config,
-    label: "Configuración",
-    icon: <SlidersHorizontal className="h-4 w-4" />,
-  },
-];
-
-function isActive(currentPath: string, href: string) {
-  if (href === routes.photographer.dashboard || href === routes.admin.dashboard) {
-    return currentPath === href;
-  }
-  return currentPath === href || currentPath.startsWith(`${href}/`);
-}
+import {
+  adminNav,
+  adminPhotographerLinks,
+  isDashboardNavActive,
+  photographerNav,
+} from "@/shared/components/dashboard-nav-config";
 
 export function DashboardSidebar({
   type,
@@ -109,7 +20,9 @@ export function DashboardSidebar({
   type: "photographer" | "admin";
 }) {
   const currentPath = usePathname();
+  const { data: session } = useSession();
   const items = type === "photographer" ? photographerNav : adminNav;
+  const isAdmin = session?.user?.role === "admin";
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-white/10 p-4 md:block">
@@ -118,24 +31,41 @@ export function DashboardSidebar({
         {type === "photographer" ? PHOTOGRAPHER_LABEL.singularCap : "Admin"}
       </div>
       <nav className="space-y-1">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors",
-              isActive(currentPath, item.href)
-                ? "bg-surface-container-high font-medium"
-                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
-            )}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        ))}
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors",
+                isDashboardNavActive(currentPath, item.href)
+                  ? "bg-surface-container-high font-medium"
+                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
       {type === "photographer" && (
         <div className="mt-6 border-t border-white/10 pt-4">
+          {isAdmin && (
+            <Link
+              href={routes.admin.dashboard}
+              className={cn(
+                "mb-1 flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors",
+                isDashboardNavActive(currentPath, routes.admin.dashboard)
+                  ? "bg-surface-container-high font-medium"
+                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              Panel admin
+            </Link>
+          )}
           <Link
             href={routes.client.favorites}
             className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
@@ -143,6 +73,31 @@ export function DashboardSidebar({
             <Heart className="h-4 w-4" />
             Mis favoritos
           </Link>
+        </div>
+      )}
+      {type === "admin" && (
+        <div className="mt-6 border-t border-white/10 pt-4">
+          <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-on-surface-variant">
+            Como fotografx
+          </p>
+          {adminPhotographerLinks.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors",
+                  isDashboardNavActive(currentPath, item.href)
+                    ? "bg-surface-container-high font-medium"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
       )}
     </aside>

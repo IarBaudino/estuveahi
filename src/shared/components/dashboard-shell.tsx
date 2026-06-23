@@ -2,7 +2,10 @@
 
 import { Suspense } from "react";
 import { DashboardSidebar } from "@/shared/components/dashboard-sidebar";
-import { MobileDashboardNav } from "@/shared/components/mobile-dashboard-nav";
+import {
+  AdminMobileNav,
+  PhotographerMobileNav,
+} from "@/shared/components/dashboard-mobile-nav";
 import { PhotographerAccessGuard } from "@/shared/components/photographer-access-guard";
 
 function SidebarFallback() {
@@ -24,7 +27,7 @@ export function PhotographerDashboardShell({
         </Suspense>
         <div className="min-w-0 flex-1 px-4 py-8 pb-24 sm:px-0 md:pb-8">{children}</div>
         <Suspense fallback={null}>
-          <MobileDashboardNav />
+          <PhotographerMobileNav />
         </Suspense>
       </div>
     </PhotographerAccessGuard>
@@ -37,7 +40,10 @@ export function AdminDashboardShell({ children }: { children: React.ReactNode })
       <Suspense fallback={<SidebarFallback />}>
         <DashboardSidebar type="admin" />
       </Suspense>
-      <div className="min-w-0 flex-1 px-4 py-8 sm:px-0">{children}</div>
+      <div className="min-w-0 flex-1 px-4 py-8 pb-24 sm:px-0 md:pb-8">{children}</div>
+      <Suspense fallback={null}>
+        <AdminMobileNav />
+      </Suspense>
     </div>
   );
 }
