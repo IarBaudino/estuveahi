@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PhotographerProfile, Profile } from "@/domain/entities/user";
 import { PhotographerProfileForm } from "@/features/auth/presentation/components/photographer-profile-form";
 import { ProfileForm } from "@/features/profile/presentation/components/profile-form";
+import { ProfileAvatarUploader } from "@/features/profile/presentation/components/profile-avatar-uploader";
 import { cn } from "@/shared/lib/utils";
 
 type Tab = "public" | "account";
@@ -27,7 +28,7 @@ export function PhotographerProfilePanel({
         {(
           [
             { id: "public" as const, label: "Perfil público" },
-            { id: "account" as const, label: "Mi cuenta" },
+            { id: "account" as const, label: "Datos de contacto" },
           ] as const
         ).map(({ id, label }) => (
           <button
@@ -48,13 +49,19 @@ export function PhotographerProfilePanel({
 
       <div className="mt-6">
         {tab === "public" ? (
-          <PhotographerProfileForm profile={photographerProfile} email={email} />
+          <div className="space-y-8">
+            <ProfileAvatarUploader
+              avatarUrl={accountProfile.avatarUrl}
+              variant="public"
+            />
+            <PhotographerProfileForm profile={photographerProfile} email={email} />
+          </div>
         ) : (
           <div>
             <p className="mb-4 text-sm text-on-surface-variant">
-              Datos de contacto que verán los clientes al solicitar fotos.
+              Nombre y teléfono que verán los clientes al solicitar tus fotos.
             </p>
-            <ProfileForm profile={accountProfile} />
+            <ProfileForm profile={accountProfile} hideAvatar />
           </div>
         )}
       </div>
