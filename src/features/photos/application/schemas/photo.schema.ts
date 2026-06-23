@@ -18,3 +18,15 @@ export const updatePhotoPriceSchema = z.object({
 });
 
 export type UpdatePhotoPriceInput = z.infer<typeof updatePhotoPriceSchema>;
+
+export const bulkUpdatePhotoPricesSchema = z.object({
+  eventId: z.string().uuid(),
+  prices: z.array(
+    z.object({
+      photoId: z.string().uuid(),
+      priceCents: z.number().int().min(0).nullable(),
+    }),
+  ),
+});
+
+export type BulkUpdatePhotoPricesInput = z.infer<typeof bulkUpdatePhotoPricesSchema>;

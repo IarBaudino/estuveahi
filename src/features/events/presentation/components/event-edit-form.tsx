@@ -11,16 +11,15 @@ import {
   type CreateEventInput,
 } from "@/features/events/application/schemas/event.schema";
 import { updateEventAction } from "@/features/events/presentation/actions/event.actions";
-import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
+import { EventFormFields } from "@/features/events/presentation/components/event-form-fields";
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface EventEditFormProps {
   event: Event;
 }
 
+/** @deprecated Usar EventManageClient con guardado unificado. */
 export function EventEditForm({ event }: EventEditFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -68,35 +67,7 @@ export function EventEditForm({ event }: EventEditFormProps) {
           onSubmit={handleSubmit((data) => execute({ id: event.id, ...data }))}
           className="space-y-4 border-t border-white/10 p-4"
         >
-          <Input label="Título" {...register("title")} error={errors.title?.message} />
-          <Textarea label="Descripción" {...register("description")} rows={3} />
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium">Categoría</label>
-            <select
-              {...register("category")}
-              className="flex h-10 w-full rounded-lg border border-outline-variant bg-surface-container px-3 text-sm"
-            >
-              {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Lugar" {...register("venue")} />
-            <Input label="Ciudad" {...register("city")} />
-          </div>
-          <Input
-            label="Fecha del evento"
-            type="date"
-            {...register("eventDate")}
-            error={errors.eventDate?.message}
-          />
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" {...register("isPublic")} className="rounded" />
-            Evento público (visible en búsqueda)
-          </label>
+          <EventFormFields register={register} errors={errors} />
           {result.serverError && (
             <p className="text-sm text-error">{result.serverError}</p>
           )}

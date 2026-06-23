@@ -4,7 +4,7 @@ import { z } from "zod";
 import { photographerActionClient } from "@/shared/lib/safe-action";
 import { revalidatePublicEventPath } from "@/shared/lib/revalidate-event";
 import { toPhotoDTO } from "@/shared/lib/photo-serialization";
-import { uploadPhotoSchema, updatePhotoPriceSchema } from "../../application/schemas/photo.schema";
+import { uploadPhotoSchema, updatePhotoPriceSchema, bulkUpdatePhotoPricesSchema } from "../../application/schemas/photo.schema";
 import { deletePhoto, uploadPhoto, updatePhotoPrice } from "../../infrastructure/photo.repository";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
 
@@ -52,4 +52,22 @@ export const updatePhotoPriceAction = photographerActionClient
     );
     await revalidatePublicGallery(parsedInput.eventId);
     return { photo: toPhotoDTO(photo) };
+  });
+
+export const bulkUpdatePhotoPricesAction = photographerActionClient
+  .schema(bulkUpdatePhotoPricesSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const photos = await Promise.all(
+      parsedInput.prices.map((item) =>
+        updatePhotoPrice(
+          item.photoId,
+          parsedInput.eventId,
+          ctx.user.id,
+          item.priceCents,
+          ctx.user.role,
+        ),
+      ),
+    );
+    await revalidatePublicGallery(parsedInput.eventId);
+    return { photos: photos.map(toPhotoDTO) };
   });

@@ -1,73 +1,36 @@
 "use client";
 
-import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import type { Photo } from "@/domain/entities/photo";
-import type { PhotoDTO } from "@/shared/lib/photo-serialization";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
-import { formatCurrency } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { ProtectedImage } from "@/shared/components/protected-image";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { deletePhotoAction, updatePhotoPriceAction } from "@/features/photos/presentation/actions/photo.actions";
+import { deletePhotoAction } from "@/features/photos/presentation/actions/photo.actions";
 import { Trash2 } from "lucide-react";
 
 interface PhotoPriceEditorProps {
   photos: Photo[];
   eventId: string;
+  prices: Record<string, string>;
+  onPriceChange: (photoId: string, value: string) => void;
   onPhotoRemoved?: (photoId: string) => void;
-  onPhotoUpdated?: (photo: PhotoDTO) => void;
 }
 
 export function PhotoPriceEditor({
   photos,
   eventId,
+  prices,
+  onPriceChange,
   onPhotoRemoved,
-  onPhotoUpdated,
 }: PhotoPriceEditorProps) {
-  const [prices, setPrices] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      photos.map((p) => [
-        p.id,
-        p.priceCents != null ? String(p.priceCents / 100) : "",
-      ]),
-    ),
-  );
-  const [savingId, setSavingId] = useState<string | null>(null);
-
-  const { executeAsync: savePriceAction } = useAction(updatePhotoPriceAction);
   const { executeAsync: deletePhoto, isExecuting: deleting } = useAction(deletePhotoAction);
-
-  async function savePrice(photoId: string) {
-    const raw = prices[photoId]?.trim();
-    const priceCents =
-      raw === "" || raw === undefined
-        ? null
-        : Math.round(Number(raw) * 100);
-
-    if (raw !== "" && (Number.isNaN(priceCents) || priceCents! < 0)) return;
-
-    setSavingId(photoId);
-    try {
-      const result = await savePriceAction({ photoId, eventId, priceCents });
-      if (result?.data?.photo) {
-        onPhotoUpdated?.(result.data.photo);
-      } else if (result?.serverError) {
-        window.alert(result.serverError);
-      }
-    } finally {
-      setSavingId(null);
-    }
-  }
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {photos.map((photo) => (
-        <div
-          key={photo.id}
-          className="flex gap-3 hairline-border p-3"
-        >
+        <div key={photo.id} className="flex gap-3 hairline-border p-3">
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
             <ProtectedImage
               src={getSecureMediaUrl(photo.id, "thumbnail")}
@@ -82,11 +45,6 @@ export function PhotoPriceEditor({
           </div>
           <div className="min-w-0 flex-1 space-y-2">
             <p className="truncate text-xs text-zinc-500">{photo.originalFilename}</p>
-            {photo.priceCents != null && photo.priceCents > 0 && (
-              <p className="text-sm font-medium">
-                {formatCurrency(photo.priceCents, photo.currency)}
-              </p>
-            )}
             <div className="flex gap-2">
               <Input
                 type="number"
@@ -95,19 +53,8 @@ export function PhotoPriceEditor({
                 placeholder="Precio en $"
                 className="h-8 text-sm"
                 value={prices[photo.id] ?? ""}
-                onChange={(e) =>
-                  setPrices((p) => ({ ...p, [photo.id]: e.target.value }))
-                }
+                onChange={(e) => onPriceChange(photo.id, e.target.value)}
               />
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0"
-                isLoading={savingId === photo.id}
-                onClick={() => savePrice(photo.id)}
-              >
-                Guardar
-              </Button>
               <Button
                 size="sm"
                 variant="destructive"
@@ -115,9 +62,7 @@ export function PhotoPriceEditor({
                 isLoading={deleting}
                 onClick={async () => {
                   if (
-                    confirm(
-                      `¿Eliminar la foto ${formatPhotoNumber(photo.sortOrder)}?`,
-                    )
+                    confirm(`¿Eliminar la foto ${formatPhotoNumber(photo.sortOrder)}?`)
                   ) {
                     const result = await deletePhoto({ photoId: photo.id, eventId });
                     if (result?.serverError) {
@@ -137,4 +82,12 @@ export function PhotoPriceEditor({
       ))}
     </div>
   );
+}
+
+export function parsePhotoPricePesos(raw: string): number | null | "invalid" {
+  const trimmed = raw.trim();
+  if (trimmed === "") return null;
+  const pesos = Number(trimmed);
+  if (Number.isNaN(pesos) || pesos < 0) return "invalid";
+  return Math.round(pesos * 100);
 }
