@@ -20,7 +20,7 @@ export default async function AdminEventManagePage({ params }: PageProps) {
     notFound();
   }
 
-  const photos = await getEventPhotos(event.id, 100);
+  const photos = await getEventPhotos(event.id);
 
   return (
     <div>

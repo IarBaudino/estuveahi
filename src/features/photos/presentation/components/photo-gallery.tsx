@@ -148,36 +148,48 @@ export function PhotoGallery({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
-            onClick={() => setSelectedPhoto(null)}
+            className="fixed inset-0 z-50 flex flex-col bg-black/95"
             onContextMenu={(e) => e.preventDefault()}
           >
-            <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="relative max-h-[90vh] w-full max-w-5xl"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex shrink-0 items-center justify-end p-3 sm:p-4">
               <button
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute -top-12 right-0 text-white hover:text-zinc-300"
+                className="rounded-full p-2 text-white transition-colors hover:bg-white/10 hover:text-zinc-200"
                 aria-label="Cerrar vista ampliada"
               >
-                <X className="h-8 w-8" />
+                <X className="h-7 w-7 sm:h-8 sm:w-8" />
               </button>
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg">
+            </div>
+
+            <div
+              className="flex min-h-0 flex-1 items-center justify-center px-3 sm:px-6"
+              onClick={() => setSelectedPhoto(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.97 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.97 }}
+                className="flex max-h-full max-w-full items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <ProtectedImage
                   src={getSecureMediaUrl(selectedPhoto.id, "preview")}
                   alt="Vista previa"
-                  fill
-                  className="object-contain"
-                  sizes="100vw"
+                  width={selectedPhoto.width ?? 960}
+                  height={selectedPhoto.height ?? 720}
+                  className="max-h-[calc(100dvh-13rem)] w-auto max-w-[min(100vw-1.5rem,64rem)] rounded-lg object-contain"
+                  sizes="(max-width: 1024px) 100vw, 64rem"
                   priority
                 />
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+              </motion.div>
+            </div>
+
+            <div
+              className="shrink-0 border-t border-white/10 px-4 py-4 sm:px-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="font-mono text-sm text-zinc-300">
                     Foto {formatPhotoNumber(selectedPhoto.sortOrder)}
@@ -216,7 +228,7 @@ export function PhotoGallery({
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

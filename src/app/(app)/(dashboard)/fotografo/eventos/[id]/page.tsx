@@ -25,7 +25,7 @@ export default async function EventManagePage({ params }: PageProps) {
     notFound();
   }
 
-  const photos = await getEventPhotos(event.id, 100);
+  const photos = await getEventPhotos(event.id);
   const isOwner = canManageEvent(event, user.id, user.role);
   const canUpload = canContributeToEvent(event, user.id, user.role);
 

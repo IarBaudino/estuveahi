@@ -4,7 +4,9 @@ import { DomainError } from "@/domain/errors/domain-errors";
 import { uploadPhotoSchema } from "@/features/photos/application/schemas/photo.schema";
 import { assertPhotographerUploadAccess } from "@/features/photos/infrastructure/upload-auth";
 import { uploadPhoto } from "@/features/photos/infrastructure/photo.repository";
+import { getEventById } from "@/features/events/infrastructure/event.repository";
 import { toPhotoDTO } from "@/shared/lib/photo-serialization";
+import { revalidatePublicEventPath } from "@/shared/lib/revalidate-event";
 import { resolveImageMimeType } from "@/shared/lib/image-upload";
 
 export const runtime = "nodejs";
@@ -70,6 +72,13 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const photo = await uploadPhoto(actor.userId, input, buffer, actor.role);
+
+    try {
+      const event = await getEventById(input.eventId);
+      if (event) revalidatePublicEventPath(event);
+    } catch (revalidateError) {
+      console.error("[api/photos/upload] revalidate:", revalidateError);
+    }
 
     return NextResponse.json({ photo: toPhotoDTO(photo) });
   } catch (error) {

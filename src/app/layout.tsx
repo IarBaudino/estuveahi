@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hanken_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/shared/components/providers";
 import { PageViewTracker } from "@/shared/components/page-view-tracker";
+import { SiteJsonLd } from "@/shared/components/site-json-ld";
 import { siteConfig } from "@/config/site";
 import "./globals.css";
 
@@ -24,12 +25,33 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} | La mirada documental del deporte y la cultura`,
+    default: `${siteConfig.name} | Fotos de eventos en Argentina`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
   openGraph: {
     title: siteConfig.name,
     description: siteConfig.description,
@@ -57,6 +79,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col bg-black text-body-md antialiased">
+        <SiteJsonLd />
         <Providers>
           <PageViewTracker />
           {children}

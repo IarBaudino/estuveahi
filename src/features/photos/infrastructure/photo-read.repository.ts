@@ -4,9 +4,12 @@ import type { PhotoDoc } from "@/infrastructure/firebase/documents";
 import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
 import type { Photo } from "@/domain/entities/photo";
 
+/** Máximo de fotos visibles por galería (público y panel). */
+export const MAX_EVENT_GALLERY_PHOTOS = 2000;
+
 export async function getEventPhotos(
   eventId: string,
-  limit = 50,
+  limit = MAX_EVENT_GALLERY_PHOTOS,
   offset = 0,
 ): Promise<Photo[]> {
   try {

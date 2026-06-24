@@ -25,7 +25,6 @@ export function ProfileAvatarUploader({
     { onSuccess: () => router.refresh() },
   );
 
-  const imageSrc = avatarUrl;
   const isPublic = variant === "public";
 
   async function handleAvatarChange(file: File) {
@@ -50,7 +49,7 @@ export function ProfileAvatarUploader({
       >
         {avatarUrl ? (
           <Image
-            src={imageSrc}
+            src={avatarUrl}
             alt={isPublic ? "Foto pública" : "Avatar"}
             fill
             className="object-cover"

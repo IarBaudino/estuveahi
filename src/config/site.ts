@@ -1,21 +1,21 @@
 function getAppUrl(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (!raw) return "https://estuveahi.com.ar";
+  if (!raw) return "https://www.estuveahi.com.ar";
 
   try {
     return new URL(raw).origin;
   } catch {
-    return "https://estuveahi.com.ar";
+    return "https://www.estuveahi.com.ar";
   }
 }
 
 export const siteConfig = {
   name: "EstuveAhí",
   description:
-    "Conectamos asistentes con fotógrafos de eventos. Sin comisión de plataforma: cada profesional cobra y entrega sus fotos directamente.",
+    "Encontrá y comprá fotos de eventos en Argentina: recitales, festivales, teatro y deporte. Galerías de fotografxs profesionales sin comisión de plataforma.",
   url: getAppUrl(),
-  /** Dominio público del QR impreso (siempre estuveahi.com.ar) */
-  publicUrl: "https://estuveahi.com.ar",
+  /** Dominio público canónico (con www). */
+  publicUrl: "https://www.estuveahi.com.ar",
   ogImage: "/og/default.png",
 } as const;
 

@@ -46,6 +46,8 @@ export default async function EventGalleryPage({ params }: PageProps) {
     auth(),
   ]);
 
+  const photosTruncated = event.photoCount > photos.length;
+
   const favoriteIds = session?.user?.id
     ? await getUserFavoriteIds(session.user.id)
     : new Set<string>();
@@ -85,17 +87,32 @@ export default async function EventGalleryPage({ params }: PageProps) {
               {[event.venue, event.city].filter(Boolean).join(", ")}
             </span>
           )}
-          <span>{event.photoCount} fotografías</span>
+          <span>
+            {photos.length === event.photoCount
+              ? `${event.photoCount} fotografías`
+              : `${photos.length} de ${event.photoCount} fotografías`}
+          </span>
         </div>
       </div>
 
+      {photosTruncated && (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          Hay más fotos en este evento. Si no ves una imagen recién subida, esperá unos segundos y
+          recargá la página.
+        </p>
+      )}
+
+      {photos.length === 0 ? (
+        <p className="text-zinc-500">Todavía no hay fotografías publicadas en esta galería.</p>
+      ) : (
       <PhotoGallery
         photos={toPublicPhotos(photos)}
         favoriteIds={Array.from(favoriteIds)}
         isAuthenticated={!!session?.user}
       />
+      )}
     </div>
   );
 }
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";

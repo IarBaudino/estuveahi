@@ -1,10 +1,11 @@
 import { getAdminStats } from "@/features/events/infrastructure/event.repository";
-import { getAnalyticsSummary } from "@/features/analytics/infrastructure/analytics.repository";
+import { getAnalyticsReport } from "@/features/analytics/infrastructure/analytics.repository";
+import { AdminTrafficPanel } from "@/features/admin/presentation/components/admin-traffic-panel";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
-import { Users, Calendar, Camera, ShoppingBag, Eye, UserCheck, TrendingUp } from "lucide-react";
+import { Users, Calendar, Camera, ShoppingBag } from "lucide-react";
 
 export default async function AdminDashboardPage() {
-  const [stats, traffic] = await Promise.all([getAdminStats(), getAnalyticsSummary()]);
+  const [stats, traffic] = await Promise.all([getAdminStats(), getAnalyticsReport()]);
 
   return (
     <div>
@@ -13,51 +14,21 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold">Tráfico web</h2>
-        <p className="text-sm text-zinc-500">
-          Visitas a páginas públicas (incluye quienes no iniciaron sesión). No cuenta el panel de
-          fotógrafos, clientes ni admin.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardDescription className="flex items-center gap-2">
-                <Eye className="h-4 w-4" /> Visitas hoy
-              </CardDescription>
-              <CardTitle className="text-3xl">{traffic.pageViewsToday}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4" /> Personas hoy
-              </CardDescription>
-              <CardTitle className="text-3xl">{traffic.uniqueVisitorsToday}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Últimos 7 días
-              </CardDescription>
-              <CardTitle className="text-3xl">{traffic.pageViewsWeek}</CardTitle>
-              <p className="text-sm text-zinc-500">
-                {traffic.uniqueVisitorsWeek} personas distintas
-              </p>
-            </CardHeader>
-          </Card>
+        <div className="mt-4">
+          <AdminTrafficPanel traffic={traffic} />
         </div>
-        <p className="mt-2 text-xs text-zinc-500">
-          Total histórico de visitas: {traffic.pageViewsTotal}
-        </p>
       </div>
 
       <div className="mt-10">
         <h2 className="text-lg font-semibold">Plataforma</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Totales actuales en la base de datos (no son métricas de visitas).
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader>
               <CardDescription className="flex items-center gap-2">
-                <Users className="h-4 w-4" /> Usuarios
+                <Users className="h-4 w-4" /> Usuarios registrados
               </CardDescription>
               <CardTitle className="text-3xl">{stats.users}</CardTitle>
             </CardHeader>
@@ -65,7 +36,7 @@ export default async function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardDescription className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" /> Eventos
+                <Calendar className="h-4 w-4" /> Eventos creados
               </CardDescription>
               <CardTitle className="text-3xl">{stats.events}</CardTitle>
             </CardHeader>
@@ -73,7 +44,7 @@ export default async function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardDescription className="flex items-center gap-2">
-                <Camera className="h-4 w-4" /> Fotografías
+                <Camera className="h-4 w-4" /> Fotografías subidas
               </CardDescription>
               <CardTitle className="text-3xl">{stats.photos}</CardTitle>
             </CardHeader>
@@ -81,7 +52,7 @@ export default async function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardDescription className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4" /> Solicitudes pendientes
+                <ShoppingBag className="h-4 w-4" /> Pedidos pendientes
               </CardDescription>
               <CardTitle className="text-3xl">{stats.pendingRequests}</CardTitle>
             </CardHeader>
