@@ -14,28 +14,48 @@ export const PURCHASE_REQUEST_STATUS_LABELS: Record<
   string
 > = {
   pending: "Pendiente",
-  approved: "Aprobada",
+  approved: "En curso",
   rejected: "Rechazada",
   completed: "Entregada",
   cancelled: "Cancelada",
 };
+
+export function getPurchaseRequestStatusBadgeVariant(
+  status: PurchaseRequestStatus,
+): "default" | "success" | "warning" | "destructive" | "outline" {
+  switch (status) {
+    case "pending":
+      return "warning";
+    case "approved":
+      return "outline";
+    case "completed":
+      return "success";
+    case "rejected":
+    case "cancelled":
+      return "destructive";
+    default:
+      return "default";
+  }
+}
 
 /** Texto orientativo según el estado del flujo manual fotógrafo → cliente */
 export const PURCHASE_REQUEST_STATUS_HINTS: Partial<
   Record<PurchaseRequestStatus, { client: string; photographer: string }>
 > = {
   pending: {
-    client: "El fotógrafo revisará tu solicitud y te enviará un precio.",
-    photographer: "Cotizá la foto. El cliente pagará directamente a vos.",
+    client:
+      "Tu pedido fue enviado. La fotografx lo revisará y te confirmará el precio o aceptará el publicado.",
+    photographer:
+      "Nuevo pedido. Cotizá la foto o aceptá el precio publicado en la galería.",
   },
   approved: {
     client:
-      "Coordiná el pago con el fotógrafo. Te enviará la imagen en alta por el canal acordado.",
+      "Precio confirmado. Coordiná el pago con la fotografx; te enviará la imagen en alta por el canal acordado.",
     photographer:
-      "Cobrá al cliente por tu cuenta y enviá la imagen en alta. Luego marcá como entregada.",
+      "Pedido aceptado. Cobrá al cliente y enviá la foto en alta. Recién después marcá como entregada.",
   },
   completed: {
-    client: "El fotógrafo confirmó la entrega de tu foto en alta resolución.",
+    client: "La fotografx confirmó que te envió la foto en alta resolución.",
     photographer: "Entrega confirmada. El 100 % de la venta es tuyo.",
   },
 };

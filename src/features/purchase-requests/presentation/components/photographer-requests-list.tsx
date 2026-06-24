@@ -1,17 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
-import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { PurchaseRequestRow } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
-import {
-  PURCHASE_REQUEST_STATUS_LABELS,
-  PURCHASE_REQUEST_STATUS_HINTS,
-} from "@/domain/enums/purchase-request-status";
+import { PURCHASE_REQUEST_STATUS_LABELS, getPurchaseRequestStatusBadgeVariant } from "@/domain/enums/purchase-request-status";
 import { businessConfig } from "@/config/business";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
 import { getDisplayName } from "@/shared/lib/profile";
@@ -19,14 +13,7 @@ import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { formatCurrency } from "@/shared/lib/utils";
 import { cn } from "@/shared/lib/utils";
 import { ProtectedImage } from "@/shared/components/protected-image";
-import {
-  approvePurchaseRequestAction,
-  archivePurchaseRequestAction,
-  completePurchaseRequestAction,
-  deletePurchaseRequestAction,
-  rejectPurchaseRequestAction,
-  unarchivePurchaseRequestAction,
-} from "@/features/purchase-requests/presentation/actions/purchase-request.actions";
+import { PhotographerRequestDetailDialog } from "@/features/purchase-requests/presentation/components/photographer-request-detail-dialog";
 
 type ViewFilter = "active" | "archived";
 
@@ -36,30 +23,13 @@ export function PhotographerRequestsList({
   requests: PurchaseRequestRow[];
 }) {
   const router = useRouter();
-  const [prices, setPrices] = useState<Record<string, string>>({});
   const [view, setView] = useState<ViewFilter>("active");
+  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequestRow | null>(null);
 
-  const refresh = () => router.refresh();
-  const actionOpts = { onSuccess: refresh };
-
-  const { execute: approve, isExecuting: approving } = useAction(
-    approvePurchaseRequestAction,
-    actionOpts,
-  );
-  const { execute: reject } = useAction(rejectPurchaseRequestAction, actionOpts);
-  const { execute: complete } = useAction(completePurchaseRequestAction, actionOpts);
-  const { execute: archive, isExecuting: archiving } = useAction(
-    archivePurchaseRequestAction,
-    actionOpts,
-  );
-  const { execute: unarchive, isExecuting: unarchiving } = useAction(
-    unarchivePurchaseRequestAction,
-    actionOpts,
-  );
-  const { execute: remove, isExecuting: removing } = useAction(
-    deletePurchaseRequestAction,
-    actionOpts,
-  );
+  const refresh = () => {
+    router.refresh();
+    setSelectedRequest(null);
+  };
 
   const activeCount = useMemo(
     () => requests.filter((req) => !req.photographer_archived_at).length,
@@ -77,12 +47,6 @@ export function PhotographerRequestsList({
       ),
     [requests, view],
   );
-
-  function confirmDelete() {
-    return confirm(
-      "¿Eliminar este pedido de forma permanente? El cliente ya no lo verá en su cuenta.",
-    );
-  }
 
   if (requests.length === 0) {
     return <p className="text-on-surface-variant">No hay pedidos de compra.</p>;
@@ -119,7 +83,7 @@ export function PhotographerRequestsList({
 
       <p className="text-caption text-on-surface-variant/80">
         {view === "active"
-          ? "Ocultá pedidos de prueba para limpiar la lista. El cliente sigue viendo su solicitud."
+          ? "Solo ves pedidos de fotos que subiste vos. Tocá un pedido para ver los datos del comprador."
           : "Pedidos ocultos del panel. Podés restaurarlos o eliminarlos definitivamente."}
       </p>
 
@@ -129,7 +93,6 @@ export function PhotographerRequestsList({
         </p>
       ) : (
         visibleRequests.map((req) => {
-          const hint = PURCHASE_REQUEST_STATUS_HINTS[req.status]?.photographer;
           const client = req.clients;
           const clientName = client
             ? getDisplayName({
@@ -142,12 +105,14 @@ export function PhotographerRequestsList({
           const isArchived = Boolean(req.photographer_archived_at);
 
           return (
-            <div
+            <button
               key={req.id}
-              className="flex flex-wrap gap-4 hairline-border p-4"
+              type="button"
+              onClick={() => setSelectedRequest(req)}
+              className="flex w-full flex-wrap gap-4 hairline-border p-4 text-left transition-colors hover:bg-surface-container-high"
             >
               {req.photos && (
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
                   <ProtectedImage
                     src={getSecureMediaUrl(req.photos.id, "thumbnail")}
                     alt=""
@@ -161,7 +126,9 @@ export function PhotographerRequestsList({
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{PURCHASE_REQUEST_STATUS_LABELS[req.status]}</Badge>
+                  <Badge variant={getPurchaseRequestStatusBadgeVariant(req.status)}>
+                    {PURCHASE_REQUEST_STATUS_LABELS[req.status]}
+                  </Badge>
                   {isArchived && <Badge variant="outline">Oculto</Badge>}
                   {req.photos && (
                     <span className="font-mono text-sm">
@@ -173,146 +140,25 @@ export function PhotographerRequestsList({
                   </span>
                 </div>
 
-                <div className="mt-2 rounded-lg bg-zinc-50 p-3 text-sm dark:bg-zinc-900">
-                  <p className="font-medium">{clientName}</p>
-                  {client?.email && (
-                    <p className="text-on-surface-variant">{client.email}</p>
-                  )}
-                  {client?.phone && (
-                    <p className="text-on-surface-variant">{client.phone}</p>
-                  )}
-                </div>
-
+                <p className="mt-2 font-medium">{clientName}</p>
                 {req.message && (
-                  <p className="mt-2 text-sm text-on-surface-variant">
+                  <p className="mt-1 line-clamp-2 text-sm text-on-surface-variant">
                     &quot;{req.message}&quot;
                   </p>
                 )}
                 {req.quoted_price_cents != null && req.quoted_price_cents > 0 && (
                   <p className="mt-2 font-medium">
                     {formatCurrency(req.quoted_price_cents, req.currency)}
-                    <span className="text-caption ml-2 text-on-surface-variant/70">
-                      (100 % para vos)
-                    </span>
-                  </p>
-                )}
-                {hint && (
-                  <p className="text-caption mt-2 text-on-surface-variant/80">
-                    {hint}
                   </p>
                 )}
               </div>
-              <div className="flex w-full flex-wrap items-end gap-2 sm:w-auto sm:justify-end">
-                {!isArchived && req.status === "pending" && (
-                  <>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      placeholder="Precio en pesos"
-                      className="w-40"
-                      value={prices[req.id] ?? ""}
-                      onChange={(e) =>
-                        setPrices((p) => ({ ...p, [req.id]: e.target.value }))
-                      }
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const pesos = Number(prices[req.id] ?? 0);
-                        if (pesos <= 0) return;
-                        approve({
-                          requestId: req.id,
-                          quotedPriceCents: Math.round(pesos * 100),
-                        });
-                      }}
-                      isLoading={approving}
-                    >
-                      Enviar cotización
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => reject({ requestId: req.id })}
-                    >
-                      Rechazar
-                    </Button>
-                  </>
-                )}
-                {!isArchived && req.status === "approved" && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (
-                        confirm(
-                          "¿Ya cobraste y enviaste la imagen en alta al cliente?",
-                        )
-                      ) {
-                        complete({ requestId: req.id });
-                      }
-                    }}
-                  >
-                    Marcar como entregada
-                  </Button>
-                )}
-
-                {!isArchived && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => archive({ requestId: req.id })}
-                    isLoading={archiving}
-                  >
-                    <Archive className="h-4 w-4" />
-                    Ocultar
-                  </Button>
-                )}
-
-                {isArchived && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => unarchive({ requestId: req.id })}
-                      isLoading={unarchiving}
-                    >
-                      <ArchiveRestore className="h-4 w-4" />
-                      Mostrar de nuevo
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        if (confirmDelete()) {
-                          remove({ requestId: req.id });
-                        }
-                      }}
-                      isLoading={removing}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Eliminar
-                    </Button>
-                  </>
-                )}
-
-                {!isArchived && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-on-surface-variant"
-                    onClick={() => {
-                      if (confirmDelete()) {
-                        remove({ requestId: req.id });
-                      }
-                    }}
-                    isLoading={removing}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar
-                  </Button>
-                )}
+              <div className="flex w-full items-center justify-end sm:w-auto sm:self-center">
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                  <Eye className="h-4 w-4" />
+                  Ver pedido
+                </span>
               </div>
-            </div>
+            </button>
           );
         })
       )}
@@ -320,6 +166,14 @@ export function PhotographerRequestsList({
       <p className="text-caption text-on-surface-variant/70">
         {businessConfig.noPlatformFeeMessage} {businessConfig.photographerDeliveryNote}
       </p>
+
+      {selectedRequest && (
+        <PhotographerRequestDetailDialog
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onUpdated={refresh}
+        />
+      )}
     </div>
   );
 }

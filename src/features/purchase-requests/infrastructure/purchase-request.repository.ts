@@ -19,6 +19,7 @@ export interface PurchaseRequestClientInfo {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  full_name: string | null;
   email: string;
   phone: string | null;
   avatar_url: string | null;
@@ -39,6 +40,7 @@ export interface PurchaseRequestRow {
   photographer_archived_at: string | null;
   photos?: {
     id: string;
+    photographer_id: string;
     thumbnail_path: string;
     preview_path: string;
     original_filename: string;
@@ -98,6 +100,7 @@ async function enrichPurchaseRequests(
           d.id,
           {
             id: d.id,
+            photographer_id: data.photographerId,
             thumbnail_path: data.thumbnailPath,
             preview_path: data.previewPath,
             original_filename: data.originalFilename,
@@ -128,6 +131,7 @@ async function enrichPurchaseRequests(
             id: d.id,
             first_name: data.firstName,
             last_name: data.lastName,
+            full_name: data.fullName,
             email: data.email,
             phone: data.phone,
             avatar_url: data.avatarUrl,
@@ -142,6 +146,44 @@ async function enrichPurchaseRequests(
     events: eventMap.get(req.event_id),
     clients: clientMap.get(req.client_id),
   }));
+}
+
+const PHOTO_ID_QUERY_CHUNK = 30;
+
+async function fetchRequestsByPhotoIds(
+  photoIds: string[],
+): Promise<PurchaseRequestRow[]> {
+  if (photoIds.length === 0) return [];
+
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const rows: PurchaseRequestRow[] = [];
+
+  for (let i = 0; i < photoIds.length; i += PHOTO_ID_QUERY_CHUNK) {
+    const chunk = photoIds.slice(i, i + PHOTO_ID_QUERY_CHUNK);
+    const snap = await db
+      .collection(COLLECTIONS.purchaseRequests)
+      .where("photoId", "in", chunk)
+      .get();
+
+    rows.push(
+      ...snap.docs.map((doc) =>
+        mapRequestRow(doc.id, doc.data() as PurchaseRequestDoc),
+      ),
+    );
+  }
+
+  return rows;
+}
+
+function filterRequestsForPhotoOwner(
+  requests: PurchaseRequestRow[],
+  photographerId: string,
+): PurchaseRequestRow[] {
+  return requests.filter(
+    (req) => req.photos?.photographer_id === photographerId,
+  );
 }
 
 export async function createPurchaseRequest(
@@ -181,7 +223,7 @@ export async function createPurchaseRequest(
     message: input.message ?? null,
     quotedPriceCents: hasListedPrice ? photo.priceCents : null,
     currency: "ARS",
-    status: hasListedPrice ? "approved" : "pending",
+    status: "pending",
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
   };
@@ -210,16 +252,34 @@ export async function getPhotographerRequests(photographerId: string) {
   const db = getDbIfConfigured();
   if (!db) return [];
 
-  const snap = await db
-    .collection(COLLECTIONS.purchaseRequests)
-    .where("photographerId", "==", photographerId)
-    .get();
+  const [ownedPhotosSnap, byStoredOwnerSnap] = await Promise.all([
+    db
+      .collection(COLLECTIONS.photos)
+      .where("photographerId", "==", photographerId)
+      .get(),
+    db
+      .collection(COLLECTIONS.purchaseRequests)
+      .where("photographerId", "==", photographerId)
+      .get(),
+  ]);
 
-  const requests = snap.docs
-    .map((doc) => mapRequestRow(doc.id, doc.data() as PurchaseRequestDoc))
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const ownedPhotoIds = ownedPhotosSnap.docs.map((doc) => doc.id);
+  const byPhotoId = await fetchRequestsByPhotoIds(ownedPhotoIds);
 
-  return enrichPurchaseRequests(requests);
+  const merged = new Map<string, PurchaseRequestRow>();
+  for (const doc of byStoredOwnerSnap.docs) {
+    merged.set(doc.id, mapRequestRow(doc.id, doc.data() as PurchaseRequestDoc));
+  }
+  for (const row of byPhotoId) {
+    merged.set(row.id, row);
+  }
+
+  const requests = [...merged.values()].sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
+  const enriched = await enrichPurchaseRequests(requests);
+
+  return filterRequestsForPhotoOwner(enriched, photographerId);
 }
 
 export async function getAllRequestsForAdmin() {
@@ -249,12 +309,20 @@ export async function updateRequestStatus(
   const ref = db.collection(COLLECTIONS.purchaseRequests).doc(requestId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as PurchaseRequestDoc).photographerId !== photographerId) {
+  if (!doc.exists) {
+    throw new NotFoundError("Solicitud no encontrada");
+  }
+
+  const data = doc.data() as PurchaseRequestDoc;
+  const photoDoc = await db.collection(COLLECTIONS.photos).doc(data.photoId).get();
+
+  if (!photoDoc.exists || (photoDoc.data() as PhotoDoc).photographerId !== photographerId) {
     throw new NotFoundError("Solicitud no encontrada");
   }
 
   const update: Record<string, unknown> = {
     status,
+    photographerId: (photoDoc.data() as PhotoDoc).photographerId,
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (quotedPriceCents !== undefined) {
@@ -290,7 +358,18 @@ async function assertPhotographerRequest(requestId: string, photographerId: stri
   const ref = db.collection(COLLECTIONS.purchaseRequests).doc(requestId);
   const doc = await ref.get();
 
-  if (!doc.exists || (doc.data() as PurchaseRequestDoc).photographerId !== photographerId) {
+  if (!doc.exists) {
+    throw new NotFoundError("Solicitud no encontrada");
+  }
+
+  const data = doc.data() as PurchaseRequestDoc;
+  const photoDoc = await db.collection(COLLECTIONS.photos).doc(data.photoId).get();
+
+  if (!photoDoc.exists) {
+    throw new NotFoundError("Solicitud no encontrada");
+  }
+
+  if ((photoDoc.data() as PhotoDoc).photographerId !== photographerId) {
     throw new NotFoundError("Solicitud no encontrada");
   }
 
@@ -319,33 +398,11 @@ export async function deleteRequest(requestId: string, photographerId: string): 
 }
 
 export async function getPendingRequestCount(photographerId: string): Promise<number> {
-  const db = getDbIfConfigured();
-  if (!db) return 0;
-
   try {
-    const snap = await db
-      .collection(COLLECTIONS.purchaseRequests)
-      .where("photographerId", "==", photographerId)
-      .where("status", "==", "pending")
-      .count()
-      .get();
-
-    return snap.data().count;
+    const requests = await getPhotographerRequests(photographerId);
+    return requests.filter((req) => req.status === "pending").length;
   } catch (error) {
-    console.error("[getPendingRequestCount] count query failed:", error);
-
-    try {
-      const snap = await db
-        .collection(COLLECTIONS.purchaseRequests)
-        .where("photographerId", "==", photographerId)
-        .get();
-
-      return snap.docs.filter(
-        (doc) => (doc.data() as PurchaseRequestDoc).status === "pending",
-      ).length;
-    } catch (fallbackError) {
-      console.error("[getPendingRequestCount] fallback failed:", fallbackError);
-      return 0;
-    }
+    console.error("[getPendingRequestCount] failed:", error);
+    return 0;
   }
 }

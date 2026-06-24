@@ -5,7 +5,7 @@ import type { PurchaseRequestRow } from "@/features/purchase-requests/infrastruc
 import { Badge } from "@/shared/ui/badge";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
 import { formatCurrency } from "@/shared/lib/utils";
-import { PURCHASE_REQUEST_STATUS_LABELS } from "@/domain/enums/purchase-request-status";
+import { PURCHASE_REQUEST_STATUS_LABELS, getPurchaseRequestStatusBadgeVariant } from "@/domain/enums/purchase-request-status";
 import { routes } from "@/config/routes";
 import { getDisplayName } from "@/shared/lib/profile";
 
@@ -65,7 +65,9 @@ export function AdminRequestsTable({
                   : "—"}
               </td>
               <td className="px-4 py-3">
-                <Badge>{PURCHASE_REQUEST_STATUS_LABELS[req.status]}</Badge>
+                <Badge variant={getPurchaseRequestStatusBadgeVariant(req.status)}>
+                  {PURCHASE_REQUEST_STATUS_LABELS[req.status]}
+                </Badge>
               </td>
               <td className="px-4 py-3">
                 {new Date(req.created_at).toLocaleDateString("es-AR")}

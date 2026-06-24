@@ -10,6 +10,7 @@ import { Button } from "@/shared/ui/button";
 import {
   PURCHASE_REQUEST_STATUS_LABELS,
   PURCHASE_REQUEST_STATUS_HINTS,
+  getPurchaseRequestStatusBadgeVariant,
   type PurchaseRequestStatus,
 } from "@/domain/enums/purchase-request-status";
 import { businessConfig } from "@/config/business";
@@ -24,7 +25,7 @@ import { cn } from "@/shared/lib/utils";
 const FILTER_OPTIONS: { value: "all" | PurchaseRequestStatus; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "pending", label: "Pendientes" },
-  { value: "approved", label: "Aprobadas" },
+  { value: "approved", label: "En curso" },
   { value: "completed", label: "Entregadas" },
   { value: "cancelled", label: "Canceladas" },
   { value: "rejected", label: "Rechazadas" },
@@ -94,7 +95,9 @@ export function ClientRequestsList({ requests }: { requests: PurchaseRequestRow[
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <Badge>{PURCHASE_REQUEST_STATUS_LABELS[req.status]}</Badge>
+                <Badge variant={getPurchaseRequestStatusBadgeVariant(req.status)}>
+                  {PURCHASE_REQUEST_STATUS_LABELS[req.status]}
+                </Badge>
                 {req.photos && (
                   <p className="mt-1 font-mono text-sm">
                     Foto {formatPhotoNumber(req.photos.sort_order)}
@@ -109,7 +112,13 @@ export function ClientRequestsList({ requests }: { requests: PurchaseRequestRow[
                 )}
                 {req.quoted_price_cents != null && req.quoted_price_cents > 0 && (
                   <p className="mt-1 font-medium">
-                    Precio: {formatCurrency(req.quoted_price_cents, req.currency)}
+                    {req.status === "pending" ? "Precio publicado: " : "Precio confirmado: "}
+                    {formatCurrency(req.quoted_price_cents, req.currency)}
+                    {req.status === "pending" && (
+                      <span className="text-caption ml-1 font-normal text-on-surface-variant">
+                        (pendiente de confirmación)
+                      </span>
+                    )}
                   </p>
                 )}
                 {hint && (
