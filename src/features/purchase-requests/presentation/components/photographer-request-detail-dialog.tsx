@@ -19,6 +19,8 @@ import { getAvatarMediaUrl } from "@/shared/lib/avatar-url";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { formatCurrency } from "@/shared/lib/utils";
 import { ProtectedImage } from "@/shared/components/protected-image";
+import { WhatsAppContactButton } from "@/features/purchase-requests/presentation/components/whatsapp-contact-button";
+import { buildPurchaseRequestWhatsAppMessage } from "@/features/purchase-requests/presentation/lib/purchase-request-whatsapp";
 import {
   approvePurchaseRequestAction,
   archivePurchaseRequestAction,
@@ -115,6 +117,15 @@ export function PhotographerRequestDetailDialog({
       "¿Eliminar este pedido de forma permanente? El cliente ya no lo verá en su cuenta.",
     );
   }
+
+  const whatsappMessage = buildPurchaseRequestWhatsAppMessage({
+    clientFirstName: client?.first_name,
+    eventTitle: request.events?.title ?? "el evento",
+    photoSortOrder: request.photos?.sort_order,
+    quotedPriceCents: request.quoted_price_cents,
+    currency: request.currency,
+    clientMessage: request.message,
+  });
 
   return (
     <div
@@ -231,6 +242,9 @@ export function PhotographerRequestDetailDialog({
                   </p>
                 )}
               </div>
+            </div>
+            <div className="mt-4">
+              <WhatsAppContactButton phone={client?.phone} message={whatsappMessage} />
             </div>
           </section>
 
