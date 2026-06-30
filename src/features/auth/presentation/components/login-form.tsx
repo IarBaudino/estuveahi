@@ -11,6 +11,7 @@ import { getDashboardForRole } from "@/shared/lib/auth-redirect";
 import type { UserRole } from "@/domain/enums/roles";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { PasswordInput } from "@/shared/ui/password-input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { routes } from "@/config/routes";
 
@@ -58,12 +59,22 @@ export function LoginForm() {
           {...register("email")}
           error={errors.email?.message}
         />
-        <Input
-          label="Contraseña"
-          type="password"
-          {...register("password")}
-          error={errors.password?.message}
-        />
+        <div className="space-y-1.5">
+          <PasswordInput
+            label="Contraseña"
+            autoComplete="current-password"
+            {...register("password")}
+            error={errors.password?.message}
+          />
+          <p className="text-right">
+            <Link
+              href={routes.forgotPassword}
+              className="text-xs text-zinc-500 underline hover:text-zinc-800 dark:hover:text-zinc-200"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
+        </div>
         {result.serverError && (
           <p className="text-sm text-red-500">{result.serverError}</p>
         )}

@@ -12,6 +12,7 @@ import {
 import { registerAction } from "@/features/auth/presentation/actions/auth.actions";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { PasswordInput } from "@/shared/ui/password-input";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { routes } from "@/config/routes";
 
@@ -62,15 +63,15 @@ export function RegisterForm() {
           {...register("phone")}
           error={errors.phone?.message}
         />
-        <Input
+        <PasswordInput
           label="Contraseña"
-          type="password"
+          autoComplete="new-password"
           {...register("password")}
           error={errors.password?.message}
         />
-        <Input
+        <PasswordInput
           label="Confirmar contraseña"
-          type="password"
+          autoComplete="new-password"
           {...register("confirmPassword")}
           error={errors.confirmPassword?.message}
         />

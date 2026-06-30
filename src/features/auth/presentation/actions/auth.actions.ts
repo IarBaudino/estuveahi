@@ -5,9 +5,11 @@ import { signIn, signOut } from "@/infrastructure/auth";
 import { actionClient, authActionClient, adminActionClient } from "@/shared/lib/safe-action";
 import {
   loginSchema,
+  forgotPasswordSchema,
   photographerOnboardingSchema,
   registerSchema,
 } from "../../application/schemas/auth.schema";
+import { sendPasswordResetEmail } from "@/infrastructure/firebase/auth-rest";
 import {
   submitPhotographerApplication,
   approvePhotographerApplication,
@@ -55,6 +57,13 @@ export const loginAction = actionClient
       }
       throw error;
     }
+  });
+
+export const requestPasswordResetAction = actionClient
+  .schema(forgotPasswordSchema)
+  .action(async ({ parsedInput }) => {
+    await sendPasswordResetEmail(parsedInput.email);
+    return { success: true as const };
   });
 
 export const logoutAction = actionClient.action(async () => {

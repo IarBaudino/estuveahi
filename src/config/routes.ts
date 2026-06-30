@@ -10,6 +10,7 @@ export const routes = {
   qrGeneral: "/e",
   login: "/login",
   register: "/register",
+  forgotPassword: "/recuperar-contrasena",
   photographer: {
     dashboard: "/fotografo",
     events: "/fotografo/eventos",

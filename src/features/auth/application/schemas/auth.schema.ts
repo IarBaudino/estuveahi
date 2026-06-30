@@ -26,6 +26,12 @@ export const registerSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Email inválido"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
 export const photographerOnboardingSchema = z.object({
   displayName: z.string().min(2, "Nombre requerido"),
   bio: z.string().max(500).optional(),
