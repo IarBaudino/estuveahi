@@ -164,7 +164,7 @@ export function PhotographerRequestDetailDialog({
             <Badge variant={getPurchaseRequestStatusBadgeVariant(request.status)}>
               {PURCHASE_REQUEST_STATUS_LABELS[request.status]}
             </Badge>
-            {isArchived && <Badge variant="outline">Oculto</Badge>}
+            {isArchived && <Badge variant="outline">Archivado</Badge>}
             <span className="text-caption text-on-surface-variant">
               Pedido del {formatDateTime(request.created_at)}
             </span>
@@ -320,19 +320,19 @@ export function PhotographerRequestDetailDialog({
             </Button>
           )}
 
-          <div className="flex flex-wrap gap-2">
-            {!isArchived && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => archive({ requestId: request.id })}
-                isLoading={archiving}
-              >
-                <Archive className="h-4 w-4" />
-                Ocultar
-              </Button>
-            )}
+          {!isArchived && request.status === "completed" && (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => archive({ requestId: request.id })}
+              isLoading={archiving}
+            >
+              <Archive className="h-4 w-4" />
+              Archivar pedido
+            </Button>
+          )}
 
+          <div className="flex flex-wrap gap-2">
             {isArchived && (
               <>
                 <Button
@@ -342,7 +342,7 @@ export function PhotographerRequestDetailDialog({
                   isLoading={unarchiving}
                 >
                   <ArchiveRestore className="h-4 w-4" />
-                  Mostrar de nuevo
+                  Restaurar
                 </Button>
                 <Button
                   variant="destructive"

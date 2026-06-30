@@ -75,3 +75,44 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
 
   throw new Error("No pudimos enviar el correo. Verificá el email e intentá otra vez.");
 }
+
+export async function changePassword(
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  let idToken: string;
+
+  try {
+    const session = await signInWithEmailPassword(email, currentPassword);
+    idToken = session.idToken;
+  } catch {
+    throw new Error("La contraseña actual no es correcta");
+  }
+
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) throw new Error("Firebase API key no configurada");
+
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        idToken,
+        password: newPassword,
+        returnSecureToken: true,
+      }),
+    },
+  );
+
+  const data = (await res.json()) as FirebaseSignInError;
+
+  if (!res.ok) {
+    const msg = data.error?.message ?? "";
+    if (msg.includes("WEAK_PASSWORD")) {
+      throw new Error("La contraseña nueva es muy débil. Usá al menos 6 caracteres.");
+    }
+    throw new Error("No se pudo actualizar la contraseña. Intentá de nuevo.");
+  }
+}

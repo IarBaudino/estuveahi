@@ -9,10 +9,12 @@ import {
 import { createPurchaseRequestSchema } from "../../application/schemas/purchase-request.schema";
 import {
   archiveRequest,
+  archiveClientRequest,
   cancelRequest,
   createPurchaseRequest,
   deleteRequest,
   unarchiveRequest,
+  unarchiveClientRequest,
   updateRequestStatus,
 } from "../../infrastructure/purchase-request.repository";
 import { routes } from "@/config/routes";
@@ -100,6 +102,22 @@ export const deletePurchaseRequestAction = photographerActionClient
   .action(async ({ parsedInput, ctx }) => {
     await deleteRequest(parsedInput.requestId, ctx.user.id);
     revalidatePath(routes.photographer.requests);
+    revalidatePath(routes.client.requests);
+    return { success: true as const };
+  });
+
+export const archiveClientPurchaseRequestAction = authActionClient
+  .schema(requestIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await archiveClientRequest(parsedInput.requestId, ctx.user.id);
+    revalidatePath(routes.client.requests);
+    return { success: true as const };
+  });
+
+export const unarchiveClientPurchaseRequestAction = authActionClient
+  .schema(requestIdSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await unarchiveClientRequest(parsedInput.requestId, ctx.user.id);
     revalidatePath(routes.client.requests);
     return { success: true as const };
   });

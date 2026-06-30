@@ -20,6 +20,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? routes.home;
   const isBlocked = searchParams.get("blocked") === "1";
+  const passwordChanged = searchParams.get("passwordChanged") === "1";
 
   const {
     register,
@@ -51,6 +52,11 @@ export function LoginForm() {
         {isBlocked && (
           <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
             Tu cuenta fue suspendida. Contactá al administrador de EstuveAhí.
+          </p>
+        )}
+        {passwordChanged && (
+          <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+            Tu contraseña fue actualizada. Iniciá sesión con la nueva contraseña.
           </p>
         )}
         <Input

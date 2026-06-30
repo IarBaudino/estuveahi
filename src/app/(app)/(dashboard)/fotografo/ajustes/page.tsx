@@ -2,7 +2,8 @@ import Link from "next/link";
 import { businessConfig } from "@/config/business";
 import { routes } from "@/config/routes";
 import { legalConfig } from "@/config/legal";
-import { DollarSign, Truck, Percent, FileText } from "lucide-react";
+import { ChangePasswordForm } from "@/features/auth/presentation/components/change-password-form";
+import { DollarSign, Truck, Percent, FileText, KeyRound } from "lucide-react";
 
 export default function PhotographerSettingsPage() {
   return (
@@ -13,6 +14,19 @@ export default function PhotographerSettingsPage() {
       </p>
 
       <div className="mt-8 space-y-4">
+        <div className="hairline-border bg-surface-container p-5">
+          <div className="flex items-center gap-3">
+            <KeyRound className="h-5 w-5" />
+            <h2 className="font-semibold">Contraseña</h2>
+          </div>
+          <p className="mt-3 text-sm text-on-surface-variant">
+            Actualizá la contraseña de tu cuenta de EstuveAhí.
+          </p>
+          <div className="mt-4">
+            <ChangePasswordForm />
+          </div>
+        </div>
+
         <div className="hairline-border bg-surface-container p-5">
           <div className="flex items-center gap-3">
             <Percent className="h-5 w-5" />

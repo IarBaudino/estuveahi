@@ -6,10 +6,14 @@ import { actionClient, authActionClient, adminActionClient } from "@/shared/lib/
 import {
   loginSchema,
   forgotPasswordSchema,
+  changePasswordSchema,
   photographerOnboardingSchema,
   registerSchema,
 } from "../../application/schemas/auth.schema";
-import { sendPasswordResetEmail } from "@/infrastructure/firebase/auth-rest";
+import {
+  changePassword,
+  sendPasswordResetEmail,
+} from "@/infrastructure/firebase/auth-rest";
 import {
   submitPhotographerApplication,
   approvePhotographerApplication,
@@ -64,6 +68,20 @@ export const requestPasswordResetAction = actionClient
   .action(async ({ parsedInput }) => {
     await sendPasswordResetEmail(parsedInput.email);
     return { success: true as const };
+  });
+
+export const changePasswordAction = authActionClient
+  .schema(changePasswordSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const profile = await getProfileByEmail(ctx.user.email ?? "");
+    const email = profile?.email ?? ctx.user.email;
+    if (!email) {
+      throw new Error("No encontramos el email de tu cuenta");
+    }
+
+    await changePassword(email, parsedInput.currentPassword, parsedInput.newPassword);
+    await signOut({ redirect: false });
+    return { success: true as const, signedOut: true as const };
   });
 
 export const logoutAction = actionClient.action(async () => {

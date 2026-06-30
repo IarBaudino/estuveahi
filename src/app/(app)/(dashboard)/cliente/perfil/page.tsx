@@ -3,6 +3,7 @@ import { auth } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
 import { getProfileById } from "@/features/profile/infrastructure/profile.repository";
 import { ProfileForm } from "@/features/profile/presentation/components/profile-form";
+import { ChangePasswordForm } from "@/features/auth/presentation/components/change-password-form";
 
 export default async function ClientProfilePage() {
   const session = await auth();
@@ -20,6 +21,17 @@ export default async function ClientProfilePage() {
       <div className="mt-6">
         <ProfileForm profile={profile} />
       </div>
+
+      <section className="mt-10 max-w-lg border-t border-white/10 pt-8">
+        <h2 className="text-lg font-semibold">Seguridad</h2>
+        <p className="mt-1 text-sm text-zinc-500">
+          Cambiá la contraseña de tu cuenta. Si entrás con Google, gestioná la contraseña desde tu
+          cuenta de Google.
+        </p>
+        <div className="mt-4">
+          <ChangePasswordForm />
+        </div>
+      </section>
     </div>
   );
 }

@@ -38,6 +38,7 @@ export interface PurchaseRequestRow {
   created_at: string;
   updated_at: string;
   photographer_archived_at: string | null;
+  client_archived_at: string | null;
   photos?: {
     id: string;
     photographer_id: string;
@@ -69,6 +70,9 @@ function mapRequestRow(
     updated_at: toDate(data.updatedAt).toISOString(),
     photographer_archived_at: data.photographerArchivedAt
       ? toDate(data.photographerArchivedAt).toISOString()
+      : null,
+    client_archived_at: data.clientArchivedAt
+      ? toDate(data.clientArchivedAt).toISOString()
       : null,
   };
 }
@@ -378,6 +382,12 @@ async function assertPhotographerRequest(requestId: string, photographerId: stri
 
 export async function archiveRequest(requestId: string, photographerId: string): Promise<void> {
   const ref = await assertPhotographerRequest(requestId, photographerId);
+  const data = (await ref.get()).data() as PurchaseRequestDoc;
+
+  if (data.status !== "completed") {
+    throw new ValidationError("Solo podés archivar pedidos ya entregados");
+  }
+
   await ref.update({
     photographerArchivedAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -397,10 +407,45 @@ export async function deleteRequest(requestId: string, photographerId: string): 
   await ref.delete();
 }
 
+async function assertClientRequest(requestId: string, clientId: string) {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.purchaseRequests).doc(requestId);
+  const doc = await ref.get();
+
+  if (!doc.exists || (doc.data() as PurchaseRequestDoc).clientId !== clientId) {
+    throw new NotFoundError("Solicitud no encontrada");
+  }
+
+  return { ref, data: doc.data() as PurchaseRequestDoc };
+}
+
+export async function archiveClientRequest(requestId: string, clientId: string): Promise<void> {
+  const { ref, data } = await assertClientRequest(requestId, clientId);
+
+  if (data.status !== "completed") {
+    throw new ValidationError("Solo podés archivar pedidos ya entregados");
+  }
+
+  await ref.update({
+    clientArchivedAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+export async function unarchiveClientRequest(requestId: string, clientId: string): Promise<void> {
+  const { ref } = await assertClientRequest(requestId, clientId);
+  await ref.update({
+    clientArchivedAt: null,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
 export async function getPendingRequestCount(photographerId: string): Promise<number> {
   try {
     const requests = await getPhotographerRequests(photographerId);
-    return requests.filter((req) => req.status === "pending").length;
+    return requests.filter(
+      (req) => req.status === "pending" && !req.photographer_archived_at,
+    ).length;
   } catch (error) {
     console.error("[getPendingRequestCount] failed:", error);
     return 0;

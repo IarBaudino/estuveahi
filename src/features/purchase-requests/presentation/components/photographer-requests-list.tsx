@@ -77,19 +77,19 @@ export function PhotographerRequestsList({
               : "text-on-surface-variant hover:bg-surface-container",
           )}
         >
-          Ocultos ({archivedCount})
+          Archivados ({archivedCount})
         </button>
       </div>
 
       <p className="text-caption text-on-surface-variant/80">
         {view === "active"
-          ? "Solo ves pedidos de fotos que subiste vos. Tocá un pedido para ver los datos del comprador."
-          : "Pedidos ocultos del panel. Podés restaurarlos o eliminarlos definitivamente."}
+          ? "Solo ves pedidos de fotos que subiste vos. Los entregados podés archivarlos para limpiar la lista."
+          : "Pedidos entregados archivados. Podés restaurarlos o eliminarlos definitivamente."}
       </p>
 
       {visibleRequests.length === 0 ? (
         <p className="text-on-surface-variant">
-          {view === "active" ? "No tenés pedidos activos." : "No tenés pedidos ocultos."}
+          {view === "active" ? "No tenés pedidos activos." : "No tenés pedidos archivados."}
         </p>
       ) : (
         visibleRequests.map((req) => {
@@ -129,7 +129,7 @@ export function PhotographerRequestsList({
                   <Badge variant={getPurchaseRequestStatusBadgeVariant(req.status)}>
                     {PURCHASE_REQUEST_STATUS_LABELS[req.status]}
                   </Badge>
-                  {isArchived && <Badge variant="outline">Oculto</Badge>}
+                  {isArchived && <Badge variant="outline">Archivado</Badge>}
                   {req.photos && (
                     <span className="font-mono text-sm">
                       Foto {formatPhotoNumber(req.photos.sort_order)}
