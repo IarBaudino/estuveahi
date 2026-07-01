@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye } from "lucide-react";
 import type { PurchaseRequestRow } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
@@ -26,10 +26,13 @@ export function PhotographerRequestsList({
   const [view, setView] = useState<ViewFilter>("active");
   const [selectedRequest, setSelectedRequest] = useState<PurchaseRequestRow | null>(null);
 
-  const refresh = () => {
-    router.refresh();
-    setSelectedRequest(null);
-  };
+  const refresh = () => router.refresh();
+
+  useEffect(() => {
+    if (!selectedRequest) return;
+    const updated = requests.find((req) => req.id === selectedRequest.id);
+    if (updated) setSelectedRequest(updated);
+  }, [requests, selectedRequest?.id]);
 
   const activeCount = useMemo(
     () => requests.filter((req) => !req.photographer_archived_at).length,

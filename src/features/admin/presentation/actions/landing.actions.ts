@@ -4,8 +4,12 @@ import { revalidatePath } from "next/cache";
 import { adminActionClient } from "@/shared/lib/safe-action";
 import {
   deleteFeaturedCategorySchema,
+  deleteLandingFaqItemSchema,
+  deleteLandingTestimonialSchema,
   resetLandingImageSchema,
   saveFeaturedCategorySchema,
+  saveLandingFaqItemSchema,
+  saveLandingTestimonialSchema,
   setFeaturedEventIdsSchema,
   updateLandingGrayscaleSchema,
   uploadFeaturedCategoryImageSchema,
@@ -13,8 +17,15 @@ import {
 } from "@/features/platform/application/schemas/landing.schema";
 import {
   deleteFeaturedCategory,
+  deleteLandingFaqItem,
+  deleteLandingTestimonial,
+  restoreDefaultFeaturedCategories,
+  restoreDefaultLandingFaq,
+  restoreDefaultLandingTestimonials,
   resetLandingImage,
   saveFeaturedCategory,
+  saveLandingFaqItem,
+  saveLandingTestimonial,
   setFeaturedEventIds,
   setLandingImageGrayscale,
   uploadFeaturedCategoryImage,
@@ -69,6 +80,12 @@ export const deleteFeaturedCategoryAction = adminActionClient
     return { categories };
   });
 
+export const restoreDefaultFeaturedCategoriesAction = adminActionClient.action(async () => {
+  const categories = await restoreDefaultFeaturedCategories();
+  revalidateLanding();
+  return { categories };
+});
+
 export const uploadFeaturedCategoryImageAction = adminActionClient
   .schema(uploadFeaturedCategoryImageSchema)
   .action(async ({ parsedInput }) => {
@@ -89,3 +106,47 @@ export const setFeaturedEventIdsAction = adminActionClient
     revalidateLanding();
     return { eventIds };
   });
+
+export const saveLandingTestimonialAction = adminActionClient
+  .schema(saveLandingTestimonialSchema)
+  .action(async ({ parsedInput }) => {
+    const testimonial = await saveLandingTestimonial(parsedInput);
+    revalidateLanding();
+    return { testimonial };
+  });
+
+export const deleteLandingTestimonialAction = adminActionClient
+  .schema(deleteLandingTestimonialSchema)
+  .action(async ({ parsedInput }) => {
+    const testimonials = await deleteLandingTestimonial(parsedInput.id);
+    revalidateLanding();
+    return { testimonials };
+  });
+
+export const restoreDefaultLandingTestimonialsAction = adminActionClient.action(async () => {
+  const testimonials = await restoreDefaultLandingTestimonials();
+  revalidateLanding();
+  return { testimonials };
+});
+
+export const saveLandingFaqItemAction = adminActionClient
+  .schema(saveLandingFaqItemSchema)
+  .action(async ({ parsedInput }) => {
+    const item = await saveLandingFaqItem(parsedInput);
+    revalidateLanding();
+    return { item };
+  });
+
+export const deleteLandingFaqItemAction = adminActionClient
+  .schema(deleteLandingFaqItemSchema)
+  .action(async ({ parsedInput }) => {
+    const faq = await deleteLandingFaqItem(parsedInput.id);
+    revalidateLanding();
+    return { faq };
+  });
+
+export const restoreDefaultLandingFaqAction = adminActionClient.action(async () => {
+  const faq = await restoreDefaultLandingFaq();
+  revalidateLanding();
+  return { faq };
+});

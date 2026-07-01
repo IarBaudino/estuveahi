@@ -48,3 +48,27 @@ export const uploadFeaturedCategoryImageSchema = z.object({
 export const setFeaturedEventIdsSchema = z.object({
   eventIds: z.array(z.string().uuid()).max(6),
 });
+
+export const saveLandingTestimonialSchema = z.object({
+  id: z.string().min(1).max(64).optional(),
+  quote: z.string().min(1).max(600),
+  name: z.string().min(1).max(80),
+  role: z.string().min(1).max(80),
+  avatarUrl: z.string().url().nullable().optional(),
+  sortOrder: z.number().int().min(0).max(99),
+});
+
+export const deleteLandingTestimonialSchema = z.object({
+  id: z.string().min(1).max(64),
+});
+
+export const saveLandingFaqItemSchema = z.object({
+  id: z.string().min(1).max(64).optional(),
+  question: z.string().min(1).max(200),
+  answer: z.string().min(1).max(1200),
+  sortOrder: z.number().int().min(0).max(99),
+});
+
+export const deleteLandingFaqItemSchema = z.object({
+  id: z.string().min(1).max(64),
+});

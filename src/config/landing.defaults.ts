@@ -54,7 +54,75 @@ export interface LandingSettings {
   grayscale: LandingGrayscale;
   featuredCategories: LandingFeaturedCategory[];
   featuredEventIds: string[];
+  testimonials: LandingTestimonial[];
+  faq: LandingFaqItem[];
 }
+
+export interface LandingTestimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  avatarUrl?: string | null;
+  sortOrder: number;
+}
+
+export interface LandingFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  sortOrder: number;
+}
+
+export const DEFAULT_LANDING_TESTIMONIALS: LandingTestimonial[] = [
+  {
+    id: "mariana-v",
+    quote:
+      "Encontrar la foto exacta de mi primer Luna Park con una calidad increíble fue algo que no esperaba. EstuveAhí capturó la emoción que sentí esa noche.",
+    name: "Mariana V.",
+    role: "Asistente a eventos",
+    sortOrder: 0,
+  },
+  {
+    id: "julian-r",
+    quote:
+      "Como fotografx documental, esta plataforma me permite llegar a quienes realmente aprecian mi trabajo y monetizar cada disparo sin complicaciones técnicas.",
+    name: "Julián R.",
+    role: "Fotografx profesional",
+    sortOrder: 1,
+  },
+];
+
+export const DEFAULT_LANDING_FAQ: LandingFaqItem[] = [
+  {
+    id: "buscar-fotos",
+    question: "¿Cómo busco mis fotos?",
+    answer:
+      "Solo necesitás ingresar a nuestra sección de búsqueda y filtrar por el nombre del evento, la fecha o el lugar. Si el evento fue reciente, aparecerá en la página principal como destacado.",
+    sortOrder: 0,
+  },
+  {
+    id: "formato-archivos",
+    question: "¿En qué formato recibo los archivos?",
+    answer:
+      "El fotografx te envía la imagen en alta resolución (JPEG u otro formato acordado) directamente, sin marca de agua, una vez confirmado el pago entre ustedes.",
+    sortOrder: 1,
+  },
+  {
+    id: "comision",
+    question: "¿EstuveAhí se queda con una comisión?",
+    answer:
+      "No. En esta etapa la plataforma no cobra comisión por venta: el 100 % del acuerdo es para el fotografx. Vos pagás directamente a quien tomó la foto.",
+    sortOrder: 2,
+  },
+  {
+    id: "publicar-fotografx",
+    question: "¿Soy fotografx, cómo puedo publicar?",
+    answer:
+      'Hacé clic en "Soy fotografx", completá tu perfil y empezá a subir tus galerías de eventos.',
+    sortOrder: 3,
+  },
+];
 
 export type LandingCategoryLayout = "wide" | "narrow";
 

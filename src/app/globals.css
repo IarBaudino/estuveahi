@@ -27,7 +27,8 @@
   /* Spacing */
   --spacing-margin-desktop: 64px;
   --spacing-margin-mobile: 16px;
-  --spacing-section-gap: 128px;
+  --spacing-section-gap: 96px;
+  --spacing-section-compact: 64px;
   --spacing-container-max: 1440px;
   --spacing-gutter: 24px;
 
@@ -177,8 +178,20 @@ details > summary::-webkit-details-marker {
 }
 
 .py-section-gap {
-  padding-top: 128px;
-  padding-bottom: 128px;
+  padding-top: var(--spacing-section-gap);
+  padding-bottom: var(--spacing-section-gap);
+}
+
+.py-section-compact {
+  padding-top: var(--spacing-section-compact);
+  padding-bottom: var(--spacing-section-compact);
+}
+
+@media (min-width: 768px) {
+  .py-section-compact {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
 }
 
 .protected-image {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { Archive, ArchiveRestore, Mail, Phone, Trash2, User, X } from "lucide-react";
 import type { PurchaseRequestRow } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
@@ -43,44 +43,114 @@ function formatDateTime(value: string): string {
 interface PhotographerRequestDetailDialogProps {
   request: PurchaseRequestRow;
   onClose: () => void;
+  /** Refresca la lista sin cerrar el modal */
   onUpdated: () => void;
 }
 
 export function PhotographerRequestDetailDialog({
-  request,
+  request: requestProp,
   onClose,
   onUpdated,
 }: PhotographerRequestDetailDialogProps) {
+  const [request, setRequest] = useState(requestProp);
+
+  useEffect(() => {
+    setRequest(requestProp);
+  }, [requestProp]);
+
+  const refreshList = () => onUpdated();
   const [pricePesos, setPricePesos] = useState(() =>
-    request.quoted_price_cents != null && request.quoted_price_cents > 0
-      ? String(request.quoted_price_cents / 100)
+    requestProp.quoted_price_cents != null && requestProp.quoted_price_cents > 0
+      ? String(requestProp.quoted_price_cents / 100)
       : "",
   );
-  const actionOpts = { onSuccess: onUpdated };
+
+  useEffect(() => {
+    if (
+      request.quoted_price_cents != null &&
+      request.quoted_price_cents > 0 &&
+      request.status !== "pending"
+    ) {
+      setPricePesos(String(request.quoted_price_cents / 100));
+    }
+  }, [request.quoted_price_cents, request.status]);
 
   const { execute: approve, isExecuting: approving } = useAction(
     approvePurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: ({ data }) => {
+        const quotedPriceCents =
+          data?.request?.quotedPriceCents ?? resolveQuotedPriceCents();
+        setRequest((prev) => ({
+          ...prev,
+          status: "approved",
+          quoted_price_cents: quotedPriceCents ?? prev.quoted_price_cents,
+          updated_at: new Date().toISOString(),
+        }));
+        refreshList();
+      },
+    },
   );
   const { execute: reject, isExecuting: rejecting } = useAction(
     rejectPurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: () => {
+        setRequest((prev) => ({
+          ...prev,
+          status: "rejected",
+          updated_at: new Date().toISOString(),
+        }));
+        refreshList();
+      },
+    },
   );
   const { execute: complete, isExecuting: completing } = useAction(
     completePurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: () => {
+        setRequest((prev) => ({
+          ...prev,
+          status: "completed",
+          updated_at: new Date().toISOString(),
+        }));
+        refreshList();
+      },
+    },
   );
   const { execute: archive, isExecuting: archiving } = useAction(
     archivePurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: () => {
+        setRequest((prev) => ({
+          ...prev,
+          photographer_archived_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }));
+        refreshList();
+      },
+    },
   );
   const { execute: unarchive, isExecuting: unarchiving } = useAction(
     unarchivePurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: () => {
+        setRequest((prev) => ({
+          ...prev,
+          photographer_archived_at: null,
+          updated_at: new Date().toISOString(),
+        }));
+        refreshList();
+      },
+    },
   );
   const { execute: remove, isExecuting: removing } = useAction(
     deletePurchaseRequestAction,
-    actionOpts,
+    {
+      onSuccess: () => {
+        refreshList();
+        onClose();
+      },
+    },
   );
 
   const client = request.clients;

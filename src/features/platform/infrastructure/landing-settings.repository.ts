@@ -4,18 +4,24 @@ import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type {
   LandingFeaturedCategoryDoc,
+  LandingFaqItemDoc,
   LandingSettingsDoc,
+  LandingTestimonialDoc,
 } from "@/infrastructure/firebase/documents";
 import {
   DEFAULT_FEATURED_CATEGORIES,
+  DEFAULT_LANDING_FAQ,
   DEFAULT_LANDING_GRAYSCALE,
   DEFAULT_LANDING_IMAGES,
+  DEFAULT_LANDING_TESTIMONIALS,
   LANDING_IMAGE_KEYS,
+  type LandingFaqItem,
   type LandingFeaturedCategory,
   type LandingImageKey,
   type LandingImages,
   type LandingGrayscale,
   type LandingSettings,
+  type LandingTestimonial,
 } from "@/config/landing.defaults";
 import { STORAGE_BUCKETS } from "@/infrastructure/storage/storage.constants";
 import { uploadFile, getPublicUrl } from "@/infrastructure/supabase/storage";
@@ -62,20 +68,60 @@ function mapFeaturedCategory(doc: LandingFeaturedCategoryDoc): LandingFeaturedCa
 }
 
 function mergeFeaturedCategories(
-  partial?: LandingFeaturedCategoryDoc[],
+  partial?: LandingFeaturedCategoryDoc[] | null,
 ): LandingFeaturedCategory[] {
-  if (!partial?.length) return DEFAULT_FEATURED_CATEGORIES;
+  if (partial === undefined || partial === null) {
+    return DEFAULT_FEATURED_CATEGORIES;
+  }
+  if (partial.length === 0) return [];
   return partial.map(mapFeaturedCategory).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function mapTestimonial(doc: LandingTestimonialDoc): LandingTestimonial {
+  return {
+    id: doc.id,
+    quote: doc.quote,
+    name: doc.name,
+    role: doc.role,
+    avatarUrl: doc.avatarUrl ?? null,
+    sortOrder: doc.sortOrder,
+  };
+}
+
+function mergeTestimonials(partial?: LandingTestimonialDoc[] | null): LandingTestimonial[] {
+  if (partial === undefined || partial === null) return DEFAULT_LANDING_TESTIMONIALS;
+  if (partial.length === 0) return [];
+  return partial.map(mapTestimonial).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function mapFaqItem(doc: LandingFaqItemDoc): LandingFaqItem {
+  return {
+    id: doc.id,
+    question: doc.question,
+    answer: doc.answer,
+    sortOrder: doc.sortOrder,
+  };
+}
+
+function mergeFaq(partial?: LandingFaqItemDoc[] | null): LandingFaqItem[] {
+  if (partial === undefined || partial === null) return DEFAULT_LANDING_FAQ;
+  if (partial.length === 0) return [];
+  return partial.map(mapFaqItem).sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
 function mapSettings(
-  data?: Pick<LandingSettingsDoc, "images" | "grayscale" | "featuredCategories" | "featuredEventIds">,
+  data?: Pick<
+    LandingSettingsDoc,
+    "images" | "grayscale" | "featuredCategories" | "featuredEventIds" | "testimonials" | "faq"
+  >,
 ): LandingSettings {
   return {
     images: mergeImages(data?.images),
     grayscale: mergeGrayscale(data?.grayscale),
     featuredCategories: mergeFeaturedCategories(data?.featuredCategories),
     featuredEventIds: data?.featuredEventIds ?? [],
+    testimonials: mergeTestimonials(data?.testimonials),
+    faq: mergeFaq(data?.faq),
   };
 }
 
@@ -92,6 +138,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
       grayscale: DEFAULT_LANDING_GRAYSCALE,
       featuredCategories: DEFAULT_FEATURED_CATEGORIES,
       featuredEventIds: [],
+      testimonials: DEFAULT_LANDING_TESTIMONIALS,
+      faq: DEFAULT_LANDING_FAQ,
     };
   }
 
@@ -107,6 +155,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
         grayscale: DEFAULT_LANDING_GRAYSCALE,
         featuredCategories: DEFAULT_FEATURED_CATEGORIES,
         featuredEventIds: [],
+        testimonials: DEFAULT_LANDING_TESTIMONIALS,
+        faq: DEFAULT_LANDING_FAQ,
       };
     }
 
@@ -118,6 +168,8 @@ export async function getLandingSettings(): Promise<LandingSettings> {
       grayscale: DEFAULT_LANDING_GRAYSCALE,
       featuredCategories: DEFAULT_FEATURED_CATEGORIES,
       featuredEventIds: [],
+      testimonials: DEFAULT_LANDING_TESTIMONIALS,
+      faq: DEFAULT_LANDING_FAQ,
     };
   }
 }
@@ -317,6 +369,154 @@ export async function setFeaturedEventIds(eventIds: string[]): Promise<string[]>
   );
 
   return unique;
+}
+
+export async function restoreDefaultFeaturedCategories(): Promise<LandingFeaturedCategory[]> {
+  const ref = await getLandingDocRef();
+
+  await ref.set(
+    {
+      featuredCategories: DEFAULT_FEATURED_CATEGORIES,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return DEFAULT_FEATURED_CATEGORIES;
+}
+
+async function readTestimonials(): Promise<LandingTestimonial[]> {
+  const ref = await getLandingDocRef();
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
+  return mergeTestimonials(data?.testimonials);
+}
+
+async function readFaq(): Promise<LandingFaqItem[]> {
+  const ref = await getLandingDocRef();
+  const doc = await ref.get();
+  const data = doc.exists ? (doc.data() as LandingSettingsDoc) : undefined;
+  return mergeFaq(data?.faq);
+}
+
+export async function saveLandingTestimonial(
+  input: Omit<LandingTestimonial, "id"> & { id?: string },
+): Promise<LandingTestimonial> {
+  const ref = await getLandingDocRef();
+  const current = await readTestimonials();
+
+  const id = input.id?.trim() || randomUUID();
+  const testimonial: LandingTestimonial = {
+    id,
+    quote: input.quote.trim(),
+    name: input.name.trim(),
+    role: input.role.trim(),
+    avatarUrl: input.avatarUrl?.trim() || null,
+    sortOrder: input.sortOrder,
+  };
+
+  const next = [...current.filter((item) => item.id !== id), testimonial].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  await ref.set(
+    {
+      testimonials: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return testimonial;
+}
+
+export async function deleteLandingTestimonial(testimonialId: string): Promise<LandingTestimonial[]> {
+  const ref = await getLandingDocRef();
+  const current = await readTestimonials();
+  const next = current.filter((item) => item.id !== testimonialId);
+
+  await ref.set(
+    {
+      testimonials: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return next;
+}
+
+export async function restoreDefaultLandingTestimonials(): Promise<LandingTestimonial[]> {
+  const ref = await getLandingDocRef();
+
+  await ref.set(
+    {
+      testimonials: DEFAULT_LANDING_TESTIMONIALS,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return DEFAULT_LANDING_TESTIMONIALS;
+}
+
+export async function saveLandingFaqItem(
+  input: Omit<LandingFaqItem, "id"> & { id?: string },
+): Promise<LandingFaqItem> {
+  const ref = await getLandingDocRef();
+  const current = await readFaq();
+
+  const id = input.id?.trim() || randomUUID();
+  const item: LandingFaqItem = {
+    id,
+    question: input.question.trim(),
+    answer: input.answer.trim(),
+    sortOrder: input.sortOrder,
+  };
+
+  const next = [...current.filter((item) => item.id !== id), item].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  await ref.set(
+    {
+      faq: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return item;
+}
+
+export async function deleteLandingFaqItem(faqId: string): Promise<LandingFaqItem[]> {
+  const ref = await getLandingDocRef();
+  const current = await readFaq();
+  const next = current.filter((item) => item.id !== faqId);
+
+  await ref.set(
+    {
+      faq: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return next;
+}
+
+export async function restoreDefaultLandingFaq(): Promise<LandingFaqItem[]> {
+  const ref = await getLandingDocRef();
+
+  await ref.set(
+    {
+      faq: DEFAULT_LANDING_FAQ,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return DEFAULT_LANDING_FAQ;
 }
 
 export async function getLandingSettingsForAdmin(): Promise<LandingSettings> {

@@ -12,9 +12,9 @@ export async function FeaturedEventsSection({ eventIds }: FeaturedEventsSectionP
   if (events.length === 0) return null;
 
   return (
-    <section className="bg-surface-container-lowest px-margin-mobile py-section-gap md:px-margin-desktop">
+    <section className="bg-surface-container-lowest px-margin-mobile py-section-compact md:px-margin-desktop">
       <div className="mx-auto max-w-container-max">
-        <div className="mb-16 flex items-end justify-between">
+        <div className="mb-8 flex items-end justify-between md:mb-10">
           <div>
             <span className="text-label-sm mb-4 block tracking-[0.3em] text-on-surface-variant/50">
               Destacados

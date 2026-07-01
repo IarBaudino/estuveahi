@@ -97,7 +97,25 @@ export interface LandingSettingsDoc {
   grayscale?: Record<string, boolean>;
   featuredCategories?: LandingFeaturedCategoryDoc[];
   featuredEventIds?: string[];
+  testimonials?: LandingTestimonialDoc[];
+  faq?: LandingFaqItemDoc[];
   updatedAt: Timestamp | Date;
+}
+
+export interface LandingTestimonialDoc {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  avatarUrl?: string | null;
+  sortOrder: number;
+}
+
+export interface LandingFaqItemDoc {
+  id: string;
+  question: string;
+  answer: string;
+  sortOrder: number;
 }
 
 export interface LandingFeaturedCategoryDoc {

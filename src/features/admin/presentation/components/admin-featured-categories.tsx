@@ -9,6 +9,7 @@ import { LANDING_IMAGE_LABELS } from "@/config/landing.defaults";
 import { EVENT_CATEGORY_LABELS, EventCategory } from "@/domain/enums/event-category";
 import {
   deleteFeaturedCategoryAction,
+  restoreDefaultFeaturedCategoriesAction,
   saveFeaturedCategoryAction,
   uploadFeaturedCategoryImageAction,
 } from "@/features/admin/presentation/actions/landing.actions";
@@ -78,6 +79,18 @@ export function AdminFeaturedCategories({
     {
       onSuccess: ({ data }) => {
         if (data?.categories) setCategories(data.categories);
+        setEditingId(null);
+        setShowForm(false);
+        refresh();
+      },
+    },
+  );
+
+  const { execute: restoreDefaults, isExecuting: restoring } = useAction(
+    restoreDefaultFeaturedCategoriesAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.categories) setCategories(data.categories);
         refresh();
       },
     },
@@ -144,12 +157,34 @@ export function AdminFeaturedCategories({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-on-surface-variant">
-          Bloques del grid de categorías en la home. Podés agregar, editar o quitar.
-        </p>
-        <Button type="button" size="sm" onClick={startCreate}>
-          Nueva categoría
-        </Button>
+        <div className="max-w-2xl space-y-1 text-sm text-on-surface-variant">
+          <p>
+            Estos bloques forman el <strong className="text-on-surface">grid visual de la home</strong>{" "}
+            (Festivales, Recitales, etc.). Cada uno puede tener imagen propia, link y tamaño.
+          </p>
+          <p>
+            Si una categoría usa &quot;imagen legacy&quot;, toma la foto de la sección{" "}
+            <em>Imágenes fijas</em> más abajo. Eliminar acá la quita de la home.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            isLoading={restoring}
+            onClick={() => {
+              if (confirm("¿Restaurar las 4 categorías por defecto? Se reemplaza la lista actual.")) {
+                restoreDefaults();
+              }
+            }}
+          >
+            Restaurar defaults
+          </Button>
+          <Button type="button" size="sm" onClick={startCreate}>
+            Nueva categoría
+          </Button>
+        </div>
       </div>
 
       {showForm && (
