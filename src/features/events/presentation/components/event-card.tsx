@@ -8,7 +8,13 @@ import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repo
 import { MaterialIcon } from "@/shared/components/icon";
 import { ProtectedImage } from "@/shared/components/protected-image";
 
-export async function EventCard({ event }: { event: EventWithPhotographer }) {
+export async function EventCard({
+  event,
+  colorCover = false,
+}: {
+  event: EventWithPhotographer;
+  colorCover?: boolean;
+}) {
   const photos = await getEventPhotos(event.id, 1);
   const coverPhotoId = photos[0]?.id;
 
@@ -21,7 +27,11 @@ export async function EventCard({ event }: { event: EventWithPhotographer }) {
               src={getSecureMediaUrl(coverPhotoId, "thumbnail")}
               alt={event.title}
               fill
-              className="grayscale-filter object-cover transition-transform duration-700 group-hover:scale-105"
+              className={
+                colorCover
+                  ? "object-cover transition-transform duration-700 group-hover:scale-105"
+                  : "grayscale-filter object-cover transition-transform duration-700 group-hover:scale-105"
+              }
               sizes="(max-width: 768px) 100vw, 33vw"
             />
           ) : (

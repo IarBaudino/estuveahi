@@ -8,7 +8,6 @@ import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
 import { LandingHowItWorksSection } from "@/features/marketing/presentation/components/landing-how-it-works-section";
-import { LandingCategoriesSection } from "@/features/marketing/presentation/components/landing-categories-section";
 import { LandingPhotographerCtaSection } from "@/features/marketing/presentation/components/landing-photographer-cta-section";
 import { LandingStatsSection } from "@/features/marketing/presentation/components/landing-stats-section";
 import { LandingTestimonialsSection } from "@/features/marketing/presentation/components/landing-testimonials-section";
@@ -32,7 +31,6 @@ export default async function HomePage() {
   const {
     images: IMAGES,
     grayscale: GRAYSCALE,
-    featuredCategories,
     featuredEventIds,
     testimonials,
     faq,
@@ -95,15 +93,13 @@ export default async function HomePage() {
         <LandingHowItWorksSection />
       </LandingFadeIn>
 
-      {/* Categories grid — lo visual primero después del hero */}
-      <LandingFadeIn>
-        <LandingCategoriesSection categories={featuredCategories} images={IMAGES} />
-      </LandingFadeIn>
-
+      {/* Galerías destacadas */}
       {featuredEventIds.length > 0 && (
-        <Suspense fallback={null}>
-          <FeaturedEventsSection eventIds={featuredEventIds} />
-        </Suspense>
+        <LandingFadeIn>
+          <Suspense fallback={null}>
+            <FeaturedEventsSection eventIds={featuredEventIds} />
+          </Suspense>
+        </LandingFadeIn>
       )}
 
       {/* For photographers */}
