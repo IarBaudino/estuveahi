@@ -92,7 +92,7 @@ export default async function HomePage() {
 
       {/* How it works */}
       <LandingFadeIn>
-        <LandingHowItWorksSection images={IMAGES} grayscale={GRAYSCALE} />
+        <LandingHowItWorksSection />
       </LandingFadeIn>
 
       {/* Categories grid — lo visual primero después del hero */}

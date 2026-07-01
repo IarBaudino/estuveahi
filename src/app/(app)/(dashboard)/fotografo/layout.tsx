@@ -43,7 +43,12 @@ export default async function PhotographerLayout({
         </div>
       }
     >
-      <PhotographerDashboardShell isPending={isPending}>{children}</PhotographerDashboardShell>
+      <PhotographerDashboardShell
+        isPending={isPending}
+        isAdmin={user.role === "admin"}
+      >
+        {children}
+      </PhotographerDashboardShell>
     </Suspense>
   );
 }

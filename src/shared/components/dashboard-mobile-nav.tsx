@@ -156,11 +156,11 @@ function MobileMenuSheet({
   );
 }
 
-export function PhotographerMobileNav() {
+export function PhotographerMobileNav({ showAdminLink = false }: { showAdminLink?: boolean }) {
   const currentPath = usePathname();
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = showAdminLink || session?.user?.role === "admin";
 
   if (!isAdmin) {
     return <BottomBar items={photographerNav} currentPath={currentPath} />;

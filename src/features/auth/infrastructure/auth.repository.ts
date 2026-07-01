@@ -11,6 +11,7 @@ import type {
   PhotographerApplicationForAdmin,
   PhotographerProfile,
 } from "@/domain/entities/user";
+import { isBootstrapAdminEmail } from "@/shared/lib/bootstrap-admin";
 
 function mapPhotographerProfile(id: string, data: PhotographerProfileDoc): PhotographerProfile {
   return {
@@ -156,7 +157,11 @@ export async function approvePhotographerApplication(userId: string): Promise<vo
   const profileRef = db.collection(COLLECTIONS.profiles).doc(userId);
   const photographerRef = db.collection(COLLECTIONS.photographerProfiles).doc(userId);
 
-  const photographerDoc = await photographerRef.get();
+  const [photographerDoc, profileDoc] = await Promise.all([
+    photographerRef.get(),
+    profileRef.get(),
+  ]);
+
   if (!photographerDoc.exists) {
     throw new Error("No hay solicitud de fotógrafo para este usuario");
   }
@@ -171,10 +176,17 @@ export async function approvePhotographerApplication(userId: string): Promise<vo
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  await profileRef.update({
-    role: Role.PHOTOGRAPHER,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  const currentRole = profileDoc.exists
+    ? (profileDoc.data() as ProfileDoc).role
+    : Role.CLIENT;
+
+  // Los admins conservan su rol: acceden al panel fotografx sin perder el admin.
+  if (currentRole !== Role.ADMIN) {
+    await profileRef.update({
+      role: Role.PHOTOGRAPHER,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
 }
 
 export async function rejectPhotographerApplication(userId: string): Promise<void> {
@@ -214,12 +226,16 @@ export async function updateUserRole(userId: string, role: UserRole) {
     throw new Error("Usuario no encontrado");
   }
 
+  const currentRole = (profileDoc.data() as ProfileDoc).role;
+  const nextRole =
+    role === Role.PHOTOGRAPHER && currentRole === Role.ADMIN ? Role.ADMIN : role;
+
   await profileRef.update({
-    role,
+    role: nextRole,
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  if (role === Role.PHOTOGRAPHER) {
+  if (role === Role.PHOTOGRAPHER || nextRole === Role.PHOTOGRAPHER) {
     await ensurePhotographerProfileApproved(
       userId,
       profileDoc.data() as ProfileDoc,
@@ -262,6 +278,26 @@ async function ensurePhotographerProfileApproved(
   };
 
   await photographerRef.set(photographerData);
+}
+
+/** Restaura rol admin en Firestore para emails de bootstrap (recuperación). */
+export async function repairBootstrapAdminRole(userId: string, email: string): Promise<boolean> {
+  if (!isBootstrapAdminEmail(email)) return false;
+
+  const db = getDb();
+  const profileRef = db.collection(COLLECTIONS.profiles).doc(userId);
+  const profileDoc = await profileRef.get();
+  if (!profileDoc.exists) return false;
+
+  const currentRole = (profileDoc.data() as ProfileDoc).role;
+  if (currentRole === Role.ADMIN) return false;
+
+  await profileRef.update({
+    role: Role.ADMIN,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return true;
 }
 
 export async function verifyPhotographer(userId: string) {

@@ -32,6 +32,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
 
+      if (route === "/admin") {
+        // El layout de admin valida el rol con datos frescos de Firestore.
+        break;
+      }
+
       if (route === "/fotografo") {
         if (session.user.role === "client") {
           // Solicitudes pendientes o aprobadas: el layout valida el acceso al panel.

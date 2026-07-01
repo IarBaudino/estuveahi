@@ -16,13 +16,15 @@ import {
 
 export function DashboardSidebar({
   type,
+  showAdminLink = false,
 }: {
   type: "photographer" | "admin";
+  showAdminLink?: boolean;
 }) {
   const currentPath = usePathname();
   const { data: session } = useSession();
   const items = type === "photographer" ? photographerNav : adminNav;
-  const isAdmin = session?.user?.role === "admin";
+  const isAdmin = showAdminLink || session?.user?.role === "admin";
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-white/10 p-4 md:block">
