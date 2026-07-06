@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { searchPublicPhotographers } from "@/features/photographers/infrastructure/photographer.repository";
-import { PhotographerCard } from "@/features/photographers/presentation/components/photographer-card";
+import { PhotographersGrid } from "@/features/photographers/presentation/components/photographers-grid";
 
 export const metadata: Metadata = {
   title: `${PHOTOGRAPHER_LABEL.pluralCap} en EstuveAhí`,
@@ -37,7 +38,7 @@ export default async function PhotographersPage({ searchParams }: PageProps) {
         </span>
         <h1 className="text-headline-lg">{PHOTOGRAPHER_LABEL.pluralCap}</h1>
         <p className="mt-2 text-on-surface-variant">
-          Descubrí quién captura los eventos y explorá sus galerías publicadas
+          Descubrí quién captura los eventos, consultá su perfil laboral y explorá sus galerías
         </p>
       </div>
 
@@ -62,11 +63,9 @@ export default async function PhotographersPage({ searchParams }: PageProps) {
           <p className="mb-4 text-sm text-on-surface-variant">
             {total} {total === 1 ? PHOTOGRAPHER_LABEL.singular : PHOTOGRAPHER_LABEL.plural}
           </p>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
-            {photographers.map((photographer) => (
-              <PhotographerCard key={photographer.id} photographer={photographer} />
-            ))}
-          </div>
+          <Suspense fallback={<div className="h-64 animate-pulse bg-white/5" />}>
+            <PhotographersGrid photographers={photographers} />
+          </Suspense>
           {totalPages > 1 && (
             <div className="mt-8 flex justify-center gap-2">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (

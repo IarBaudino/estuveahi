@@ -8,6 +8,7 @@ import { EventStatus } from "@/domain/enums/event-status";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { Role } from "@/domain/enums/roles";
 import { hasAvatar } from "@/shared/lib/avatar-url";
+import { getDisplayName } from "@/shared/lib/profile";
 
 function isPublicListing(data: EventDoc): boolean {
   return data.isPublic !== false;
@@ -23,7 +24,7 @@ function mapPublicPhotographer(
   id: string,
   data: PhotographerProfileDoc,
   publishedEventCount: number,
-  profileAvatarUrl: string | null | undefined,
+  profile: ProfileDoc | undefined,
 ): PublicPhotographer {
   return {
     id,
@@ -31,9 +32,20 @@ function mapPublicPhotographer(
     bio: data.bio,
     websiteUrl: data.websiteUrl,
     instagramHandle: data.instagramHandle,
+    portfolioUrl: data.portfolioUrl,
     isVerified: data.isVerified,
     publishedEventCount,
-    hasAvatar: hasAvatar(profileAvatarUrl),
+    hasAvatar: hasAvatar(profile?.avatarUrl),
+    phone: profile?.phone ?? null,
+    email: profile?.email ?? null,
+    contactName: profile
+      ? getDisplayName({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          phone: profile.phone,
+        })
+      : null,
   };
 }
 
@@ -103,6 +115,8 @@ export async function searchPublicPhotographers(input: {
           row.data.displayName,
           row.data.bio,
           row.data.instagramHandle,
+          row.data.websiteUrl,
+          row.data.portfolioUrl,
         ]
           .filter(Boolean)
           .join(" ")
@@ -117,16 +131,14 @@ export async function searchPublicPhotographers(input: {
     const offset = (page - 1) * limit;
     const pageRows = rows.slice(offset, offset + limit);
 
-    const photographers = pageRows.map((row) => {
-      const profile = profileById.get(row.id);
-
-      return mapPublicPhotographer(
+    const photographers = pageRows.map((row) =>
+      mapPublicPhotographer(
         row.id,
         row.data,
         eventCounts.get(row.id) ?? 0,
-        profile?.avatarUrl,
-      );
-    });
+        profileById.get(row.id),
+      ),
+    );
 
     return { photographers, total };
   } catch (error) {
@@ -157,12 +169,7 @@ export async function getPublicPhotographerById(
 
     const events = await getPublicEventsByPhotographer(id);
 
-    return mapPublicPhotographer(
-      id,
-      data,
-      events.length,
-      profileData.avatarUrl,
-    );
+    return mapPublicPhotographer(id, data, events.length, profileData);
   } catch (error) {
     console.error("[getPublicPhotographerById]", error);
     return null;

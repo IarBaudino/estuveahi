@@ -1,22 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import type { PublicPhotographer } from "@/domain/entities/public-photographer";
-import { routes } from "@/config/routes";
 import { PhotographerAvatar } from "@/features/photographers/presentation/components/photographer-avatar";
 
 interface PhotographerCardProps {
   photographer: PublicPhotographer;
+  onOpen: () => void;
 }
 
-export function PhotographerCard({ photographer }: PhotographerCardProps) {
+export function PhotographerCard({ photographer, onOpen }: PhotographerCardProps) {
   const { id, displayName, hasAvatar, isVerified, publishedEventCount } = photographer;
 
   return (
-    <Link
-      href={routes.photographerPublic(id)}
-      className="group block overflow-hidden hairline-border transition-colors hover:bg-white/5"
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group block w-full overflow-hidden hairline-border text-left transition-colors hover:bg-white/5"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-surface-container">
         <PhotographerAvatar
@@ -41,6 +41,6 @@ export function PhotographerCard({ photographer }: PhotographerCardProps) {
           </p>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }
