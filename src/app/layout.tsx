@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  icons: {
+    icon: [{ url: siteConfig.logo, type: "image/png" }],
+    apple: [{ url: siteConfig.logo, type: "image/png" }],
+    shortcut: [siteConfig.logo],
+  },
   robots: {
     index: true,
     follow: true,
@@ -59,6 +64,7 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     locale: "es_AR",
     type: "website",
+    images: [{ url: siteConfig.logo, width: 512, height: 512, alt: siteConfig.name }],
   },
 };
 

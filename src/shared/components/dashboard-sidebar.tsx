@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Camera, Heart, Shield } from "lucide-react";
+import { Heart, Shield } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
+import { SiteLogo } from "@/shared/components/site-logo";
 import {
   adminNav,
   adminPhotographerLinks,
@@ -28,9 +29,11 @@ export function DashboardSidebar({
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-white/10 p-4 md:block">
-      <div className="mb-6 flex items-center gap-2 font-semibold">
-        <Camera className="h-5 w-5" />
-        {type === "photographer" ? PHOTOGRAPHER_LABEL.singularCap : "Admin"}
+      <div className="mb-6">
+        <SiteLogo size="sm" />
+        <p className="mt-2 px-0.5 text-xs text-on-surface-variant">
+          {type === "photographer" ? PHOTOGRAPHER_LABEL.panel : "Panel admin"}
+        </p>
       </div>
       <nav className="space-y-1">
         {items.map((item) => {

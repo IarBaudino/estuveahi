@@ -4,6 +4,7 @@ import { signOut } from "@/infrastructure/auth";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { MaterialIcon } from "@/shared/components/icon";
+import { SiteLogo } from "@/shared/components/site-logo";
 import { DASHBOARD_LINK_LABEL, getDashboardRoute } from "@/shared/lib/dashboard-route";
 
 export async function Header() {
@@ -19,12 +20,7 @@ export async function Header() {
   return (
     <header className="glass-nav fixed top-0 z-50 w-full border-b border-white/10">
       <div className="mx-auto flex h-16 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
-        <Link
-          href={routes.home}
-          className="text-headline-md font-bold tracking-tighter text-primary"
-        >
-          EstuveAhí
-        </Link>
+        <SiteLogo />
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link

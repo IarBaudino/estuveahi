@@ -24,7 +24,7 @@ export function SiteJsonLd() {
     name: siteConfig.name,
     url: base,
     description: siteConfig.description,
-    logo: `${base}/favicon.ico`,
+    logo: `${base}${siteConfig.logo}`,
   };
 
   return (

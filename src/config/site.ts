@@ -16,6 +16,7 @@ export const siteConfig = {
   url: getAppUrl(),
   /** Dominio público canónico (con www). */
   publicUrl: "https://www.estuveahi.com.ar",
+  logo: "/logo.png",
   ogImage: "/og/default.png",
 } as const;
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Fragment } from "react";
 import { routes } from "@/config/routes";
+import { siteConfig } from "@/config/site";
+import { SiteLogo } from "@/shared/components/site-logo";
 import { cn } from "@/shared/lib/utils";
 
 const links = [
@@ -18,13 +20,16 @@ export function SiteFooter({ className }: { className?: string }) {
   return (
     <footer className={cn("border-t border-white/10", className)}>
       <div className="mx-auto flex max-w-container-max flex-col gap-3 px-margin-mobile py-4 sm:flex-row sm:items-center sm:justify-between md:px-margin-desktop">
-        <div className="flex shrink-0 items-baseline gap-2">
-          <span className="text-xs font-medium tracking-tight text-primary">
-            EstuveAhí
-          </span>
-          <span className="text-[10px] text-on-surface-variant/40">
-            © {year}
-          </span>
+        <div className="flex shrink-0 items-center gap-3">
+          <SiteLogo href={routes.home} size="sm" showName={false} />
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-medium tracking-tight text-primary">
+              {siteConfig.name}
+            </span>
+            <span className="text-[10px] text-on-surface-variant/40">
+              © {year}
+            </span>
+          </div>
         </div>
 
         <nav

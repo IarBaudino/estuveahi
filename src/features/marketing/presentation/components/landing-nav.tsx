@@ -2,17 +2,13 @@ import Link from "next/link";
 import { routes } from "@/config/routes";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { MaterialIcon } from "@/shared/components/icon";
+import { SiteLogo } from "@/shared/components/site-logo";
 import { LandingNavAuth } from "@/features/marketing/presentation/components/landing-nav-auth";
 
 export function LandingNav() {
   return (
     <nav className="glass-nav fixed top-0 z-50 flex w-full items-center justify-between border-b border-white/10 px-margin-mobile py-4 md:px-margin-desktop">
-      <Link
-        href={routes.home}
-        className="text-headline-md font-bold tracking-tighter text-primary"
-      >
-        EstuveAhí
-      </Link>
+      <SiteLogo />
 
       <div className="hidden items-center space-x-8 md:flex">
         <Link
