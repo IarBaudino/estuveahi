@@ -1,16 +1,27 @@
-import { getAdminStats } from "@/features/events/infrastructure/event.repository";
+import { getAdminStats, getAdminListingExpiryAlerts } from "@/features/events/infrastructure/event.repository";
 import { getAnalyticsReport } from "@/features/analytics/infrastructure/analytics.repository";
 import { AdminTrafficPanel } from "@/features/admin/presentation/components/admin-traffic-panel";
+import { AdminListingExpiryAlerts } from "@/features/admin/presentation/components/admin-listing-expiry-alerts";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Users, Calendar, Camera, ShoppingBag } from "lucide-react";
 
 export default async function AdminDashboardPage() {
-  const [stats, traffic] = await Promise.all([getAdminStats(), getAnalyticsReport()]);
+  const [stats, traffic, listingAlerts] = await Promise.all([
+    getAdminStats(),
+    getAnalyticsReport(),
+    getAdminListingExpiryAlerts(),
+  ]);
 
   return (
     <div>
       <h1 className="text-2xl font-bold">Panel de administración</h1>
       <p className="text-zinc-500">Vista general de la plataforma</p>
+
+      {listingAlerts.length > 0 && (
+        <div className="mt-8">
+          <AdminListingExpiryAlerts alerts={listingAlerts} />
+        </div>
+      )}
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold">Tráfico web</h2>

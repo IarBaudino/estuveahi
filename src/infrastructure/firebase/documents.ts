@@ -47,6 +47,8 @@ export interface EventDoc {
   isPublic: boolean;
   photoCount: number;
   searchKeywords: string[];
+  publishedAt?: Timestamp | Date | null;
+  listingExpiresAt?: Timestamp | Date | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

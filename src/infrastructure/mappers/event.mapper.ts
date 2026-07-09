@@ -1,8 +1,11 @@
 import type { Event, EventWithPhotographer } from "@/domain/entities/event";
 import type { EventDoc, PhotographerProfileDoc } from "@/infrastructure/firebase/documents";
 import { toDate } from "@/infrastructure/firebase/helpers";
+import { resolveEventListingDates } from "@/shared/lib/event-listing";
 
 export function mapEvent(id: string, data: EventDoc): Event {
+  const listing = resolveEventListingDates(data);
+
   return {
     id,
     photographerId: data.photographerId,
@@ -19,6 +22,8 @@ export function mapEvent(id: string, data: EventDoc): Event {
     qrCode: data.qrCode,
     isPublic: data.isPublic,
     photoCount: data.photoCount,
+    publishedAt: listing.publishedAt,
+    listingExpiresAt: listing.listingExpiresAt,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };

@@ -12,6 +12,8 @@ import { siteConfig } from "@/config/site";
 import { routes } from "@/config/routes";
 import { auth } from "@/infrastructure/auth";
 import { getUserFavoriteIds } from "@/features/favorites/infrastructure/favorite.repository";
+import { isListingCurrentlyActive } from "@/shared/lib/event-listing";
+import { EventListingNotice } from "@/shared/components/event-listing-notice";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -20,7 +22,14 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
-  if (!event) return { title: "Evento no encontrado" };
+  if (
+    !event ||
+    event.status !== "published" ||
+    event.isPublic === false ||
+    !isListingCurrentlyActive(event.listingExpiresAt)
+  ) {
+    return { title: "Evento no encontrado" };
+  }
 
   return {
     title: event.title,
@@ -37,7 +46,12 @@ export default async function EventGalleryPage({ params }: PageProps) {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
 
-  if (!event || event.status !== "published" || event.isPublic === false) {
+  if (
+    !event ||
+    event.status !== "published" ||
+    event.isPublic === false ||
+    !isListingCurrentlyActive(event.listingExpiresAt)
+  ) {
     notFound();
   }
 
@@ -93,6 +107,12 @@ export default async function EventGalleryPage({ params }: PageProps) {
               : `${photos.length} de ${event.photoCount} fotografías`}
           </span>
         </div>
+
+        <EventListingNotice
+          listingExpiresAt={event.listingExpiresAt}
+          className="mt-4"
+          compact
+        />
       </div>
 
       {photosTruncated && (

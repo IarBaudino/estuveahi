@@ -28,6 +28,12 @@ import { mapProfile } from "@/infrastructure/mappers/profile.mapper";
 import type { ProfileDoc } from "@/infrastructure/firebase/documents";
 import type { UserRole } from "@/domain/enums/roles";
 import { Role } from "@/domain/enums/roles";
+import { businessConfig } from "@/config/business";
+import { isEventListingActive, resolveEventListingDates } from "@/shared/lib/event-listing";
+import {
+  clearEventCoverIfPhoto,
+  deleteEventAssets,
+} from "@/features/events/infrastructure/event-cleanup";
 import { canManageEvent } from "./event-access";
 
 async function getPhotographerSummary(photographerId: string) {
@@ -186,7 +192,8 @@ export async function searchPublicEvents(
         id: doc.id,
         data: doc.data() as EventDoc,
       }))
-      .filter((row) => row.data.isPublic !== false);
+      .filter((row) => row.data.isPublic !== false)
+      .filter((row) => isEventListingActive(row.data));
 
     if (input.category) {
       rows = rows.filter((row) => row.data.category === input.category);
@@ -309,6 +316,12 @@ export async function publishEvent(
 
   await ref.update({
     status: EventStatus.PUBLISHED,
+    publishedAt: FieldValue.serverTimestamp(),
+    listingExpiresAt: (() => {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + businessConfig.eventListingDays);
+      return expires;
+    })(),
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -351,6 +364,7 @@ export async function deleteEvent(
     throw new NotFoundError("Evento no encontrado");
   }
 
+  await deleteEventAssets(eventId);
   await ref.delete();
 }
 
@@ -414,16 +428,93 @@ export async function getAllEventsForAdmin() {
       .map((d) => [d.id, (d.data() as PhotographerProfileDoc).displayName]),
   );
 
-  return events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    slug: event.slug,
-    status: event.status,
-    photoCount: event.photoCount,
-    eventDate: toDate(event.eventDate),
-    photographerId: event.photographerId,
-    photographerName: photographerMap.get(event.photographerId) ?? "—",
-  }));
+  return events.map((event) => {
+    const listing = resolveEventListingDates(event);
+    return {
+      id: event.id,
+      title: event.title,
+      slug: event.slug,
+      status: event.status,
+      photoCount: event.photoCount,
+      eventDate: toDate(event.eventDate),
+      photographerId: event.photographerId,
+      photographerName: photographerMap.get(event.photographerId) ?? "—",
+      publishedAt: listing.publishedAt,
+      listingExpiresAt: listing.listingExpiresAt,
+    };
+  });
+}
+
+export interface AdminListingExpiryAlert {
+  id: string;
+  title: string;
+  slug: string;
+  photographerName: string;
+  photoCount: number;
+  listingExpiresAt: Date;
+  status: "warning" | "expired";
+  daysRemaining: number;
+}
+
+export async function getAdminListingExpiryAlerts(): Promise<AdminListingExpiryAlert[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const snap = await db
+    .collection(COLLECTIONS.events)
+    .where("status", "==", EventStatus.PUBLISHED)
+    .get();
+
+  if (snap.empty) return [];
+
+  const photographerIds = [
+    ...new Set(snap.docs.map((doc) => (doc.data() as EventDoc).photographerId)),
+  ];
+  const photographerSnaps = await Promise.all(
+    photographerIds.map((id) =>
+      db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+    ),
+  );
+  const photographerMap = new Map(
+    photographerSnaps
+      .filter((d) => d.exists)
+      .map((d) => [d.id, (d.data() as PhotographerProfileDoc).displayName]),
+  );
+
+  const now = Date.now();
+
+  return snap.docs
+    .map((doc) => {
+      const data = doc.data() as EventDoc;
+      const { listingExpiresAt } = resolveEventListingDates(data);
+      if (!listingExpiresAt) return null;
+
+      const daysRemaining = Math.max(
+        0,
+        Math.ceil((listingExpiresAt.getTime() - now) / (24 * 60 * 60 * 1000)),
+      );
+      const status =
+        listingExpiresAt.getTime() <= now
+          ? "expired"
+          : daysRemaining <= businessConfig.eventListingWarningDays
+            ? "warning"
+            : null;
+
+      if (!status) return null;
+
+      return {
+        id: doc.id,
+        title: data.title,
+        slug: data.slug,
+        photographerName: photographerMap.get(data.photographerId) ?? "—",
+        photoCount: data.photoCount,
+        listingExpiresAt,
+        status,
+        daysRemaining,
+      };
+    })
+    .filter((item): item is AdminListingExpiryAlert => item !== null)
+    .sort((a, b) => a.listingExpiresAt.getTime() - b.listingExpiresAt.getTime());
 }
 
 export async function adminArchiveEvent(eventId: string): Promise<void> {
@@ -444,6 +535,7 @@ export async function adminDeleteEvent(eventId: string): Promise<void> {
   const doc = await ref.get();
   if (!doc.exists) throw new NotFoundError("Evento no encontrado");
 
+  await deleteEventAssets(eventId);
   await ref.delete();
 }
 
@@ -598,7 +690,8 @@ export async function getFeaturedEventsByIds(
       .filter(
         (row) =>
           row.data.status === EventStatus.PUBLISHED && row.data.isPublic !== false,
-      );
+      )
+      .filter((row) => isEventListingActive(row.data));
 
     const order = new Map(eventIds.map((id, index) => [id, index]));
     rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));

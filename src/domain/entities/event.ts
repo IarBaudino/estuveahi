@@ -17,6 +17,8 @@ export interface Event {
   qrCode: string;
   isPublic: boolean;
   photoCount: number;
+  publishedAt: Date | null;
+  listingExpiresAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

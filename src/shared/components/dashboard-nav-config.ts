@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   User,
   UserCheck,
+  UserPlus,
   Users,
   Shield,
 } from "lucide-react";
@@ -150,16 +151,71 @@ export const clientNav: DashboardNavItem[] = [
   { href: routes.client.profile, label: "Mi perfil", icon: User },
 ];
 
-export const clientMobileNav: DashboardNavItem[] = clientNav.filter(
-  (item) =>
-    item.href === routes.client.dashboard ||
-    item.href === routes.events ||
-    item.href === routes.client.favorites ||
-    item.href === routes.client.requests ||
-    item.href === routes.client.profile,
-);
+export const clientMobileNav: DashboardNavItem[] = [
+  { href: routes.client.dashboard, label: "Inicio", shortLabel: "Inicio", icon: Home },
+  { href: routes.events, label: "Eventos", icon: Calendar },
+  {
+    href: routes.photographers,
+    label: PHOTOGRAPHER_LABEL.pluralCap,
+    shortLabel: "Fotografxs",
+    icon: Camera,
+  },
+  { href: routes.client.favorites, label: "Favoritos", icon: Heart },
+];
+
+export const clientMobileMenuNav: DashboardNavItem[] = [
+  {
+    href: routes.client.requests,
+    label: "Solicitudes",
+    shortLabel: "Mis pedidos",
+    icon: ShoppingBag,
+  },
+  { href: routes.client.profile, label: "Mi perfil", icon: User },
+  {
+    href: routes.becomePhotographer,
+    label: `Ser ${PHOTOGRAPHER_LABEL.singular}`,
+    shortLabel: "Ser fotografx",
+    icon: UserPlus,
+  },
+];
+
+export const publicMobileNav: DashboardNavItem[] = [
+  { href: routes.home, label: "Inicio", shortLabel: "Inicio", icon: Home },
+  { href: routes.events, label: "Eventos", icon: Calendar },
+  {
+    href: routes.photographers,
+    label: PHOTOGRAPHER_LABEL.pluralCap,
+    shortLabel: "Fotografxs",
+    icon: Camera,
+  },
+  {
+    href: routes.becomePhotographer,
+    label: `Ser ${PHOTOGRAPHER_LABEL.singular}`,
+    shortLabel: "Ser FX",
+    icon: UserPlus,
+  },
+];
+
+export const publicMobileMenuNav: DashboardNavItem[] = [
+  {
+    href: routes.client.favorites,
+    label: "Mis favoritos",
+    shortLabel: "Favoritos",
+    icon: Heart,
+  },
+  {
+    href: routes.client.requests,
+    label: "Mis solicitudes",
+    shortLabel: "Pedidos",
+    icon: ShoppingBag,
+  },
+  { href: routes.legal.hub, label: "Legales", icon: ImageIcon },
+];
 
 export function isDashboardNavActive(currentPath: string, href: string): boolean {
+  if (href === routes.home) {
+    return currentPath === href;
+  }
   if (href === routes.photographer.dashboard || href === routes.admin.dashboard) {
     return currentPath === href;
   }

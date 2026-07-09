@@ -16,6 +16,9 @@ import {
 import type { Photo } from "@/domain/entities/photo";
 import { NotFoundError, ValidationError } from "@/domain/errors/domain-errors";
 import type { UploadPhotoInput } from "../application/schemas/photo.schema";
+import { deletePhotoStorageFiles } from "@/infrastructure/storage/photo-storage";
+import { clearEventCoverIfPhoto } from "@/features/events/infrastructure/event-cleanup";
+import { deleteFavoritesForPhoto } from "@/features/favorites/infrastructure/favorite.repository";
 
 export {
   getEventPhotos,
@@ -59,7 +62,6 @@ export async function uploadPhoto(
         preview: paths.preview,
         thumbnail: paths.thumbnail,
       },
-      photoId,
     ));
   } catch (error) {
     console.error("[uploadPhoto] storage:", error);
@@ -147,15 +149,18 @@ export async function deletePhoto(
     throw new NotFoundError("Foto no encontrada");
   }
 
+  await deletePhotoStorageFiles(photo);
+  await deleteFavoritesForPhoto(photoId);
   await ref.delete();
 
-  if (!eventDoc.exists) return;
-
-  const currentCount = (eventDoc.data() as EventDoc).photoCount;
-  await db.collection(COLLECTIONS.events).doc(photo.eventId).update({
-    photoCount: Math.max(0, currentCount - 1),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  if (eventDoc.exists) {
+    const currentCount = (eventDoc.data() as EventDoc).photoCount;
+    await db.collection(COLLECTIONS.events).doc(photo.eventId).update({
+      photoCount: Math.max(0, currentCount - 1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    await clearEventCoverIfPhoto(photo.eventId, photoId);
+  }
 }
 
 export async function updatePhotoPrice(

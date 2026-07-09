@@ -6,6 +6,7 @@ import Link from "next/link";
 import { routes } from "@/config/routes";
 import { formatDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
+import { EVENT_LISTING_NOTICE } from "@/shared/lib/event-listing";
 
 export const metadata: Metadata = {
   title: "Explorar eventos",
@@ -57,6 +58,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
         <p className="mt-2 text-on-surface-variant">
           Encuentra fotografías de los eventos a los que asististe
         </p>
+        <p className="mt-3 text-sm text-on-surface-variant/80">{EVENT_LISTING_NOTICE}</p>
       </div>
 
       <EventSearchForm

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { LandingNav } from "@/features/marketing/presentation/components/landing-nav";
+import { PublicMobileNav } from "@/shared/components/public-mobile-nav";
 import { LandingFooter } from "@/features/marketing/presentation/components/landing-footer";
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
@@ -152,6 +153,7 @@ export default async function HomePage() {
       </section>
 
       <LandingFooter />
+      <PublicMobileNav />
     </>
   );
 }

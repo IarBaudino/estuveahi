@@ -34,5 +34,6 @@ export const adminDeleteEventAction = adminActionClient
   .action(async ({ parsedInput }) => {
     await adminDeleteEvent(parsedInput.eventId);
     revalidatePath(routes.admin.events);
+    revalidatePath(routes.admin.dashboard);
     return { success: true };
   });

@@ -4,6 +4,7 @@ import { routes } from "@/config/routes";
 import { getUserFavoritesWithEvents } from "@/features/favorites/infrastructure/favorite.repository";
 import { FavoriteCard } from "@/features/favorites/presentation/components/favorite-card";
 import Link from "next/link";
+import { EVENT_LISTING_NOTICE } from "@/shared/lib/event-listing";
 
 export default async function FavoritesPage() {
   const session = await auth();
@@ -16,6 +17,11 @@ export default async function FavoritesPage() {
       <h1 className="text-headline-lg">Mis favoritos</h1>
       <p className="text-on-surface-variant">
         {favorites.length} fotografías guardadas
+      </p>
+
+      <p className="mt-4 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-on-surface-variant">
+        {EVENT_LISTING_NOTICE} Tus favoritos siguen guardados, pero la galería pública puede no
+        estar disponible después del vencimiento.
       </p>
 
       {favorites.length === 0 ? (

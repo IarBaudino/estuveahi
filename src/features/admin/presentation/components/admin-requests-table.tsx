@@ -10,6 +10,7 @@ import {
   getPurchaseRequestStatusBadgeVariant,
 } from "@/domain/enums/purchase-request-status";
 import { routes } from "@/config/routes";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getDisplayName } from "@/shared/lib/profile";
 import { WhatsAppContactButton } from "@/features/purchase-requests/presentation/components/whatsapp-contact-button";
 import { buildPurchaseRequestWhatsAppMessage } from "@/features/purchase-requests/presentation/lib/purchase-request-whatsapp";
@@ -30,6 +31,7 @@ export function AdminRequestsTable({
           <tr>
             <th className="px-4 py-3 text-left font-medium">Evento</th>
             <th className="px-4 py-3 text-left font-medium">Foto</th>
+            <th className="px-4 py-3 text-left font-medium">{PHOTOGRAPHER_LABEL.singularCap}</th>
             <th className="px-4 py-3 text-left font-medium">Cliente</th>
             <th className="px-4 py-3 text-left font-medium">Precio</th>
             <th className="px-4 py-3 text-left font-medium">Estado</th>
@@ -64,6 +66,18 @@ export function AdminRequestsTable({
                 </td>
                 <td className="px-4 py-3 font-mono">
                   {req.photos ? formatPhotoNumber(req.photos.sort_order) : "—"}
+                </td>
+                <td className="px-4 py-3">
+                  {req.photographers ? (
+                    <Link
+                      href={routes.photographerPublic(req.photographers.id)}
+                      className="font-medium hover:underline"
+                    >
+                      {req.photographers.display_name}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   {req.clients

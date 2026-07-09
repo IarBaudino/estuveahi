@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/utils";
+import { formatListingExpiryDate } from "@/shared/lib/event-listing";
 import { routes } from "@/config/routes";
 import {
   adminArchiveEventAction,
@@ -23,6 +24,8 @@ export interface AdminEventRow {
   eventDate: Date;
   photographerId: string;
   photographerName: string;
+  publishedAt: Date | null;
+  listingExpiresAt: Date | null;
 }
 
 export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
@@ -55,6 +58,7 @@ export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
             <th className="px-4 py-3 text-left font-medium">{PHOTOGRAPHER_LABEL.singularCap}</th>
             <th className="px-4 py-3 text-left font-medium">Fecha</th>
             <th className="px-4 py-3 text-left font-medium">Estado</th>
+            <th className="px-4 py-3 text-left font-medium">Cartelera</th>
             <th className="px-4 py-3 text-left font-medium">Fotos</th>
             <th className="px-4 py-3 text-left font-medium">Acciones</th>
           </tr>
@@ -67,6 +71,19 @@ export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
               <td className="px-4 py-3">{formatDate(event.eventDate)}</td>
               <td className="px-4 py-3">
                 <Badge>{event.status}</Badge>
+              </td>
+              <td className="px-4 py-3 text-xs text-on-surface-variant">
+                {event.status === "published" && event.listingExpiresAt ? (
+                  event.listingExpiresAt.getTime() <= Date.now() ? (
+                    <span className="text-red-400">
+                      Venció {formatListingExpiryDate(event.listingExpiresAt)}
+                    </span>
+                  ) : (
+                    <span>Hasta {formatListingExpiryDate(event.listingExpiresAt)}</span>
+                  )
+                ) : (
+                  "—"
+                )}
               </td>
               <td className="px-4 py-3">{event.photoCount}</td>
               <td className="px-4 py-3">

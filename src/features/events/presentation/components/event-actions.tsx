@@ -8,6 +8,7 @@ import {
   archiveEventAction,
   deleteEventAction,
 } from "@/features/events/presentation/actions/event.actions";
+import { businessConfig } from "@/config/business";
 
 interface EventActionsProps {
   eventId: string;
@@ -31,7 +32,15 @@ export function EventActions({ eventId, status }: EventActionsProps) {
       {status === "draft" && (
         <Button
           size="sm"
-          onClick={() => publish({ eventId })}
+          onClick={() => {
+            if (
+              confirm(
+                `¿Publicar este evento en el catálogo?\n\n${businessConfig.eventListingNotice}`,
+              )
+            ) {
+              publish({ eventId });
+            }
+          }}
           isLoading={publishing}
         >
           Publicar evento

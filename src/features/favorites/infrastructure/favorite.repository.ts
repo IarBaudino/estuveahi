@@ -15,6 +15,24 @@ function favoriteDocId(userId: string, photoId: string) {
   return `${userId}_${photoId}`;
 }
 
+export async function deleteFavoritesForPhoto(photoId: string): Promise<void> {
+  const db = getDbIfConfigured();
+  if (!db) return;
+
+  const snap = await db
+    .collection(COLLECTIONS.favorites)
+    .where("photoId", "==", photoId)
+    .get();
+
+  if (snap.empty) return;
+
+  const batch = db.batch();
+  for (const doc of snap.docs) {
+    batch.delete(doc.ref);
+  }
+  await batch.commit();
+}
+
 export async function getUserFavorites(userId: string): Promise<Photo[]> {
   const db = getDbIfConfigured();
   if (!db) return [];

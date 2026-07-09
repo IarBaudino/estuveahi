@@ -10,6 +10,7 @@ import {
   adminNav,
   adminPhotographerLinks,
   clientMobileNav,
+  clientMobileMenuNav,
   isDashboardNavActive,
   photographerAdminLink,
   photographerNav,
@@ -236,7 +237,53 @@ export function PhotographerMobileNav({ showAdminLink = false }: { showAdminLink
 
 export function ClientMobileNav() {
   const currentPath = usePathname();
-  return <BottomBar items={clientMobileNav} currentPath={currentPath} />;
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/90 backdrop-blur-md md:hidden">
+        <div className="flex items-stretch justify-around py-2">
+          {clientMobileNav.map((item) => {
+            const Icon = item.icon;
+            const active = isDashboardNavActive(currentPath, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[10px] sm:text-xs",
+                  active ? "font-medium text-white" : "text-on-surface-variant",
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="truncate">{item.shortLabel ?? item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            className={cn(
+              "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-1 text-[10px] sm:text-xs",
+              menuOpen ? "font-medium text-white" : "text-on-surface-variant",
+            )}
+            aria-label="Abrir menú"
+          >
+            <Menu className="h-5 w-5 shrink-0" />
+            <span className="truncate">Más</span>
+          </button>
+        </div>
+      </nav>
+
+      <MobileMenuSheet
+        title="Mi cuenta"
+        items={clientMobileMenuNav}
+        currentPath={currentPath}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+      />
+    </>
+  );
 }
 
 export function AdminMobileNav() {

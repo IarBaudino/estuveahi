@@ -27,6 +27,7 @@ import { routes } from "@/config/routes";
 import { QrCode } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
+import { EventListingNotice } from "@/shared/components/event-listing-notice";
 
 interface EventManageClientProps {
   event: Event;
@@ -201,6 +202,12 @@ export function EventManageClient({
               Evento colaborativo: podés subir tus fotos y gestionar solo las tuyas. Las ventas
               de cada foto van al fotógrafo que la subió.
             </p>
+          )}
+          {event.status === "published" && (
+            <EventListingNotice
+              listingExpiresAt={event.listingExpiresAt}
+              className="mt-3"
+            />
           )}
         </div>
         {isOwner && <EventActions eventId={event.id} status={event.status} />}

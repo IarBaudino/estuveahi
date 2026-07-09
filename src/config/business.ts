@@ -11,6 +11,12 @@ export const businessConfig = {
     "La fotografx te contacta para coordinar el pago y enviarte la foto en alta.",
   photographerDeliveryNote:
     "Vos guardás el material en alta y lo enviás al cliente. En la web solo hay vistas previa con marca de agua.",
+  /** Días en cartelera pública desde la publicación */
+  eventListingDays: 30,
+  /** Días antes del vencimiento para alertar al admin */
+  eventListingWarningDays: 7,
+  eventListingNotice:
+    "Los eventos publicados permanecen en cartelera 30 días. Después se ocultan del catálogo y deben eliminarse para liberar espacio.",
   noPlatformFeeMessage:
     "En esta etapa EstuveAhí no cobra comisión: el 100 % de la venta es para el fotógrafo.",
 } as const;

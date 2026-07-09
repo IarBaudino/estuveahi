@@ -29,6 +29,14 @@ export async function downloadFile(
   return Buffer.from(await data.arrayBuffer());
 }
 
+export async function deleteFile(bucket: string, path: string): Promise<void> {
+  const supabase = createStorageAdminClientIfConfigured();
+  if (!supabase) return;
+
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
+}
+
 export function getPublicUrl(bucket: string, path: string): string {
   const supabase = createStorageAdminClient();
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);

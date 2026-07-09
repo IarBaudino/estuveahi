@@ -61,6 +61,7 @@ export const deleteEventAction = photographerActionClient
     await deleteEvent(parsedInput.eventId, ctx.user.id, ctx.user.role);
     revalidatePath(routes.photographer.events);
     revalidatePath(routes.admin.events);
+    revalidatePath(routes.admin.dashboard);
     return { success: true };
   });
 

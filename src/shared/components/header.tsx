@@ -19,10 +19,10 @@ export async function Header() {
 
   return (
     <header className="glass-nav fixed top-0 z-50 w-full border-b border-white/10">
-      <div className="mx-auto flex h-16 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
+      <div className="mx-auto flex h-16 max-w-container-max items-center gap-2 px-margin-mobile md:gap-0 md:px-margin-desktop">
         <SiteLogo />
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-8 md:flex md:flex-1 md:justify-center">
           <Link
             href={routes.events}
             className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
@@ -37,7 +37,25 @@ export async function Header() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <nav
+          className="flex min-w-0 flex-1 items-center justify-center gap-3 md:hidden"
+          aria-label="Secciones"
+        >
+          <Link
+            href={routes.events}
+            className="text-label-sm truncate tracking-wider text-on-surface-variant/80 transition-colors hover:text-primary"
+          >
+            Eventos
+          </Link>
+          <Link
+            href={routes.photographers}
+            className="text-label-sm truncate tracking-wider text-on-surface-variant/80 transition-colors hover:text-primary"
+          >
+            {PHOTOGRAPHER_LABEL.pluralCap}
+          </Link>
+        </nav>
+
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Link href={routes.events} aria-label="Buscar">
             <MaterialIcon name="search" className="text-primary" />
           </Link>

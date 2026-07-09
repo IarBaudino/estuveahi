@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isSupabaseStorageConfigured } from "@/infrastructure/supabase/config";
 import { downloadFile } from "@/infrastructure/supabase/storage";
+import { applyServedPhotoWatermark } from "@/infrastructure/storage/image-processor";
+import {
+  PREVIEW_QUALITY,
+  THUMBNAIL_QUALITY,
+} from "@/infrastructure/storage/storage.constants";
 import { resolvePhotoMediaAccess } from "@/features/photos/infrastructure/media-access";
 import type { MediaVariant } from "@/shared/lib/media-url";
 import { siteConfig } from "@/config/site";
@@ -57,12 +62,14 @@ export async function GET(
 
   try {
     const buffer = await downloadFile(access.bucket, access.path);
+    const quality = variant === "thumbnail" ? THUMBNAIL_QUALITY : PREVIEW_QUALITY;
+    const watermarked = await applyServedPhotoWatermark(buffer, quality);
 
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(new Uint8Array(watermarked), {
       status: 200,
       headers: {
-        "Content-Type": access.contentType,
-        "Content-Length": String(buffer.length),
+        "Content-Type": "image/webp",
+        "Content-Length": String(watermarked.length),
         "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
         "X-Content-Type-Options": "nosniff",

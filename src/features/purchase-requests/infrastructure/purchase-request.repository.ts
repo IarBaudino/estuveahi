@@ -5,6 +5,7 @@ import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type {
   EventDoc,
   PhotoDoc,
+  PhotographerProfileDoc,
   ProfileDoc,
   PurchaseRequestDoc,
 } from "@/infrastructure/firebase/documents";
@@ -50,6 +51,7 @@ export interface PurchaseRequestRow {
   };
   events?: { id: string; title: string; slug: string };
   clients?: PurchaseRequestClientInfo;
+  photographers?: { id: string; display_name: string };
 }
 
 function mapRequestRow(
@@ -94,6 +96,23 @@ async function enrichPurchaseRequests(
     Promise.all(eventIds.map((id) => db.collection(COLLECTIONS.events).doc(id).get())),
     Promise.all(clientIds.map((id) => db.collection(COLLECTIONS.profiles).doc(id).get())),
   ]);
+
+  const photographerIds = [
+    ...new Set(
+      [
+        ...requests.map((r) => r.photographer_id),
+        ...photoSnaps
+          .filter((d) => d.exists)
+          .map((d) => (d.data() as PhotoDoc).photographerId),
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const photographerSnaps = await Promise.all(
+    photographerIds.map((id) =>
+      db.collection(COLLECTIONS.photographerProfiles).doc(id).get(),
+    ),
+  );
 
   const photoMap = new Map(
     photoSnaps
@@ -144,12 +163,26 @@ async function enrichPurchaseRequests(
       }),
   );
 
-  return requests.map((req) => ({
-    ...req,
-    photos: photoMap.get(req.photo_id),
-    events: eventMap.get(req.event_id),
-    clients: clientMap.get(req.client_id),
-  }));
+  const photographerMap = new Map(
+    photographerSnaps
+      .filter((d) => d.exists)
+      .map((d) => {
+        const data = d.data() as PhotographerProfileDoc;
+        return [d.id, { id: d.id, display_name: data.displayName }];
+      }),
+  );
+
+  return requests.map((req) => {
+    const photo = photoMap.get(req.photo_id);
+    const photographerId = photo?.photographer_id ?? req.photographer_id;
+    return {
+      ...req,
+      photos: photo,
+      events: eventMap.get(req.event_id),
+      clients: clientMap.get(req.client_id),
+      photographers: photographerId ? photographerMap.get(photographerId) : undefined,
+    };
+  });
 }
 
 const PHOTO_ID_QUERY_CHUNK = 30;

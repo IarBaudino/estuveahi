@@ -6,6 +6,8 @@ import { Badge } from "@/shared/ui/badge";
 import { routes } from "@/config/routes";
 import { formatDate } from "@/shared/lib/utils";
 import { Plus } from "lucide-react";
+import { EVENT_LISTING_NOTICE } from "@/shared/lib/event-listing";
+import { EventListingBadge } from "@/shared/components/event-listing-notice";
 
 export default async function PhotographerEventsPage() {
   const session = await auth();
@@ -29,6 +31,10 @@ export default async function PhotographerEventsPage() {
         </Link>
       </div>
 
+      <p className="mt-4 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+        {EVENT_LISTING_NOTICE}
+      </p>
+
       <div className="mt-6 space-y-3">
         {events.length === 0 ? (
           <p className="text-zinc-500">No tienes eventos aún.</p>
@@ -46,6 +52,9 @@ export default async function PhotographerEventsPage() {
                   <Badge variant={event.status === "published" ? "success" : "default"}>
                     {event.status}
                   </Badge>
+                  {event.status === "published" && (
+                    <EventListingBadge listingExpiresAt={event.listingExpiresAt} />
+                  )}
                   {!isOwn && (
                     <Badge variant="outline">Colaborativo</Badge>
                   )}
