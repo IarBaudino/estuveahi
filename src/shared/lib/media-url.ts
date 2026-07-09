@@ -1,7 +1,7 @@
 export type MediaVariant = "thumbnail" | "preview";
 
 /** Versión de la marca de agua — cambiar para invalidar caché del navegador */
-const WATERMARK_VERSION = "3";
+const WATERMARK_VERSION = "4";
 
 export const MEDIA_VARIANTS = {
   thumbnail: "thumbnail",

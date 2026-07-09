@@ -9,26 +9,30 @@ import { createWatermarkPng } from "./watermark";
 import { uploadFile } from "@/infrastructure/supabase/storage";
 import sharp from "./sharp";
 
-async function rasterizeWatermark(width: number, height: number): Promise<Buffer> {
-  return createWatermarkPng(width, height);
-}
-
 /** Aplica la marca de agua al servir preview/thumbnail (todas las fotos, incluidas las ya subidas). */
 export async function applyServedPhotoWatermark(
   imageBuffer: Buffer,
   quality = PREVIEW_QUALITY,
 ): Promise<Buffer> {
-  const pipeline = sharp(imageBuffer).rotate();
-  const meta = await pipeline.metadata();
+  const meta = await sharp(imageBuffer).rotate().metadata();
   const width = meta.width ?? PREVIEW_MAX_PX;
   const height = meta.height ?? PREVIEW_MAX_PX;
 
-  const watermarkPng = await rasterizeWatermark(width, height);
-
-  return pipeline
-    .composite([{ input: watermarkPng, top: 0, left: 0 }])
-    .webp({ quality, effort: 4 })
-    .toBuffer();
+  try {
+    const watermarkPng = await createWatermarkPng(width, height);
+    return sharp(imageBuffer)
+      .rotate()
+      .composite([{ input: watermarkPng, top: 0, left: 0 }])
+      .webp({ quality, effort: 4 })
+      .toBuffer();
+  } catch (error) {
+    console.error("[applyServedPhotoWatermark] watermark failed, serving without overlay:", error);
+    // Nunca romper la galería: si falla la marca, igual devolvemos la imagen
+    return sharp(imageBuffer)
+      .rotate()
+      .webp({ quality, effort: 4 })
+      .toBuffer();
+  }
 }
 
 async function resizeVariant(

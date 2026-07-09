@@ -60,8 +60,15 @@ export async function GET(
     return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
   }
 
+  let buffer: Buffer;
   try {
-    const buffer = await downloadFile(access.bucket, access.path);
+    buffer = await downloadFile(access.bucket, access.path);
+  } catch (error) {
+    console.error("[api/media] download failed:", photoId, access.bucket, access.path, error);
+    return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
+  }
+
+  try {
     const quality = variant === "thumbnail" ? THUMBNAIL_QUALITY : PREVIEW_QUALITY;
     const watermarked = await applyServedPhotoWatermark(buffer, quality);
 
@@ -71,8 +78,8 @@ export async function GET(
         "Content-Type": "image/webp",
         "Content-Length": String(watermarked.length),
         "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
-        "Pragma": "no-cache",
-        "Expires": "0",
+        Pragma: "no-cache",
+        Expires: "0",
         "X-Watermarked": "1",
         "X-Content-Type-Options": "nosniff",
         "Content-Disposition": "inline",
@@ -81,7 +88,8 @@ export async function GET(
         "Permissions-Policy": "interest-cohort=()",
       },
     });
-  } catch {
-    return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
+  } catch (error) {
+    console.error("[api/media] process failed:", photoId, error);
+    return NextResponse.json({ error: "No se pudo procesar la imagen" }, { status: 500 });
   }
 }
