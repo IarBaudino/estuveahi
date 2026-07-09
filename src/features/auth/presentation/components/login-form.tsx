@@ -50,12 +50,12 @@ export function LoginForm() {
       </CardHeader>
       <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">
         {isBlocked && (
-          <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+          <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
             Tu cuenta fue suspendida. Contactá al administrador de EstuveAhí.
           </p>
         )}
         {passwordChanged && (
-          <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+          <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">
             Tu contraseña fue actualizada. Iniciá sesión con la nueva contraseña.
           </p>
         )}
@@ -75,21 +75,21 @@ export function LoginForm() {
           <p className="text-right">
             <Link
               href={routes.forgotPassword}
-              className="text-xs text-zinc-500 underline hover:text-zinc-800 dark:hover:text-zinc-200"
+              className="text-xs text-zinc-500 underline hover:text-zinc-200"
             >
               ¿Olvidaste tu contraseña?
             </Link>
           </p>
         </div>
         {result.serverError && (
-          <p className="text-sm text-red-500">{result.serverError}</p>
+          <p className="text-sm text-red-400">{result.serverError}</p>
         )}
         <Button type="submit" className="w-full" isLoading={isExecuting}>
           Ingresar
         </Button>
         <p className="text-center text-sm text-zinc-500">
           ¿No tienes cuenta?{" "}
-          <Link href={routes.register} className="font-medium text-zinc-900 dark:text-white">
+          <Link href={routes.register} className="font-medium text-white hover:underline">
             Regístrate
           </Link>
         </p>

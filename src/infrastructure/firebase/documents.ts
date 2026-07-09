@@ -70,6 +70,14 @@ export interface PhotoDoc {
   sortOrder: number;
   capturedAt: Timestamp | Date | null;
   metadata: Record<string, unknown>;
+  likeCount?: number;
+  createdAt: Timestamp | Date;
+}
+
+export interface PhotoLikeDoc {
+  userId: string;
+  photoId: string;
+  eventId: string;
   createdAt: Timestamp | Date;
 }
 

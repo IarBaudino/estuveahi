@@ -14,6 +14,7 @@ import { LandingStatsSection } from "@/features/marketing/presentation/component
 import { LandingTestimonialsSection } from "@/features/marketing/presentation/components/landing-testimonials-section";
 import { LandingFaqSection } from "@/features/marketing/presentation/components/landing-faq-section";
 import { FeaturedEventsSection } from "@/features/marketing/presentation/components/featured-events-section";
+import { PopularPhotosSection } from "@/features/marketing/presentation/components/popular-photos-section";
 import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
 import {
   getPlatformPublicStats,
@@ -102,6 +103,12 @@ export default async function HomePage() {
           </Suspense>
         </LandingFadeIn>
       )}
+
+      <LandingFadeIn>
+        <Suspense fallback={null}>
+          <PopularPhotosSection />
+        </Suspense>
+      </LandingFadeIn>
 
       {/* For photographers */}
       <LandingFadeIn>

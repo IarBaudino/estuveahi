@@ -35,6 +35,7 @@ import {
   deleteEventAssets,
 } from "@/features/events/infrastructure/event-cleanup";
 import { canManageEvent } from "./event-access";
+import { getTotalPhotoLikes } from "@/features/photo-likes/infrastructure/photo-like.repository";
 
 async function getPhotographerSummary(photographerId: string) {
   const db = getDbIfConfigured();
@@ -371,11 +372,11 @@ export async function deleteEvent(
 export async function getAdminStats() {
   const db = getDbIfConfigured();
   if (!db) {
-    return { users: 0, events: 0, photos: 0, pendingRequests: 0 };
+    return { users: 0, events: 0, photos: 0, pendingRequests: 0, totalLikes: 0 };
   }
 
   try {
-    const [users, events, photos, requests] = await Promise.all([
+    const [users, events, photos, requests, totalLikes] = await Promise.all([
       db.collection(COLLECTIONS.profiles).count().get(),
       db.collection(COLLECTIONS.events).count().get(),
       db.collection(COLLECTIONS.photos).count().get(),
@@ -384,6 +385,7 @@ export async function getAdminStats() {
         .where("status", "==", "pending")
         .count()
         .get(),
+      getTotalPhotoLikes(),
     ]);
 
     return {
@@ -391,10 +393,11 @@ export async function getAdminStats() {
       events: events.data().count,
       photos: photos.data().count,
       pendingRequests: requests.data().count,
+      totalLikes,
     };
   } catch (error) {
     console.error("[getAdminStats] count queries failed:", error);
-    return { users: 0, events: 0, photos: 0, pendingRequests: 0 };
+    return { users: 0, events: 0, photos: 0, pendingRequests: 0, totalLikes: 0 };
   }
 }
 

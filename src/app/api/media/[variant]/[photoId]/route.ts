@@ -72,6 +72,8 @@ export async function GET(
         "Content-Length": String(watermarked.length),
         "Cache-Control": "private, no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Watermarked": "1",
         "X-Content-Type-Options": "nosniff",
         "Content-Disposition": "inline",
         "Referrer-Policy": "no-referrer",

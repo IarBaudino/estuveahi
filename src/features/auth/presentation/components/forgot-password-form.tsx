@@ -77,7 +77,7 @@ export function ForgotPasswordForm() {
           Enviar enlace
         </Button>
         <p className="text-center text-sm text-zinc-500">
-          <Link href={routes.login} className="font-medium text-zinc-900 dark:text-white">
+          <Link href={routes.login} className="font-medium text-white hover:underline">
             Volver a iniciar sesión
           </Link>
         </p>

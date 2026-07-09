@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ShoppingBag, X } from "lucide-react";
+import { Heart, ShoppingBag, ThumbsUp, X } from "lucide-react";
 import type { PublicPhoto } from "@/domain/dto/public-photo";
 import { formatCurrency } from "@/shared/lib/utils";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
@@ -11,6 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { ProtectedImage } from "@/shared/components/protected-image";
 import { useGalleryProtection } from "@/shared/hooks/use-gallery-protection";
 import { toggleFavoriteAction } from "@/features/favorites/presentation/actions/favorite.actions";
+import { togglePhotoLikeAction } from "@/features/photo-likes/presentation/actions/photo-like.actions";
 import { PurchaseRequestDialog } from "@/features/purchase-requests/presentation/components/purchase-request-dialog";
 import { usePathname, useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
@@ -18,16 +19,22 @@ import { routes } from "@/config/routes";
 interface PhotoGalleryProps {
   photos: PublicPhoto[];
   favoriteIds: string[];
+  likedIds: string[];
   isAuthenticated: boolean;
 }
 
 export function PhotoGallery({
   photos,
   favoriteIds: initialFavorites,
+  likedIds: initialLikedIds,
   isAuthenticated,
 }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<PublicPhoto | null>(null);
   const [favorites, setFavorites] = useState(new Set(initialFavorites));
+  const [likes, setLikes] = useState(new Set(initialLikedIds));
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>(() =>
+    Object.fromEntries(photos.map((photo) => [photo.id, photo.likeCount])),
+  );
   const [purchasePhoto, setPurchasePhoto] = useState<PublicPhoto | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -45,6 +52,26 @@ export function PhotoGallery({
       return;
     }
     setPurchasePhoto(photo);
+  }
+
+  async function handleToggleLike(photoId: string) {
+    if (!isAuthenticated) {
+      goToLogin();
+      return;
+    }
+    const result = await togglePhotoLikeAction({ photoId });
+    if (result?.data) {
+      setLikes((prev) => {
+        const next = new Set(prev);
+        if (result.data!.liked) next.add(photoId);
+        else next.delete(photoId);
+        return next;
+      });
+      setLikeCounts((prev) => ({
+        ...prev,
+        [photoId]: result.data!.likeCount,
+      }));
+    }
   }
 
   async function handleToggleFavorite(photoId: string) {
@@ -103,6 +130,12 @@ export function PhotoGallery({
               <span className="absolute left-2 top-2 z-20 rounded bg-black/70 px-2 py-0.5 font-mono text-xs text-white">
                 {formatPhotoNumber(photo.sortOrder)}
               </span>
+              {(likeCounts[photo.id] ?? 0) > 0 && (
+                <span className="absolute left-2 top-9 z-20 flex items-center gap-1 rounded bg-black/70 px-2 py-0.5 text-[10px] text-white">
+                  <ThumbsUp className="h-3 w-3" />
+                  {likeCounts[photo.id]}
+                </span>
+              )}
               {photo.priceCents != null && photo.priceCents > 0 && (
                 <span className="absolute right-2 top-2 z-20 rounded bg-black/70 px-2 py-0.5 text-xs font-medium text-white">
                   {formatCurrency(photo.priceCents, photo.currency)}
@@ -122,6 +155,18 @@ export function PhotoGallery({
               >
                 <ShoppingBag className="h-4 w-4 shrink-0" />
                 Pedir esta foto
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-10 shrink-0 px-3"
+                onClick={() => handleToggleLike(photo.id)}
+                aria-label={likes.has(photo.id) ? "Quitar like" : "Dar like"}
+              >
+                <ThumbsUp
+                  className={`h-4 w-4 ${likes.has(photo.id) ? "fill-primary text-primary" : ""}`}
+                />
               </Button>
               <Button
                 type="button"
@@ -202,6 +247,12 @@ export function PhotoGallery({
                   <p className="text-caption text-on-surface-variant/60">
                     Vista previa con marca de agua
                   </p>
+                  {(likeCounts[selectedPhoto.id] ?? 0) > 0 && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-zinc-400">
+                      <ThumbsUp className="h-4 w-4" />
+                      {likeCounts[selectedPhoto.id]} likes
+                    </p>
+                  )}
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   <Button
@@ -214,6 +265,17 @@ export function PhotoGallery({
                   >
                     <ShoppingBag className="h-4 w-4" />
                     Pedir esta foto
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full border-white/30 text-white hover:bg-white/10 sm:w-auto"
+                    onClick={() => handleToggleLike(selectedPhoto.id)}
+                  >
+                    <ThumbsUp
+                      className={`h-4 w-4 ${likes.has(selectedPhoto.id) ? "fill-primary text-primary" : ""}`}
+                    />
+                    Like
                   </Button>
                   <Button
                     variant="outline"

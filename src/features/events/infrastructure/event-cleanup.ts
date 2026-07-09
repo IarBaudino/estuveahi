@@ -4,6 +4,7 @@ import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type { EventDoc, PhotoDoc } from "@/infrastructure/firebase/documents";
 import { deletePhotoStorageFiles } from "@/infrastructure/storage/photo-storage";
 import { deleteFavoritesForPhoto } from "@/features/favorites/infrastructure/favorite.repository";
+import { deleteLikesForPhoto } from "@/features/photo-likes/infrastructure/photo-like.repository";
 
 async function deletePurchaseRequestsForEvent(eventId: string): Promise<void> {
   const db = getDb();
@@ -33,6 +34,7 @@ export async function deleteEventAssets(eventId: string): Promise<void> {
       const data = doc.data() as PhotoDoc;
       await deletePhotoStorageFiles(data);
       await deleteFavoritesForPhoto(doc.id);
+      await deleteLikesForPhoto(doc.id);
       await doc.ref.delete();
     }),
   );

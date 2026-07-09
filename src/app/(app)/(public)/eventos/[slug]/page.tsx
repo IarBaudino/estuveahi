@@ -12,6 +12,7 @@ import { siteConfig } from "@/config/site";
 import { routes } from "@/config/routes";
 import { auth } from "@/infrastructure/auth";
 import { getUserFavoriteIds } from "@/features/favorites/infrastructure/favorite.repository";
+import { getUserLikedIds } from "@/features/photo-likes/infrastructure/photo-like.repository";
 import { isListingCurrentlyActive } from "@/shared/lib/event-listing";
 import { EventListingNotice } from "@/shared/components/event-listing-notice";
 
@@ -64,6 +65,10 @@ export default async function EventGalleryPage({ params }: PageProps) {
 
   const favoriteIds = session?.user?.id
     ? await getUserFavoriteIds(session.user.id)
+    : new Set<string>();
+
+  const likedIds = session?.user?.id
+    ? await getUserLikedIds(session.user.id)
     : new Set<string>();
 
   return (
@@ -128,6 +133,7 @@ export default async function EventGalleryPage({ params }: PageProps) {
       <PhotoGallery
         photos={toPublicPhotos(photos)}
         favoriteIds={Array.from(favoriteIds)}
+        likedIds={Array.from(likedIds)}
         isAuthenticated={!!session?.user}
       />
       )}

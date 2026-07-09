@@ -4,6 +4,7 @@ export const COLLECTIONS = {
   events: "events",
   photos: "photos",
   favorites: "favorites",
+  photoLikes: "photoLikes",
   purchaseRequests: "purchaseRequests",
   platformSettings: "platformSettings",
   analytics: "analytics",

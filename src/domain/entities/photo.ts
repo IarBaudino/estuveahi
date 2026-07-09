@@ -16,5 +16,6 @@ export interface Photo {
   sortOrder: number;
   capturedAt: Date | null;
   metadata: Record<string, unknown>;
+  likeCount: number;
   createdAt: Date;
 }

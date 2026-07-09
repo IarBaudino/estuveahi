@@ -14,6 +14,7 @@ export interface PublicPhoto {
   sortOrder: number;
   capturedAt: Date | null;
   createdAt: Date;
+  likeCount: number;
 }
 
 export function toPublicPhoto(photo: Photo): PublicPhoto {
@@ -30,6 +31,7 @@ export function toPublicPhoto(photo: Photo): PublicPhoto {
     sortOrder: photo.sortOrder,
     capturedAt: photo.capturedAt,
     createdAt: photo.createdAt,
+    likeCount: photo.likeCount,
   };
 }
 

@@ -26,7 +26,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   serverExternalPackages: ["firebase-admin"],
   outputFileTracingIncludes: {
-    "/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
+    "/*": [
+      "./node_modules/sharp/**/*",
+      "./node_modules/@img/**/*",
+      "./src/infrastructure/storage/assets/**/*",
+    ],
   },
   images: {
     remotePatterns: [

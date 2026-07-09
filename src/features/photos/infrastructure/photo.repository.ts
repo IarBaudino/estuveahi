@@ -19,6 +19,7 @@ import type { UploadPhotoInput } from "../application/schemas/photo.schema";
 import { deletePhotoStorageFiles } from "@/infrastructure/storage/photo-storage";
 import { clearEventCoverIfPhoto } from "@/features/events/infrastructure/event-cleanup";
 import { deleteFavoritesForPhoto } from "@/features/favorites/infrastructure/favorite.repository";
+import { deleteLikesForPhoto } from "@/features/photo-likes/infrastructure/photo-like.repository";
 
 export {
   getEventPhotos,
@@ -101,6 +102,7 @@ export async function uploadPhoto(
     sortOrder,
     capturedAt: null,
     metadata: {},
+    likeCount: 0,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
   };
 
@@ -151,6 +153,7 @@ export async function deletePhoto(
 
   await deletePhotoStorageFiles(photo);
   await deleteFavoritesForPhoto(photoId);
+  await deleteLikesForPhoto(photoId);
   await ref.delete();
 
   if (eventDoc.exists) {

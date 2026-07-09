@@ -21,6 +21,7 @@ export function mapPhoto(id: string, data: PhotoDoc): Photo {
     sortOrder: data.sortOrder,
     capturedAt: data.capturedAt ? toDate(data.capturedAt) : null,
     metadata: data.metadata ?? {},
+    likeCount: data.likeCount ?? 0,
     createdAt: toDate(data.createdAt),
   };
 }

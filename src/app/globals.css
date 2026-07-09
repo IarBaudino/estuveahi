@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Dark fijo por clase en <html>, no por preferencia del sistema operativo */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   /* Material-inspired palette */
   --color-background: #121414;
@@ -46,7 +49,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: only dark;
 }
 
 body {
@@ -55,6 +58,19 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Autofill del navegador: evita fondos blancos que ocultan el texto */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e3e2e2;
+  caret-color: #e3e2e2;
+  box-shadow: 0 0 0 1000px #09090b inset;
+  transition: background-color 99999s ease-in-out 0s;
 }
 
 ::selection {

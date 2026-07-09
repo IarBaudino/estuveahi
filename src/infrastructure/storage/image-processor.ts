@@ -5,17 +5,12 @@ import {
   THUMBNAIL_MAX_PX,
   THUMBNAIL_QUALITY,
 } from "./storage.constants";
-import { createWatermarkSvg } from "./watermark";
+import { createWatermarkPng } from "./watermark";
 import { uploadFile } from "@/infrastructure/supabase/storage";
 import sharp from "./sharp";
 
 async function rasterizeWatermark(width: number, height: number): Promise<Buffer> {
-  const watermarkSvg = createWatermarkSvg(width, height);
-
-  return sharp(watermarkSvg, { density: 300 })
-    .resize(width, height, { fit: "fill" })
-    .png()
-    .toBuffer();
+  return createWatermarkPng(width, height);
 }
 
 /** Aplica la marca de agua al servir preview/thumbnail (todas las fotos, incluidas las ya subidas). */
@@ -23,15 +18,15 @@ export async function applyServedPhotoWatermark(
   imageBuffer: Buffer,
   quality = PREVIEW_QUALITY,
 ): Promise<Buffer> {
-  const image = sharp(imageBuffer).rotate();
-  const meta = await image.metadata();
+  const pipeline = sharp(imageBuffer).rotate();
+  const meta = await pipeline.metadata();
   const width = meta.width ?? PREVIEW_MAX_PX;
   const height = meta.height ?? PREVIEW_MAX_PX;
 
   const watermarkPng = await rasterizeWatermark(width, height);
 
-  return image
-    .composite([{ input: watermarkPng, blend: "over" }])
+  return pipeline
+    .composite([{ input: watermarkPng, top: 0, left: 0 }])
     .webp({ quality, effort: 4 })
     .toBuffer();
 }
