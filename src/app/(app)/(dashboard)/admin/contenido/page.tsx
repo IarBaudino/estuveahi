@@ -1,47 +1,42 @@
 import { getLandingSettingsForAdmin } from "@/features/platform/infrastructure/landing-settings.repository";
-import { getPublishedEventsForPicker } from "@/features/events/infrastructure/event.repository";
 import { AdminLandingManager } from "@/features/admin/presentation/components/admin-landing-manager";
-import { AdminFeaturedCategories } from "@/features/admin/presentation/components/admin-featured-categories";
-import { AdminFeaturedEvents } from "@/features/admin/presentation/components/admin-featured-events";
+import { AdminLandingCopy } from "@/features/admin/presentation/components/admin-landing-copy";
 import { AdminLandingTestimonials } from "@/features/admin/presentation/components/admin-landing-testimonials";
 import { AdminLandingFaq } from "@/features/admin/presentation/components/admin-landing-faq";
 
 export default async function AdminContentPage() {
-  const [settings, publishedEvents] = await Promise.all([
-    getLandingSettingsForAdmin(),
-    getPublishedEventsForPicker(),
-  ]);
+  const settings = await getLandingSettingsForAdmin();
 
   return (
     <div className="space-y-12">
       <div>
         <h1 className="text-2xl font-bold">Contenido de la home</h1>
         <p className="mt-1 text-on-surface-variant">
-          Configurá categorías, eventos destacados, opiniones, preguntas frecuentes e imágenes de la
-          página principal.
+          Editá textos, imágenes, encuadre del hero, opiniones y preguntas frecuentes.
         </p>
       </div>
 
       <section>
-        <h2 className="text-lg font-semibold">Categorías destacadas</h2>
+        <h2 className="text-lg font-semibold">Textos</h2>
         <p className="mt-1 text-sm text-on-surface-variant">
-          Grid visual de la home (Festivales, Recitales…). Podés agregar, editar, eliminar o restaurar
-          las categorías por defecto. Las imágenes legacy se configuran más abajo.
+          Hero, sección de fotografxs y llamada a la acción final.
         </p>
         <div className="mt-6">
-          <AdminFeaturedCategories
-            categories={settings.featuredCategories}
-            images={settings.images}
-          />
+          <AdminLandingCopy copy={settings.copy} />
         </div>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Eventos destacados</h2>
+        <h2 className="text-lg font-semibold">Imágenes</h2>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Hero, sección fotografx y CTA final. Podés acomodar el encuadre del hero si queda
+          cortado.
+        </p>
         <div className="mt-6">
-          <AdminFeaturedEvents
-            publishedEvents={publishedEvents}
-            selectedEventIds={settings.featuredEventIds}
+          <AdminLandingManager
+            images={settings.images}
+            grayscale={settings.grayscale}
+            heroFocus={settings.heroFocus}
           />
         </div>
       </section>
@@ -49,8 +44,7 @@ export default async function AdminContentPage() {
       <section>
         <h2 className="text-lg font-semibold">Opiniones</h2>
         <p className="mt-1 text-sm text-on-surface-variant">
-          Testimonios de la sección &ldquo;En palabras de la comunidad&rdquo;. Las métricas numéricas
-          de la home se calculan solas desde la base de datos.
+          Testimonios de la sección &ldquo;En palabras de la comunidad&rdquo;.
         </p>
         <div className="mt-6">
           <AdminLandingTestimonials testimonials={settings.testimonials} />
@@ -61,16 +55,6 @@ export default async function AdminContentPage() {
         <h2 className="text-lg font-semibold">Preguntas frecuentes</h2>
         <div className="mt-6">
           <AdminLandingFaq items={settings.faq} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold">Imágenes fijas de la home</h2>
-        <p className="mt-1 text-sm text-on-surface-variant">
-          Hero, sección fotografx, CTA y respaldos legacy de categorías.
-        </p>
-        <div className="mt-6">
-          <AdminLandingManager images={settings.images} grayscale={settings.grayscale} />
         </div>
       </section>
     </div>

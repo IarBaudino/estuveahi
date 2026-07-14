@@ -15,6 +15,7 @@ export function mapEvent(id: string, data: EventDoc): Event {
     category: data.category,
     venue: data.venue,
     city: data.city,
+    province: (data.province as Event["province"]) ?? null,
     country: data.country,
     eventDate: toDate(data.eventDate),
     status: data.status,

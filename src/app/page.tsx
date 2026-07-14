@@ -6,14 +6,13 @@ import { PublicMobileNav } from "@/shared/components/public-mobile-nav";
 import { LandingFooter } from "@/features/marketing/presentation/components/landing-footer";
 import { MaterialIcon } from "@/shared/components/icon";
 import { routes } from "@/config/routes";
-import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { LandingFadeIn } from "@/features/marketing/presentation/components/landing-fade-in";
 import { LandingHowItWorksSection } from "@/features/marketing/presentation/components/landing-how-it-works-section";
 import { LandingPhotographerCtaSection } from "@/features/marketing/presentation/components/landing-photographer-cta-section";
+import { LandingHireCtaSection } from "@/features/marketing/presentation/components/landing-hire-cta-section";
 import { LandingStatsSection } from "@/features/marketing/presentation/components/landing-stats-section";
 import { LandingTestimonialsSection } from "@/features/marketing/presentation/components/landing-testimonials-section";
 import { LandingFaqSection } from "@/features/marketing/presentation/components/landing-faq-section";
-import { FeaturedEventsSection } from "@/features/marketing/presentation/components/featured-events-section";
 import { PopularPhotosSection } from "@/features/marketing/presentation/components/popular-photos-section";
 import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
 import {
@@ -33,11 +32,13 @@ export default async function HomePage() {
   const {
     images: IMAGES,
     grayscale: GRAYSCALE,
-    featuredEventIds,
+    heroFocus,
+    copy,
     testimonials,
     faq,
   } = settings;
   const stats = mapPlatformStatsToLanding(platformStats);
+  const heroObjectPosition = `${heroFocus.x}% ${heroFocus.y}%`;
 
   return (
     <>
@@ -48,11 +49,12 @@ export default async function HomePage() {
         <div className="absolute inset-0 z-0">
           <Image
             src={IMAGES.hero}
-            alt="Multitud en un recital"
+            alt={copy.heroTitleLine1}
             fill
             priority
             unoptimized
             className={cn("object-cover opacity-60", GRAYSCALE.hero && "grayscale")}
+            style={{ objectPosition: heroObjectPosition }}
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/60" />
@@ -61,26 +63,25 @@ export default async function HomePage() {
 
         <div className="relative z-10 mx-auto max-w-container-max px-margin-mobile text-center md:px-margin-desktop">
           <h1 className="text-display-xl mb-6 leading-none">
-            Estuviste ahí.
+            {copy.heroTitleLine1}
             <br />
-            Nosotros lo capturamos.
+            {copy.heroTitleLine2}
           </h1>
           <p className="text-body-lg mx-auto mb-12 max-w-2xl text-on-surface-variant">
-            Encontrá las fotografías de los momentos que viviste en recitales, festivales,
-            obras y eventos de la mano de profesionales.
+            {copy.heroSubtitle}
           </p>
           <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
             <Link
               href={routes.events}
               className="text-label-sm w-full bg-primary px-10 py-4 tracking-widest text-background transition-all hover:opacity-90 md:w-auto"
             >
-              Explorar eventos
+              {copy.heroCtaPrimary}
             </Link>
             <Link
               href={routes.becomePhotographer}
               className="text-label-sm w-full border border-white/30 px-10 py-4 tracking-widest text-primary transition-all hover:bg-white/5 md:w-auto"
             >
-              Soy {PHOTOGRAPHER_LABEL.singular}
+              {copy.heroCtaSecondary}
             </Link>
           </div>
         </div>
@@ -90,24 +91,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <LandingFadeIn>
-        <LandingHowItWorksSection />
-      </LandingFadeIn>
-
-      {/* Galerías destacadas */}
-      {featuredEventIds.length > 0 && (
-        <LandingFadeIn>
-          <Suspense fallback={null}>
-            <FeaturedEventsSection eventIds={featuredEventIds} />
-          </Suspense>
-        </LandingFadeIn>
-      )}
-
+      {/* Top fotos por likes — prueba visual justo después del hero */}
       <LandingFadeIn>
         <Suspense fallback={null}>
           <PopularPhotosSection />
         </Suspense>
+      </LandingFadeIn>
+
+      {/* How it works */}
+      <LandingFadeIn>
+        <LandingHowItWorksSection />
       </LandingFadeIn>
 
       {/* For photographers */}
@@ -115,7 +108,13 @@ export default async function HomePage() {
         <LandingPhotographerCtaSection
           image={IMAGES.photographer}
           grayscale={GRAYSCALE.photographer}
+          copy={copy}
         />
+      </LandingFadeIn>
+
+      {/* For organizers / hire */}
+      <LandingFadeIn>
+        <LandingHireCtaSection />
       </LandingFadeIn>
 
       {/* Stats */}
@@ -146,15 +145,15 @@ export default async function HomePage() {
         </div>
         <div className="relative z-10 mx-auto max-w-container-max space-y-12 text-center">
           <h2 className="text-display-xl leading-tight md:text-[72px]">
-            Reviví los momentos que
+            {copy.finalCtaTitleLine1}
             <br />
-            merecen ser recordados.
+            {copy.finalCtaTitleLine2}
           </h2>
           <Link
             href={routes.events}
             className="text-label-sm inline-block bg-primary px-12 py-5 tracking-[0.2em] text-background transition-transform duration-300 hover:scale-105"
           >
-            Explorar eventos ahora
+            {copy.finalCtaButton}
           </Link>
         </div>
       </section>

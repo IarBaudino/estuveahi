@@ -22,6 +22,11 @@ import type {
   UpdateEventInput,
 } from "../application/schemas/event.schema";
 import { EventStatus } from "@/domain/enums/event-status";
+import {
+  ARGENTINA_PROVINCE_LABELS,
+  cityMatchesProvince,
+  type ArgentinaProvince,
+} from "@/domain/enums/argentina-province";
 import { NotFoundError } from "@/domain/errors/domain-errors";
 import type { Profile } from "@/domain/entities/user";
 import { mapProfile } from "@/infrastructure/mappers/profile.mapper";
@@ -63,6 +68,9 @@ export async function createEvent(
   const slug = `${baseSlug}-${nanoid(6)}`;
   const qrCode = nanoid(8);
 
+  const province = input.province ?? null;
+  const provinceLabel = province ? ARGENTINA_PROVINCE_LABELS[province] : null;
+
   const eventData: EventDoc = {
     photographerId,
     title: input.title,
@@ -71,6 +79,7 @@ export async function createEvent(
     category: input.category,
     venue: input.venue ?? null,
     city: input.city ?? null,
+    province,
     country: input.country,
     eventDate: new Date(input.eventDate),
     status: EventStatus.DRAFT,
@@ -83,6 +92,7 @@ export async function createEvent(
       input.description,
       input.city,
       input.venue,
+      provinceLabel,
     ),
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
@@ -200,10 +210,20 @@ export async function searchPublicEvents(
       rows = rows.filter((row) => row.data.category === input.category);
     }
 
+    if (input.province) {
+      const province = input.province;
+      rows = rows.filter((row) => {
+        const eventProvince = row.data.province as ArgentinaProvince | null | undefined;
+        if (eventProvince === province) return true;
+        if (eventProvince) return false;
+        return cityMatchesProvince(row.data.city, province);
+      });
+    }
+
     if (input.city) {
-    const cityLower = input.city.toLowerCase();
-    rows = rows.filter((r) => r.data.city?.toLowerCase().includes(cityLower));
-  }
+      const cityLower = input.city.toLowerCase();
+      rows = rows.filter((r) => r.data.city?.toLowerCase().includes(cityLower));
+    }
 
     if (input.q) {
       rows = rows.filter((r) => matchesSearch(r.data.searchKeywords, input.q!));
@@ -269,6 +289,11 @@ export async function updateEvent(
     input.description !== undefined ? (input.description ?? null) : current.description;
   const city = input.city !== undefined ? (input.city ?? null) : current.city;
   const venue = input.venue !== undefined ? (input.venue ?? null) : current.venue;
+  const province =
+    input.province !== undefined ? (input.province ?? null) : (current.province ?? null);
+  const provinceLabel = province
+    ? ARGENTINA_PROVINCE_LABELS[province as ArgentinaProvince]
+    : null;
 
   const updates: Record<string, unknown> = {
     updatedAt: FieldValue.serverTimestamp(),
@@ -279,6 +304,7 @@ export async function updateEvent(
   if (input.category !== undefined) updates.category = input.category;
   if (input.venue !== undefined) updates.venue = input.venue ?? null;
   if (input.city !== undefined) updates.city = input.city ?? null;
+  if (input.province !== undefined) updates.province = input.province ?? null;
   if (input.country !== undefined) updates.country = input.country;
   if (input.eventDate !== undefined) updates.eventDate = new Date(input.eventDate);
   if (input.isPublic !== undefined) updates.isPublic = input.isPublic;
@@ -287,13 +313,15 @@ export async function updateEvent(
     input.title !== undefined ||
     input.description !== undefined ||
     input.city !== undefined ||
-    input.venue !== undefined
+    input.venue !== undefined ||
+    input.province !== undefined
   ) {
     updates.searchKeywords = buildSearchKeywords(
       title,
       description ?? undefined,
       city ?? undefined,
       venue ?? undefined,
+      provinceLabel,
     );
   }
 

@@ -27,6 +27,8 @@ export interface PhotographerProfileDoc {
   portfolioUrl: string | null;
   isVerified: boolean;
   applicationStatus?: PhotographerApplicationStatus;
+  coverageProvinces?: string[];
+  availableForHire?: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
@@ -39,6 +41,7 @@ export interface EventDoc {
   category: EventCategory;
   venue: string | null;
   city: string | null;
+  province?: string | null;
   country: string;
   eventDate: Timestamp | Date;
   status: EventStatus;
@@ -105,6 +108,21 @@ export interface PurchaseRequestDoc {
 export interface LandingSettingsDoc {
   images: Record<string, string>;
   grayscale?: Record<string, boolean>;
+  heroFocus?: { x?: number; y?: number } | null;
+  copy?: Partial<{
+    heroTitleLine1: string;
+    heroTitleLine2: string;
+    heroSubtitle: string;
+    heroCtaPrimary: string;
+    heroCtaSecondary: string;
+    photographerEyebrow: string;
+    photographerTitle: string;
+    photographerBody: string;
+    photographerCta: string;
+    finalCtaTitleLine1: string;
+    finalCtaTitleLine2: string;
+    finalCtaButton: string;
+  }> | null;
   featuredCategories?: LandingFeaturedCategoryDoc[];
   featuredEventIds?: string[];
   testimonials?: LandingTestimonialDoc[];

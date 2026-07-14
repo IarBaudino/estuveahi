@@ -8,6 +8,7 @@ import {
   forgotPasswordSchema,
   changePasswordSchema,
   photographerOnboardingSchema,
+  photographerProfileUpdateSchema,
   registerSchema,
 } from "../../application/schemas/auth.schema";
 import {
@@ -156,7 +157,7 @@ export const unverifyPhotographerAction = adminActionClient
   });
 
 export const updatePhotographerProfileAction = authActionClient
-  .schema(photographerOnboardingSchema)
+  .schema(photographerProfileUpdateSchema)
   .action(async ({ parsedInput, ctx }) => {
     await updatePhotographerProfile(ctx.user.id, parsedInput);
     revalidatePath(routes.photographer.profile);

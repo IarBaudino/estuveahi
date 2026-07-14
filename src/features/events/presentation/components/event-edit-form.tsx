@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Event } from "@/domain/entities/event";
+import { ArgentinaProvince } from "@/domain/enums/argentina-province";
 import {
   createEventSchema,
   type CreateEventInput,
@@ -41,6 +42,7 @@ export function EventEditForm({ event }: EventEditFormProps) {
       category: event.category,
       venue: event.venue ?? "",
       city: event.city ?? "",
+      province: event.province ?? ArgentinaProvince.CABA,
       country: event.country,
       eventDate,
       isPublic: event.isPublic,

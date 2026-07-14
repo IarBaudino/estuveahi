@@ -17,8 +17,9 @@ export function buildSearchKeywords(
   description?: string | null,
   city?: string | null,
   venue?: string | null,
+  province?: string | null,
 ): string[] {
-  const text = [title, description, city, venue]
+  const text = [title, description, city, venue, province]
     .filter(Boolean)
     .join(" ")
     .toLowerCase()

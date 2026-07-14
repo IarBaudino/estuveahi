@@ -24,6 +24,10 @@ export interface PhotographerProfile {
   portfolioUrl: string | null;
   isVerified: boolean;
   applicationStatus: PhotographerApplicationStatus | null;
+  /** Provincias donde ofrece cobertura / trabajos. */
+  coverageProvinces: string[];
+  /** Si quiere recibir consultas de contratación. */
+  availableForHire: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

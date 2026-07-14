@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { argentinaProvinceValues } from "@/domain/enums/argentina-province";
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -58,4 +59,13 @@ export const photographerOnboardingSchema = z.object({
 
 export type PhotographerOnboardingInput = z.infer<
   typeof photographerOnboardingSchema
+>;
+
+export const photographerProfileUpdateSchema = photographerOnboardingSchema.extend({
+  coverageProvinces: z.array(z.enum(argentinaProvinceValues)).max(24),
+  availableForHire: z.boolean(),
+});
+
+export type PhotographerProfileUpdateInput = z.infer<
+  typeof photographerProfileUpdateSchema
 >;

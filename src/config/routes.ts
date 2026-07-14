@@ -4,6 +4,7 @@ export const routes = {
   photographers: "/fotografxs",
   photographerPublic: (id: string) => `/fotografxs/${id}`,
   becomePhotographer: "/ser-fotografx",
+  hirePhotographer: "/contratar-fotografx",
   event: (slug: string) => `/eventos/${slug}`,
   eventPhoto: (slug: string, photoId: string) => `/eventos/${slug}/${photoId}`,
   qr: (code: string) => `/e/${code}`,

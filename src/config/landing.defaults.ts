@@ -10,6 +10,10 @@ export const LANDING_IMAGE_KEYS = [
 
 export type LandingImageKey = (typeof LANDING_IMAGE_KEYS)[number];
 
+/** Imágenes que se editan en admin (las de categorías quedaron fuera de la home). */
+export const ACTIVE_LANDING_IMAGE_KEYS = ["hero", "photographer", "cta"] as const;
+export type ActiveLandingImageKey = (typeof ACTIVE_LANDING_IMAGE_KEYS)[number];
+
 export const LANDING_IMAGE_LABELS: Record<LandingImageKey, string> = {
   hero: "Hero principal",
   festivales: "Categoría — Festivales",
@@ -49,9 +53,54 @@ export const DEFAULT_LANDING_GRAYSCALE: Record<LandingImageKey, boolean> = {
 
 export type LandingGrayscale = Record<LandingImageKey, boolean>;
 
+/** Encuadre del hero: porcentaje 0–100 (object-position). */
+export interface LandingHeroFocus {
+  x: number;
+  y: number;
+}
+
+export const DEFAULT_LANDING_HERO_FOCUS: LandingHeroFocus = {
+  x: 50,
+  y: 50,
+};
+
+export interface LandingCopy {
+  heroTitleLine1: string;
+  heroTitleLine2: string;
+  heroSubtitle: string;
+  heroCtaPrimary: string;
+  heroCtaSecondary: string;
+  photographerEyebrow: string;
+  photographerTitle: string;
+  photographerBody: string;
+  photographerCta: string;
+  finalCtaTitleLine1: string;
+  finalCtaTitleLine2: string;
+  finalCtaButton: string;
+}
+
+export const DEFAULT_LANDING_COPY: LandingCopy = {
+  heroTitleLine1: "Estuviste ahí.",
+  heroTitleLine2: "Nosotros lo capturamos.",
+  heroSubtitle:
+    "Encontrá las fotografías de los momentos que viviste en recitales, festivales, obras y eventos de la mano de profesionales.",
+  heroCtaPrimary: "Explorar eventos",
+  heroCtaSecondary: "Soy fotografx",
+  photographerEyebrow: "Alianza",
+  photographerTitle: "Un espacio para la mirada profesional.",
+  photographerBody:
+    "¿Sos fotografx? Sumate y publicá tus galerías de eventos para llegar a quien estuvo en la platea.",
+  photographerCta: "Sumarme como fotografx",
+  finalCtaTitleLine1: "Reviví los momentos que",
+  finalCtaTitleLine2: "merecen ser recordados.",
+  finalCtaButton: "Explorar eventos ahora",
+};
+
 export interface LandingSettings {
   images: LandingImages;
   grayscale: LandingGrayscale;
+  heroFocus: LandingHeroFocus;
+  copy: LandingCopy;
   featuredCategories: LandingFeaturedCategory[];
   featuredEventIds: string[];
   testimonials: LandingTestimonial[];

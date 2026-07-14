@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { EventSearchForm } from "@/features/events/presentation/components/event-search-form";
 import { searchPublicEvents } from "@/features/events/infrastructure/event.repository";
 import { EventCategory } from "@/domain/enums/event-category";
+import type { ArgentinaProvince } from "@/domain/enums/argentina-province";
+import { ARGENTINA_PROVINCE_LABELS } from "@/domain/enums/argentina-province";
 import Link from "next/link";
 import { routes } from "@/config/routes";
 import { formatDate } from "@/shared/lib/utils";
@@ -20,6 +22,7 @@ interface PageProps {
   searchParams: Promise<{
     q?: string;
     category?: string;
+    province?: string;
     city?: string;
     page?: string;
   }>;
@@ -36,6 +39,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
     const result = await searchPublicEvents({
       q: params.q,
       category: params.category as EventCategory | undefined,
+      province: params.province as ArgentinaProvince | undefined,
       city: params.city,
       page,
       limit: 20,
@@ -47,6 +51,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
   }
 
   const totalPages = Math.ceil(total / 20);
+  const hasFilters = Boolean(params.q || params.category || params.province || params.city);
 
   return (
     <div className="mx-auto max-w-container-max px-margin-mobile py-12 md:px-margin-desktop">
@@ -56,7 +61,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
         </span>
         <h1 className="text-headline-lg">Explorar eventos</h1>
         <p className="mt-2 text-on-surface-variant">
-          Encuentra fotografías de los eventos a los que asististe
+          Encontrá fotografías de los eventos a los que asististe en todo el país
         </p>
         <p className="mt-3 text-sm text-on-surface-variant/80">{EVENT_LISTING_NOTICE}</p>
       </div>
@@ -65,6 +70,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
         defaultValues={{
           q: params.q ?? "",
           category: params.category ?? "",
+          province: params.province ?? "",
           city: params.city ?? "",
         }}
       />
@@ -73,21 +79,29 @@ export default async function EventsPage({ searchParams }: PageProps) {
         <>
           <p className="mb-4 text-sm text-on-surface-variant">{total} eventos encontrados</p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <Link
-                key={event.id}
-                href={routes.event(event.slug)}
-                className="block overflow-hidden hairline-border p-5 transition-colors hover:bg-white/5"
-              >
-                <p className="text-label-sm text-on-surface-variant">
-                  {EVENT_CATEGORY_LABELS[event.category]}
-                </p>
-                <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
-                <p className="mt-2 text-sm text-on-surface-variant">
-                  {formatDate(event.eventDate)} · {event.photoCount} fotos
-                </p>
-              </Link>
-            ))}
+            {events.map((event) => {
+              const locationParts = [
+                event.city,
+                event.province ? ARGENTINA_PROVINCE_LABELS[event.province] : null,
+              ].filter(Boolean);
+
+              return (
+                <Link
+                  key={event.id}
+                  href={routes.event(event.slug)}
+                  className="block overflow-hidden hairline-border p-5 transition-colors hover:bg-white/5"
+                >
+                  <p className="text-label-sm text-on-surface-variant">
+                    {EVENT_CATEGORY_LABELS[event.category]}
+                  </p>
+                  <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    {formatDate(event.eventDate)} · {event.photoCount} fotos
+                    {locationParts.length > 0 ? ` · ${locationParts.join(", ")}` : ""}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
           {totalPages > 1 && (
             <div className="mt-8 flex justify-center gap-2">
@@ -110,11 +124,11 @@ export default async function EventsPage({ searchParams }: PageProps) {
       ) : (
         <div className="mt-12 text-center">
           <p className="text-on-surface-variant">
-            {params.q || params.category || params.city
+            {hasFilters
               ? "No se encontraron eventos con esos filtros."
               : "Todavía no hay eventos publicados en el catálogo."}
           </p>
-          {!params.q && !params.category && !params.city && (
+          {!hasFilters && (
             <p className="mt-3 text-sm text-on-surface-variant/80">
               Los eventos aparecen acá cuando un fotografx los publica desde su panel
               (botón &quot;Publicar evento&quot;).

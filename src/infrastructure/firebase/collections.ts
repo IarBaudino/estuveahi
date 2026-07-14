@@ -6,6 +6,8 @@ export const COLLECTIONS = {
   favorites: "favorites",
   photoLikes: "photoLikes",
   purchaseRequests: "purchaseRequests",
+  hireRequests: "hireRequests",
+  hireLeads: "hireLeads",
   platformSettings: "platformSettings",
   analytics: "analytics",
 } as const;

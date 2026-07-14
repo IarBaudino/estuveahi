@@ -1,16 +1,21 @@
 import { redirect } from "next/navigation";
 import { getServerSessionUser } from "@/infrastructure/auth/session";
-import { getPhotographerApplicationStatus } from "@/features/auth/infrastructure/auth.repository";
+import {
+  getPhotographerApplicationStatus,
+  getPhotographerProfile,
+} from "@/features/auth/infrastructure/auth.repository";
 import { getPhotographerEvents } from "@/features/events/infrastructure/event.repository";
 import { getPendingRequestCount } from "@/features/purchase-requests/infrastructure/purchase-request.repository";
 import { getPhotographerPhotoCount } from "@/features/photos/infrastructure/photo-read.repository";
 import { PhotographerPendingReview } from "@/features/auth/presentation/components/photographer-pending-review";
+import { PhotographerPanelGuide } from "@/features/auth/presentation/components/photographer-panel-guide";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Calendar, Camera, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { routes } from "@/config/routes";
 import { Button } from "@/shared/ui/button";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +37,19 @@ export default async function PhotographerDashboardPage() {
   let events: Awaited<ReturnType<typeof getPhotographerEvents>> = [];
   let pendingRequests = 0;
   let photoCount = 0;
+  let isVerified = false;
 
   try {
-    [events, pendingRequests, photoCount] = await Promise.all([
+    const [eventsResult, pendingResult, photoResult, profile] = await Promise.all([
       getPhotographerEvents(user.id),
       getPendingRequestCount(user.id),
       getPhotographerPhotoCount(user.id),
+      getPhotographerProfile(user.id),
     ]);
+    events = eventsResult;
+    pendingRequests = pendingResult;
+    photoCount = photoResult;
+    isVerified = profile?.isVerified === true;
   } catch (error) {
     console.error("[PhotographerDashboard] data load failed:", error);
   }
@@ -47,8 +58,8 @@ export default async function PhotographerDashboardPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-zinc-500">Resumen de tu actividad</p>
+          <h1 className="text-2xl font-bold">{PHOTOGRAPHER_LABEL.panel}</h1>
+          <p className="text-on-surface-variant">Resumen de tu actividad</p>
         </div>
         <Link href={routes.photographer.newEvent}>
           <Button>Nuevo evento</Button>
@@ -82,34 +93,38 @@ export default async function PhotographerDashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-10">
         <h2 className="text-lg font-semibold">Eventos recientes</h2>
         {events.length === 0 ? (
-          <p className="mt-4 text-zinc-500">Aún no tienes eventos. ¡Crea el primero!</p>
+          <p className="mt-4 text-on-surface-variant">
+            Aún no tenés eventos. ¡Creá el primero!
+          </p>
         ) : (
-          <ul className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className="mt-4 divide-y divide-white/10">
             {events.slice(0, 5).map((event) => {
               const isOwn = event.photographerId === user.id;
               return (
-              <li key={event.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium">{event.title}</p>
-                  <p className="text-sm text-zinc-500">
-                    {event.photoCount} fotos · {event.status}
-                    {!isOwn && " · colaborativo"}
-                  </p>
-                </div>
-                <Link href={routes.photographer.event(event.id)}>
-                  <Button variant="outline" size="sm">
-                    {isOwn ? "Gestionar" : "Colaborar"}
-                  </Button>
-                </Link>
-              </li>
+                <li key={event.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="font-medium">{event.title}</p>
+                    <p className="text-sm text-on-surface-variant">
+                      {event.photoCount} fotos · {event.status}
+                      {!isOwn && " · colaborativo"}
+                    </p>
+                  </div>
+                  <Link href={routes.photographer.event(event.id)}>
+                    <Button variant="outline" size="sm">
+                      {isOwn ? "Gestionar" : "Colaborar"}
+                    </Button>
+                  </Link>
+                </li>
               );
             })}
           </ul>
         )}
       </div>
+
+      <PhotographerPanelGuide isVerified={isVerified} className="mt-10" />
     </div>
   );
 }

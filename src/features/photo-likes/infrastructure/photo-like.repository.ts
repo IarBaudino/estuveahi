@@ -130,26 +130,27 @@ async function fetchTopVisiblePhotos(limit: number): Promise<{ id: string; data:
   }
 }
 
-export async function getTopPhotosByLikes(
-  limit = 12,
-  options?: { minLikes?: number; onlyActiveEvents?: boolean },
-): Promise<RankedPhoto[]> {
+function shuffleInPlace<T>(items: T[]): T[] {
+  for (let i = items.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const current = items[i]!;
+    items[i] = items[j]!;
+    items[j] = current;
+  }
+  return items;
+}
+
+async function loadEventMeta(eventIds: string[]) {
   const db = getDbIfConfigured();
-  if (!db) return [];
+  if (!db || eventIds.length === 0) {
+    return new Map<string, { title: string; slug: string; isActive: boolean }>();
+  }
 
-  const minLikes = options?.minLikes ?? 0;
-  const onlyActiveEvents = options?.onlyActiveEvents ?? false;
-  const overfetch = onlyActiveEvents ? limit * 4 : limit;
-
-  const candidates = await fetchTopVisiblePhotos(Math.max(overfetch, limit));
-  if (candidates.length === 0) return [];
-
-  const eventIds = [...new Set(candidates.map((row) => row.data.eventId))];
   const eventSnaps = await Promise.all(
     eventIds.map((id) => db.collection(COLLECTIONS.events).doc(id).get()),
   );
 
-  const eventMap = new Map(
+  return new Map(
     eventSnaps
       .filter((doc) => doc.exists)
       .map((doc) => {
@@ -167,6 +168,40 @@ export async function getTopPhotosByLikes(
         ];
       }),
   );
+}
+
+function toRankedPhoto(
+  row: { id: string; data: PhotoDoc },
+  event: { title: string; slug: string },
+): RankedPhoto {
+  return {
+    id: row.id,
+    likeCount: row.data.likeCount ?? 0,
+    sortOrder: row.data.sortOrder,
+    eventId: row.data.eventId,
+    eventTitle: event.title,
+    eventSlug: event.slug,
+    photographerId: row.data.photographerId,
+  };
+}
+
+export async function getTopPhotosByLikes(
+  limit = 12,
+  options?: { minLikes?: number; onlyActiveEvents?: boolean },
+): Promise<RankedPhoto[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  const minLikes = options?.minLikes ?? 0;
+  const onlyActiveEvents = options?.onlyActiveEvents ?? false;
+  const overfetch = onlyActiveEvents ? limit * 4 : limit;
+
+  const candidates = await fetchTopVisiblePhotos(Math.max(overfetch, limit));
+  if (candidates.length === 0) return [];
+
+  const eventMap = await loadEventMeta([
+    ...new Set(candidates.map((row) => row.data.eventId)),
+  ]);
 
   const ranked: RankedPhoto[] = [];
 
@@ -178,18 +213,80 @@ export async function getTopPhotosByLikes(
     if (!event) continue;
     if (onlyActiveEvents && !event.isActive) continue;
 
-    ranked.push({
-      id: row.id,
-      likeCount,
-      sortOrder: row.data.sortOrder,
-      eventId: row.data.eventId,
-      eventTitle: event.title,
-      eventSlug: event.slug,
-      photographerId: row.data.photographerId,
-    });
+    ranked.push(toRankedPhoto(row, event));
 
     if (ranked.length >= limit) break;
   }
 
   return ranked;
+}
+
+/**
+ * Top 3 del home: por likes; si hay empate (p. ej. todas con 1 like o 0),
+ * elige 3 al azar entre las empatadas / disponibles.
+ */
+export async function getHomeFeaturedPhotos(limit = 3): Promise<RankedPhoto[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  let candidates: { id: string; data: PhotoDoc }[] = [];
+
+  try {
+    candidates = await fetchTopVisiblePhotos(80);
+  } catch (error) {
+    console.error("[getHomeFeaturedPhotos]", error);
+  }
+
+  if (candidates.length < limit) {
+    try {
+      const snap = await db
+        .collection(COLLECTIONS.photos)
+        .where("isVisible", "==", true)
+        .limit(200)
+        .get();
+      candidates = snap.docs.map((doc) => ({
+        id: doc.id,
+        data: doc.data() as PhotoDoc,
+      }));
+    } catch (error) {
+      console.error("[getHomeFeaturedPhotos] fallback pool:", error);
+    }
+  }
+
+  if (candidates.length === 0) return [];
+
+  const eventMap = await loadEventMeta([
+    ...new Set(candidates.map((row) => row.data.eventId)),
+  ]);
+
+  const eligible = candidates
+    .map((row) => {
+      const event = eventMap.get(row.data.eventId);
+      if (!event?.isActive) return null;
+      return toRankedPhoto(row, event);
+    })
+    .filter((photo): photo is RankedPhoto => photo !== null);
+
+  if (eligible.length === 0) return [];
+
+  eligible.sort((a, b) => b.likeCount - a.likeCount);
+
+  const topScore = eligible[0]!.likeCount;
+  const tiedAtTop = eligible.filter((photo) => photo.likeCount === topScore);
+
+  // Empate en el tope (todas con 1 like, o todas con 0, etc.) → aleatorio
+  if (tiedAtTop.length > limit) {
+    return shuffleInPlace([...tiedAtTop]).slice(0, limit);
+  }
+
+  // Hay un ranking claro: top N; si faltan, completar al azar del resto
+  const selected = eligible.slice(0, Math.min(limit, eligible.length));
+  if (selected.length < limit) {
+    const remaining = shuffleInPlace(
+      eligible.filter((photo) => !selected.some((s) => s.id === photo.id)),
+    );
+    selected.push(...remaining.slice(0, limit - selected.length));
+  }
+
+  return selected;
 }

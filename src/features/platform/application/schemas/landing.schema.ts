@@ -72,3 +72,23 @@ export const saveLandingFaqItemSchema = z.object({
 export const deleteLandingFaqItemSchema = z.object({
   id: z.string().min(1).max(64),
 });
+
+export const updateLandingHeroFocusSchema = z.object({
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+});
+
+export const updateLandingCopySchema = z.object({
+  heroTitleLine1: z.string().min(1).max(80),
+  heroTitleLine2: z.string().min(1).max(80),
+  heroSubtitle: z.string().min(1).max(400),
+  heroCtaPrimary: z.string().min(1).max(60),
+  heroCtaSecondary: z.string().min(1).max(60),
+  photographerEyebrow: z.string().min(1).max(40),
+  photographerTitle: z.string().min(1).max(120),
+  photographerBody: z.string().min(1).max(400),
+  photographerCta: z.string().min(1).max(60),
+  finalCtaTitleLine1: z.string().min(1).max(80),
+  finalCtaTitleLine2: z.string().min(1).max(80),
+  finalCtaButton: z.string().min(1).max(60),
+});

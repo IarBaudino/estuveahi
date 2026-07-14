@@ -4,15 +4,23 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { EVENT_CATEGORY_LABELS, EventCategory } from "@/domain/enums/event-category";
+import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
+import {
+  ARGENTINA_PROVINCE_LABELS,
+  argentinaProvinceValues,
+} from "@/domain/enums/argentina-province";
 
 interface EventSearchFormProps {
   defaultValues: {
     q: string;
     category: string;
+    province: string;
     city: string;
   };
 }
+
+const selectClassName =
+  "flex h-10 w-full rounded-lg border border-white/15 bg-zinc-950 px-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-white/20";
 
 export function EventSearchForm({ defaultValues }: EventSearchFormProps) {
   const router = useRouter();
@@ -24,9 +32,11 @@ export function EventSearchForm({ defaultValues }: EventSearchFormProps) {
     const params = new URLSearchParams();
     const q = formData.get("q") as string;
     const category = formData.get("category") as string;
+    const province = formData.get("province") as string;
     const city = formData.get("city") as string;
     if (q) params.set("q", q);
     if (category) params.set("category", category);
+    if (province) params.set("province", province);
     if (city) params.set("city", city);
     startTransition(() => {
       router.push(`/eventos?${params.toString()}`);
@@ -36,7 +46,7 @@ export function EventSearchForm({ defaultValues }: EventSearchFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-8 grid gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50 sm:grid-cols-4"
+      className="mb-8 grid gap-4 rounded-xl border border-white/10 bg-zinc-950/50 p-4 sm:grid-cols-2 lg:grid-cols-5"
     >
       <Input
         name="q"
@@ -45,14 +55,14 @@ export function EventSearchForm({ defaultValues }: EventSearchFormProps) {
         defaultValue={defaultValues.q}
       />
       <div className="space-y-1.5">
-        <label htmlFor="category" className="block text-sm font-medium">
+        <label htmlFor="category" className="block text-sm font-medium text-on-surface">
           Categoría
         </label>
         <select
           id="category"
           name="category"
           defaultValue={defaultValues.category}
-          className="flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className={selectClassName}
         >
           <option value="">Todas</option>
           {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (
@@ -62,10 +72,28 @@ export function EventSearchForm({ defaultValues }: EventSearchFormProps) {
           ))}
         </select>
       </div>
+      <div className="space-y-1.5">
+        <label htmlFor="province" className="block text-sm font-medium text-on-surface">
+          Provincia
+        </label>
+        <select
+          id="province"
+          name="province"
+          defaultValue={defaultValues.province}
+          className={selectClassName}
+        >
+          <option value="">Todo el país</option>
+          {argentinaProvinceValues.map((value) => (
+            <option key={value} value={value}>
+              {ARGENTINA_PROVINCE_LABELS[value]}
+            </option>
+          ))}
+        </select>
+      </div>
       <Input
         name="city"
         label="Ciudad"
-        placeholder="Buenos Aires"
+        placeholder="Opcional"
         defaultValue={defaultValues.city}
       />
       <div className="flex items-end">

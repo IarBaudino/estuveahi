@@ -10,13 +10,17 @@ import type {
 } from "@/infrastructure/firebase/documents";
 import {
   DEFAULT_FEATURED_CATEGORIES,
+  DEFAULT_LANDING_COPY,
   DEFAULT_LANDING_FAQ,
   DEFAULT_LANDING_GRAYSCALE,
+  DEFAULT_LANDING_HERO_FOCUS,
   DEFAULT_LANDING_IMAGES,
   DEFAULT_LANDING_TESTIMONIALS,
   LANDING_IMAGE_KEYS,
+  type LandingCopy,
   type LandingFaqItem,
   type LandingFeaturedCategory,
+  type LandingHeroFocus,
   type LandingImageKey,
   type LandingImages,
   type LandingGrayscale,
@@ -109,15 +113,50 @@ function mergeFaq(partial?: LandingFaqItemDoc[] | null): LandingFaqItem[] {
   return partial.map(mapFaqItem).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-function mapSettings(
-  data?: Pick<
-    LandingSettingsDoc,
-    "images" | "grayscale" | "featuredCategories" | "featuredEventIds" | "testimonials" | "faq"
-  >,
-): LandingSettings {
+function clampPercent(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
+  return Math.min(100, Math.max(0, value));
+}
+
+function mergeHeroFocus(partial?: LandingSettingsDoc["heroFocus"]): LandingHeroFocus {
+  return {
+    x: clampPercent(partial?.x, DEFAULT_LANDING_HERO_FOCUS.x),
+    y: clampPercent(partial?.y, DEFAULT_LANDING_HERO_FOCUS.y),
+  };
+}
+
+function mergeCopy(partial?: LandingSettingsDoc["copy"]): LandingCopy {
+  const merged = { ...DEFAULT_LANDING_COPY };
+  if (!partial) return merged;
+
+  for (const key of Object.keys(DEFAULT_LANDING_COPY) as (keyof LandingCopy)[]) {
+    const value = partial[key];
+    if (typeof value === "string" && value.trim()) {
+      merged[key] = value.trim();
+    }
+  }
+  return merged;
+}
+
+function emptySettings(): LandingSettings {
+  return {
+    images: DEFAULT_LANDING_IMAGES,
+    grayscale: DEFAULT_LANDING_GRAYSCALE,
+    heroFocus: DEFAULT_LANDING_HERO_FOCUS,
+    copy: DEFAULT_LANDING_COPY,
+    featuredCategories: DEFAULT_FEATURED_CATEGORIES,
+    featuredEventIds: [],
+    testimonials: DEFAULT_LANDING_TESTIMONIALS,
+    faq: DEFAULT_LANDING_FAQ,
+  };
+}
+
+function mapSettings(data?: LandingSettingsDoc): LandingSettings {
   return {
     images: mergeImages(data?.images),
     grayscale: mergeGrayscale(data?.grayscale),
+    heroFocus: mergeHeroFocus(data?.heroFocus),
+    copy: mergeCopy(data?.copy),
     featuredCategories: mergeFeaturedCategories(data?.featuredCategories),
     featuredEventIds: data?.featuredEventIds ?? [],
     testimonials: mergeTestimonials(data?.testimonials),
@@ -132,16 +171,7 @@ async function getLandingDocRef() {
 
 export async function getLandingSettings(): Promise<LandingSettings> {
   const db = getDbIfConfigured();
-  if (!db) {
-    return {
-      images: DEFAULT_LANDING_IMAGES,
-      grayscale: DEFAULT_LANDING_GRAYSCALE,
-      featuredCategories: DEFAULT_FEATURED_CATEGORIES,
-      featuredEventIds: [],
-      testimonials: DEFAULT_LANDING_TESTIMONIALS,
-      faq: DEFAULT_LANDING_FAQ,
-    };
-  }
+  if (!db) return emptySettings();
 
   try {
     const doc = await db
@@ -149,28 +179,12 @@ export async function getLandingSettings(): Promise<LandingSettings> {
       .doc(LANDING_DOC_ID)
       .get();
 
-    if (!doc.exists) {
-      return {
-        images: DEFAULT_LANDING_IMAGES,
-        grayscale: DEFAULT_LANDING_GRAYSCALE,
-        featuredCategories: DEFAULT_FEATURED_CATEGORIES,
-        featuredEventIds: [],
-        testimonials: DEFAULT_LANDING_TESTIMONIALS,
-        faq: DEFAULT_LANDING_FAQ,
-      };
-    }
+    if (!doc.exists) return emptySettings();
 
     return mapSettings(doc.data() as LandingSettingsDoc);
   } catch (error) {
     console.error("[getLandingSettings]", error);
-    return {
-      images: DEFAULT_LANDING_IMAGES,
-      grayscale: DEFAULT_LANDING_GRAYSCALE,
-      featuredCategories: DEFAULT_FEATURED_CATEGORIES,
-      featuredEventIds: [],
-      testimonials: DEFAULT_LANDING_TESTIMONIALS,
-      faq: DEFAULT_LANDING_FAQ,
-    };
+    return emptySettings();
   }
 }
 
@@ -262,7 +276,53 @@ export async function resetLandingImage(key: LandingImageKey): Promise<LandingSe
     { merge: true },
   );
 
-  return mapSettings({ images: currentImages, grayscale: currentGrayscale });
+  return getLandingSettings();
+}
+
+export async function setLandingHeroFocus(
+  focus: LandingHeroFocus,
+): Promise<LandingHeroFocus> {
+  const ref = await getLandingDocRef();
+  const next = mergeHeroFocus(focus);
+
+  await ref.set(
+    {
+      heroFocus: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return next;
+}
+
+export async function updateLandingCopy(copy: LandingCopy): Promise<LandingCopy> {
+  const ref = await getLandingDocRef();
+  const next = mergeCopy(copy);
+
+  await ref.set(
+    {
+      copy: next,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return next;
+}
+
+export async function restoreDefaultLandingCopy(): Promise<LandingCopy> {
+  const ref = await getLandingDocRef();
+
+  await ref.set(
+    {
+      copy: DEFAULT_LANDING_COPY,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return DEFAULT_LANDING_COPY;
 }
 
 export async function saveFeaturedCategory(

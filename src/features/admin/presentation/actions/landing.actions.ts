@@ -11,7 +11,9 @@ import {
   saveLandingFaqItemSchema,
   saveLandingTestimonialSchema,
   setFeaturedEventIdsSchema,
+  updateLandingCopySchema,
   updateLandingGrayscaleSchema,
+  updateLandingHeroFocusSchema,
   uploadFeaturedCategoryImageSchema,
   uploadLandingImageSchema,
 } from "@/features/platform/application/schemas/landing.schema";
@@ -20,6 +22,7 @@ import {
   deleteLandingFaqItem,
   deleteLandingTestimonial,
   restoreDefaultFeaturedCategories,
+  restoreDefaultLandingCopy,
   restoreDefaultLandingFaq,
   restoreDefaultLandingTestimonials,
   resetLandingImage,
@@ -27,7 +30,9 @@ import {
   saveLandingFaqItem,
   saveLandingTestimonial,
   setFeaturedEventIds,
+  setLandingHeroFocus,
   setLandingImageGrayscale,
+  updateLandingCopy,
   uploadFeaturedCategoryImage,
   uploadLandingImage,
 } from "@/features/platform/infrastructure/landing-settings.repository";
@@ -149,4 +154,26 @@ export const restoreDefaultLandingFaqAction = adminActionClient.action(async () 
   const faq = await restoreDefaultLandingFaq();
   revalidateLanding();
   return { faq };
+});
+
+export const updateLandingHeroFocusAction = adminActionClient
+  .schema(updateLandingHeroFocusSchema)
+  .action(async ({ parsedInput }) => {
+    const heroFocus = await setLandingHeroFocus(parsedInput);
+    revalidateLanding();
+    return { heroFocus };
+  });
+
+export const updateLandingCopyAction = adminActionClient
+  .schema(updateLandingCopySchema)
+  .action(async ({ parsedInput }) => {
+    const copy = await updateLandingCopy(parsedInput);
+    revalidateLanding();
+    return { copy };
+  });
+
+export const restoreDefaultLandingCopyAction = adminActionClient.action(async () => {
+  const copy = await restoreDefaultLandingCopy();
+  revalidateLanding();
+  return { copy };
 });

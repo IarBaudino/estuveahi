@@ -172,6 +172,12 @@ export const clientMobileMenuNav: DashboardNavItem[] = [
   },
   { href: routes.client.profile, label: "Mi perfil", icon: User },
   {
+    href: routes.hirePhotographer,
+    label: `Contratar ${PHOTOGRAPHER_LABEL.singular}`,
+    shortLabel: "Contratar",
+    icon: Camera,
+  },
+  {
     href: routes.becomePhotographer,
     label: `Ser ${PHOTOGRAPHER_LABEL.singular}`,
     shortLabel: "Ser fotografx",
@@ -197,6 +203,12 @@ export const publicMobileNav: DashboardNavItem[] = [
 ];
 
 export const publicMobileMenuNav: DashboardNavItem[] = [
+  {
+    href: routes.hirePhotographer,
+    label: `Contratar ${PHOTOGRAPHER_LABEL.singular}`,
+    shortLabel: "Contratar",
+    icon: Camera,
+  },
   {
     href: routes.client.favorites,
     label: "Mis favoritos",

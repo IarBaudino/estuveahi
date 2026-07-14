@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Event } from "@/domain/entities/event";
 import type { Photo } from "@/domain/entities/photo";
+import { ArgentinaProvince } from "@/domain/enums/argentina-province";
 import type { PhotoDTO } from "@/shared/lib/photo-serialization";
 import { fromPhotoDTO } from "@/shared/lib/photo-serialization";
 import { formatPhotoNumber } from "@/shared/lib/photo-number";
@@ -79,6 +80,7 @@ export function EventManageClient({
       category: event.category,
       venue: event.venue ?? "",
       city: event.city ?? "",
+      province: event.province ?? ArgentinaProvince.CABA,
       country: event.country,
       eventDate,
       isPublic: event.isPublic,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EventCategory } from "@/domain/enums/event-category";
+import { argentinaProvinceValues } from "@/domain/enums/argentina-province";
 
 const eventCategories = [
   EventCategory.CONCERT,
@@ -17,6 +18,7 @@ export const createEventSchema = z.object({
   category: z.enum(eventCategories),
   venue: z.string().max(200).optional(),
   city: z.string().max(100).optional(),
+  province: z.enum(argentinaProvinceValues).optional(),
   country: z.string().max(2),
   eventDate: z.string().min(1, "Fecha requerida"),
   isPublic: z.boolean(),
@@ -33,6 +35,7 @@ export type UpdateEventInput = z.infer<typeof updateEventSchema>;
 export const searchEventsSchema = z.object({
   q: z.string().optional(),
   category: z.enum(eventCategories).optional(),
+  province: z.enum(argentinaProvinceValues).optional(),
   city: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),

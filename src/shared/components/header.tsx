@@ -35,6 +35,12 @@ export async function Header() {
           >
             {PHOTOGRAPHER_LABEL.pluralCap}
           </Link>
+          <Link
+            href={routes.hirePhotographer}
+            className="text-label-sm tracking-widest text-on-surface-variant/70 transition-colors hover:text-primary"
+          >
+            Contratar
+          </Link>
         </nav>
 
         <nav

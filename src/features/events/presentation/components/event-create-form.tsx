@@ -13,6 +13,11 @@ import {
 import { createEventAction } from "@/features/events/presentation/actions/event.actions";
 import { adminCreateEventAction } from "@/features/admin/presentation/actions/admin.actions";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
+import {
+  ARGENTINA_PROVINCE_LABELS,
+  argentinaProvinceValues,
+  ArgentinaProvince,
+} from "@/domain/enums/argentina-province";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
@@ -28,6 +33,7 @@ interface PhotographerOption {
 const defaultValues = {
   category: "other" as const,
   country: "AR",
+  province: ArgentinaProvince.CABA,
   isPublic: true,
 };
 
@@ -46,7 +52,7 @@ function EventFields({
         <label className="block text-sm font-medium">Categoría</label>
         <select
           {...register("category")}
-          className="flex h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          className="flex h-10 w-full rounded-lg border border-white/15 bg-zinc-950 px-3 text-sm"
         >
           {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -57,8 +63,21 @@ function EventFields({
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="Lugar" {...register("venue")} />
-        <Input label="Ciudad" {...register("city")} />
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium">Provincia</label>
+          <select
+            {...register("province")}
+            className="flex h-10 w-full rounded-lg border border-white/15 bg-zinc-950 px-3 text-sm"
+          >
+            {argentinaProvinceValues.map((value) => (
+              <option key={value} value={value}>
+                {ARGENTINA_PROVINCE_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+      <Input label="Ciudad" {...register("city")} />
       <Input
         label="Fecha del evento"
         type="date"

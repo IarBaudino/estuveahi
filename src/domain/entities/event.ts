@@ -1,3 +1,4 @@
+import type { ArgentinaProvince } from "@/domain/enums/argentina-province";
 import type { EventCategory } from "@/domain/enums/event-category";
 import type { EventStatus } from "@/domain/enums/event-status";
 
@@ -10,6 +11,7 @@ export interface Event {
   category: EventCategory;
   venue: string | null;
   city: string | null;
+  province: ArgentinaProvince | null;
   country: string;
   eventDate: Date;
   status: EventStatus;

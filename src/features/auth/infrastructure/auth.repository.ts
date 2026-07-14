@@ -3,7 +3,10 @@ import { getDb, getDbIfConfigured, getFirebaseAuth } from "@/infrastructure/fire
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type { PhotographerProfileDoc, ProfileDoc } from "@/infrastructure/firebase/documents";
 import type { RegisterInput } from "../application/schemas/auth.schema";
-import type { PhotographerOnboardingInput } from "../application/schemas/auth.schema";
+import type {
+  PhotographerOnboardingInput,
+  PhotographerProfileUpdateInput,
+} from "../application/schemas/auth.schema";
 import { Role, type UserRole } from "@/domain/enums/roles";
 import { PhotographerApplicationStatus } from "@/domain/enums/photographer-application-status";
 import { toDate } from "@/infrastructure/firebase/helpers";
@@ -23,6 +26,8 @@ function mapPhotographerProfile(id: string, data: PhotographerProfileDoc): Photo
     portfolioUrl: data.portfolioUrl,
     isVerified: data.isVerified,
     applicationStatus: data.applicationStatus ?? null,
+    coverageProvinces: data.coverageProvinces ?? [],
+    availableForHire: data.availableForHire === true,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };
@@ -72,6 +77,8 @@ export async function submitPhotographerApplication(
     portfolioUrl: null,
     isVerified: false,
     applicationStatus: PhotographerApplicationStatus.PENDING,
+    coverageProvinces: [],
+    availableForHire: false,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
   };
@@ -273,6 +280,8 @@ async function ensurePhotographerProfileApproved(
     portfolioUrl: null,
     isVerified: false,
     applicationStatus: PhotographerApplicationStatus.APPROVED,
+    coverageProvinces: [],
+    availableForHire: false,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
   };
@@ -332,7 +341,7 @@ export async function unverifyPhotographer(userId: string) {
 
 export async function updatePhotographerProfile(
   userId: string,
-  input: PhotographerOnboardingInput,
+  input: PhotographerProfileUpdateInput,
 ) {
   const db = getDb();
   await db.collection(COLLECTIONS.photographerProfiles).doc(userId).update({
@@ -340,6 +349,8 @@ export async function updatePhotographerProfile(
     bio: input.bio ?? null,
     websiteUrl: input.websiteUrl || null,
     instagramHandle: input.instagramHandle ?? null,
+    coverageProvinces: input.coverageProvinces,
+    availableForHire: input.availableForHire,
     updatedAt: FieldValue.serverTimestamp(),
   });
 }
