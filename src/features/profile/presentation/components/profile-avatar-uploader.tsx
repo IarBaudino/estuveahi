@@ -7,6 +7,7 @@ import { uploadAvatarAction } from "@/features/profile/presentation/actions/prof
 import { Button } from "@/shared/ui/button";
 import { User } from "lucide-react";
 import Image from "next/image";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface ProfileAvatarUploaderProps {
   avatarUrl: string | null;
@@ -22,7 +23,11 @@ export function ProfileAvatarUploader({
   const fileRef = useRef<HTMLInputElement>(null);
   const { execute: uploadAvatar, isExecuting: uploading } = useAction(
     uploadAvatarAction,
-    { onSuccess: () => router.refresh() },
+    actionFeedback({
+      successMessage: "Foto de perfil actualizada",
+      errorMessage: "No se pudo actualizar la foto",
+      onSuccess: () => router.refresh(),
+    }),
   );
 
   const isPublic = variant === "public";

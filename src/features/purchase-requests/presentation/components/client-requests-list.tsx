@@ -25,6 +25,8 @@ import {
 } from "@/features/purchase-requests/presentation/actions/purchase-request.actions";
 import { routes } from "@/config/routes";
 import { cn } from "@/shared/lib/utils";
+import { actionFeedback } from "@/shared/lib/action-feedback";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 type ViewFilter = "active" | "archived";
 
@@ -33,7 +35,10 @@ export function ClientRequestsList({ requests }: { requests: PurchaseRequestRow[
   const [view, setView] = useState<ViewFilter>("active");
 
   const refresh = () => router.refresh();
-  const actionOpts = { onSuccess: refresh };
+  const actionOpts = actionFeedback({
+    successMessage: toastMessages.statusUpdated,
+    onSuccess: refresh,
+  });
 
   const { execute: cancel } = useAction(cancelPurchaseRequestAction, actionOpts);
   const { execute: archive, isExecuting: archiving } = useAction(

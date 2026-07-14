@@ -29,6 +29,8 @@ import { QrCode } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { EventListingNotice } from "@/shared/components/event-listing-notice";
+import { emitToastError, emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface EventManageClientProps {
   event: Event;
@@ -142,7 +144,9 @@ export function EventManageClient({
     for (const photo of photos) {
       const parsed = parsePhotoPricePesos(draftPrices[photo.id] ?? "");
       if (parsed === "invalid") {
-        setSaveError(`Revisá el precio de la foto ${formatPhotoNumber(photo.sortOrder)}`);
+        const message = `Revisá el precio de la foto ${formatPhotoNumber(photo.sortOrder)}`;
+        setSaveError(message);
+        emitToastError(message);
         return;
       }
       if (parsed !== photo.priceCents) {
@@ -154,6 +158,7 @@ export function EventManageClient({
       const eventResult = await updateEvent({ id: event.id, ...eventData });
       if (eventResult?.serverError) {
         setSaveError(eventResult.serverError);
+        emitToastError(eventResult.serverError);
         return;
       }
     }
@@ -166,6 +171,7 @@ export function EventManageClient({
 
       if (pricesResult?.serverError) {
         setSaveError(pricesResult.serverError);
+        emitToastError(pricesResult.serverError);
         return;
       }
 
@@ -179,7 +185,8 @@ export function EventManageClient({
       }
     }
 
-    setSaveMessage("Cambios guardados");
+    setSaveMessage(toastMessages.saved);
+    emitToastSuccess(toastMessages.saved);
     router.refresh();
   });
 

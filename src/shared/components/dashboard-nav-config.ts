@@ -92,7 +92,7 @@ export const adminNav: DashboardNavItem[] = [
   },
   {
     href: routes.admin.requests,
-    label: "Solicitudes",
+    label: "Pedidos y contratar",
     shortLabel: "Pedidos",
     icon: ShoppingBag,
     adminMobilePrimary: true,

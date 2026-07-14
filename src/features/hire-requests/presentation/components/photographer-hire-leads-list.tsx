@@ -13,6 +13,8 @@ import { buildHireLeadClientWhatsAppMessage } from "@/features/hire-requests/pre
 import { WhatsAppContactButton } from "@/features/purchase-requests/presentation/components/whatsapp-contact-button";
 import { formatDate } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
+import { actionFeedback } from "@/shared/lib/action-feedback";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 function leadVariant(status: HireLeadWithRequest["status"]) {
   if (status === HireLeadStatus.INTERESTED) return "success" as const;
@@ -28,9 +30,13 @@ function HireLeadCard({
   photographerDisplayName?: string | null;
 }) {
   const router = useRouter();
-  const { execute, isExecuting } = useAction(updateHireLeadStatusAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute, isExecuting } = useAction(
+    updateHireLeadStatusAction,
+    actionFeedback({
+      successMessage: toastMessages.statusUpdated,
+      onSuccess: () => router.refresh(),
+    }),
+  );
 
   const location = [
     lead.request.city,

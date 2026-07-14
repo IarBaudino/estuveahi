@@ -8,6 +8,7 @@ import type { LandingHeroFocus } from "@/config/landing.defaults";
 import { updateLandingHeroFocusAction } from "@/features/admin/presentation/actions/landing.actions";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface AdminLandingHeroFocusProps {
   imageUrl: string;
@@ -28,9 +29,13 @@ export function AdminLandingHeroFocus({
     setFocus(initialFocus);
   }, [initialFocus.x, initialFocus.y]);
 
-  const { execute, isExecuting } = useAction(updateLandingHeroFocusAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute, isExecuting } = useAction(
+    updateLandingHeroFocusAction,
+    actionFeedback({
+      successMessage: "Encuadre del hero guardado",
+      onSuccess: () => router.refresh(),
+    }),
+  );
 
   function save() {
     startTransition(() => {

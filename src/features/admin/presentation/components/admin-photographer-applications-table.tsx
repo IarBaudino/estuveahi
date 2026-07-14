@@ -11,7 +11,7 @@ import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/utils";
 import { getDisplayName } from "@/shared/lib/profile";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
-import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
+import { adminActionFeedback } from "@/shared/lib/admin-action-feedback";
 
 export function AdminPhotographerApplicationsTable({
   applications,
@@ -19,11 +19,7 @@ export function AdminPhotographerApplicationsTable({
   applications: PhotographerApplicationForAdmin[];
 }) {
   const router = useRouter();
-  const actionOptions = {
-    onSuccess: () => router.refresh(),
-    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
-      showAdminActionError(error),
-  };
+  const actionOptions = adminActionFeedback({ onSuccess: () => router.refresh() });
 
   const { execute: approve, isExecuting: approving } = useAction(
     approvePhotographerApplicationAction,

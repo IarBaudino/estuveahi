@@ -15,6 +15,7 @@ import { updateEventAction } from "@/features/events/presentation/actions/event.
 import { EventFormFields } from "@/features/events/presentation/components/event-form-fields";
 import { Button } from "@/shared/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface EventEditFormProps {
   event: Event;
@@ -49,9 +50,10 @@ export function EventEditForm({ event }: EventEditFormProps) {
     },
   });
 
-  const { execute, isExecuting, result } = useAction(updateEventAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute, isExecuting, result } = useAction(
+    updateEventAction,
+    actionFeedback({ onSuccess: () => router.refresh() }),
+  );
 
   return (
     <div className="hairline-border">

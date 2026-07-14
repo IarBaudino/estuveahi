@@ -23,6 +23,8 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Card, CardHeader, CardTitle } from "@/shared/ui/card";
 import { routes } from "@/config/routes";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface PhotographerOption {
   id: string;
@@ -105,6 +107,7 @@ function PhotographerEventCreateForm() {
 
   const { execute, isExecuting, result } = useAction(createEventAction, {
     onSuccess: ({ data }) => {
+      emitToastSuccess(toastMessages.created);
       if (data?.event) router.push(routes.photographer.event(data.event.id));
     },
   });
@@ -143,6 +146,7 @@ function AdminEventCreateForm({ photographers }: { photographers: PhotographerOp
 
   const { execute, isExecuting, result } = useAction(adminCreateEventAction, {
     onSuccess: ({ data }) => {
+      emitToastSuccess(toastMessages.created);
       if (data?.event) router.push(routes.admin.event(data.event.id));
     },
   });

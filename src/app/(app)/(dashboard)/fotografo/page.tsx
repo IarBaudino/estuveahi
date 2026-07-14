@@ -66,7 +66,9 @@ export default async function PhotographerDashboardPage() {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <PhotographerPanelGuide isVerified={isVerified} className="mt-8" />
+
+      <div className="mt-10 grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
             <CardDescription className="flex items-center gap-2">
@@ -123,8 +125,6 @@ export default async function PhotographerDashboardPage() {
           </ul>
         )}
       </div>
-
-      <PhotographerPanelGuide isVerified={isVerified} className="mt-10" />
     </div>
   );
 }

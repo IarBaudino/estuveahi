@@ -13,7 +13,7 @@ import { setUserBlockedAction } from "@/features/profile/presentation/actions/pr
 import type { AdminUserListItem } from "@/features/events/infrastructure/event.repository";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getDisplayName } from "@/shared/lib/profile";
-import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
+import { adminActionFeedback } from "@/shared/lib/admin-action-feedback";
 
 const ROLE_LABELS: Record<AdminUserListItem["role"], string> = {
   client: "Cliente",
@@ -23,11 +23,7 @@ const ROLE_LABELS: Record<AdminUserListItem["role"], string> = {
 
 export function AdminUsersTable({ users }: { users: AdminUserListItem[] }) {
   const router = useRouter();
-  const actionOptions = {
-    onSuccess: () => router.refresh(),
-    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
-      showAdminActionError(error),
-  };
+  const actionOptions = adminActionFeedback({ onSuccess: () => router.refresh() });
 
   const { execute: updateRole, isExecuting: updatingRole } = useAction(
     updateUserRoleAction,

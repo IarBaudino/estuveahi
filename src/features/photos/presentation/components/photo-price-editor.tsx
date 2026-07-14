@@ -9,6 +9,8 @@ import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { deletePhotoAction } from "@/features/photos/presentation/actions/photo.actions";
 import { Trash2 } from "lucide-react";
+import { emitToastError, emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface PhotoPriceEditorProps {
   photos: Photo[];
@@ -87,9 +89,10 @@ export function PhotoPriceEditor({
                   ) {
                     const result = await deletePhoto({ photoId: photo.id, eventId });
                     if (result?.serverError) {
-                      window.alert(result.serverError);
+                      emitToastError(result.serverError);
                       return;
                     }
+                    emitToastSuccess(toastMessages.deleted);
                     onPhotoRemoved?.(photo.id);
                   }
                 }}

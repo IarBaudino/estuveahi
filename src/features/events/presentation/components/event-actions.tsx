@@ -9,6 +9,8 @@ import {
   deleteEventAction,
 } from "@/features/events/presentation/actions/event.actions";
 import { businessConfig } from "@/config/business";
+import { actionFeedback } from "@/shared/lib/action-feedback";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface EventActionsProps {
   eventId: string;
@@ -17,15 +19,27 @@ interface EventActionsProps {
 
 export function EventActions({ eventId, status }: EventActionsProps) {
   const router = useRouter();
-  const { execute: publish, isExecuting: publishing } = useAction(publishEventAction, {
-    onSuccess: () => router.refresh(),
-  });
-  const { execute: archive, isExecuting: archiving } = useAction(archiveEventAction, {
-    onSuccess: () => router.refresh(),
-  });
-  const { execute: remove, isExecuting: deleting } = useAction(deleteEventAction, {
-    onSuccess: () => router.push("/fotografo/eventos"),
-  });
+  const { execute: publish, isExecuting: publishing } = useAction(
+    publishEventAction,
+    actionFeedback({
+      successMessage: toastMessages.published,
+      onSuccess: () => router.refresh(),
+    }),
+  );
+  const { execute: archive, isExecuting: archiving } = useAction(
+    archiveEventAction,
+    actionFeedback({
+      successMessage: "Evento archivado",
+      onSuccess: () => router.refresh(),
+    }),
+  );
+  const { execute: remove, isExecuting: deleting } = useAction(
+    deleteEventAction,
+    actionFeedback({
+      successMessage: toastMessages.deleted,
+      onSuccess: () => router.push("/fotografo/eventos"),
+    }),
+  );
 
   return (
     <div className="flex flex-wrap gap-2">

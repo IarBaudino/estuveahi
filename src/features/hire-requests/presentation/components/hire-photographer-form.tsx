@@ -21,6 +21,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import Link from "next/link";
 import { routes } from "@/config/routes";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
 
 export function HirePhotographerForm() {
   const [submitted, setSubmitted] = useState(false);
@@ -40,6 +41,7 @@ export function HirePhotographerForm() {
     onSuccess: () => {
       setSubmitted(true);
       reset({ province: ArgentinaProvince.CABA });
+      emitToastSuccess("Consulta enviada");
     },
   });
 

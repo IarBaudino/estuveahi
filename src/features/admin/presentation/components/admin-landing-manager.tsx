@@ -20,6 +20,8 @@ import {
 import { AdminLandingHeroFocus } from "@/features/admin/presentation/components/admin-landing-hero-focus";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface AdminLandingManagerProps {
   images: LandingImages;
@@ -44,7 +46,10 @@ export function AdminLandingManager({
   const refresh = () => router.refresh();
 
   const { execute: upload, isExecuting: uploading } = useAction(uploadLandingImageAction, {
-    onSuccess: () => refresh(),
+    onSuccess: () => {
+      emitToastSuccess("Imagen actualizada");
+      refresh();
+    },
   });
 
   const { execute: updateGrayscale, isExecuting: updatingGrayscale } = useAction(
@@ -60,13 +65,17 @@ export function AdminLandingManager({
             }));
           }
         }
+        emitToastSuccess(toastMessages.saved);
         refresh();
       },
     },
   );
 
   const { execute: reset, isExecuting: resetting } = useAction(resetLandingImageAction, {
-    onSuccess: refresh,
+    onSuccess: () => {
+      emitToastSuccess("Imagen restaurada");
+      refresh();
+    },
   });
 
   async function handleFileChange(key: ActiveLandingImageKey, file: File) {

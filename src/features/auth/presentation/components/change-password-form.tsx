@@ -14,6 +14,7 @@ import { changePasswordAction } from "@/features/auth/presentation/actions/auth.
 import { Button } from "@/shared/ui/button";
 import { PasswordInput } from "@/shared/ui/password-input";
 import { routes } from "@/config/routes";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
 
 export function ChangePasswordForm() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export function ChangePasswordForm() {
       if (data?.signedOut) {
         setDone(true);
         reset();
+        emitToastSuccess("Contraseña actualizada");
         setTimeout(() => {
           router.push(`${routes.login}?passwordChanged=1`);
           router.refresh();

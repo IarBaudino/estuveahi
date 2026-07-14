@@ -19,6 +19,7 @@ import { getAvatarMediaUrl } from "@/shared/lib/avatar-url";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { formatCurrency } from "@/shared/lib/utils";
 import { ProtectedImage } from "@/shared/components/protected-image";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
 import { WhatsAppContactButton } from "@/features/purchase-requests/presentation/components/whatsapp-contact-button";
 import { buildPurchaseRequestWhatsAppMessage } from "@/features/purchase-requests/presentation/lib/purchase-request-whatsapp";
 import {
@@ -87,6 +88,7 @@ export function PhotographerRequestDetailDialog({
           quoted_price_cents: quotedPriceCents ?? prev.quoted_price_cents,
           updated_at: new Date().toISOString(),
         }));
+        emitToastSuccess("Solicitud aprobada");
         refreshList();
       },
     },
@@ -100,6 +102,7 @@ export function PhotographerRequestDetailDialog({
           status: "rejected",
           updated_at: new Date().toISOString(),
         }));
+        emitToastSuccess("Solicitud rechazada");
         refreshList();
       },
     },
@@ -113,6 +116,7 @@ export function PhotographerRequestDetailDialog({
           status: "completed",
           updated_at: new Date().toISOString(),
         }));
+        emitToastSuccess("Solicitud completada");
         refreshList();
       },
     },
@@ -126,6 +130,7 @@ export function PhotographerRequestDetailDialog({
           photographer_archived_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }));
+        emitToastSuccess("Solicitud archivada");
         refreshList();
       },
     },
@@ -139,6 +144,7 @@ export function PhotographerRequestDetailDialog({
           photographer_archived_at: null,
           updated_at: new Date().toISOString(),
         }));
+        emitToastSuccess("Solicitud restaurada");
         refreshList();
       },
     },
@@ -147,6 +153,7 @@ export function PhotographerRequestDetailDialog({
     deletePurchaseRequestAction,
     {
       onSuccess: () => {
+        emitToastSuccess("Solicitud eliminada");
         refreshList();
         onClose();
       },

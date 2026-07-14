@@ -12,12 +12,17 @@ import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { ProtectedImage } from "@/shared/components/protected-image";
 import { routes } from "@/config/routes";
 import { cn } from "@/shared/lib/utils";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 export function FavoriteCard({ photo }: { photo: FavoriteWithEvent }) {
   const router = useRouter();
-  const { execute, isExecuting } = useAction(toggleFavoriteAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute, isExecuting } = useAction(
+    toggleFavoriteAction,
+    actionFeedback({
+      successMessage: "Favorito actualizado",
+      onSuccess: () => router.refresh(),
+    }),
+  );
 
   const photoUrl = photo.eventSlug
     ? routes.eventPhoto(photo.eventSlug, photo.id)

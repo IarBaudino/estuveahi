@@ -7,6 +7,7 @@ import type { PublishedEventPickerItem } from "@/features/events/infrastructure/
 import { setFeaturedEventIdsAction } from "@/features/admin/presentation/actions/landing.actions";
 import { Button } from "@/shared/ui/button";
 import { formatDate } from "@/shared/lib/utils";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface AdminFeaturedEventsProps {
   publishedEvents: PublishedEventPickerItem[];
@@ -20,9 +21,10 @@ export function AdminFeaturedEvents({
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(initialSelected);
 
-  const { execute: save, isExecuting } = useAction(setFeaturedEventIdsAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute: save, isExecuting } = useAction(
+    setFeaturedEventIdsAction,
+    actionFeedback({ onSuccess: () => router.refresh() }),
+  );
 
   function toggleEventId(eventId: string) {
     setSelected((current) => {

@@ -12,6 +12,8 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface AdminLandingFaqProps {
   items: LandingFaqItem[];
@@ -43,6 +45,7 @@ export function AdminLandingFaq({ items: initialItems }: AdminLandingFaqProps) {
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
+      emitToastSuccess(toastMessages.saved);
       refresh();
     },
   });
@@ -52,6 +55,7 @@ export function AdminLandingFaq({ items: initialItems }: AdminLandingFaqProps) {
       if (data?.faq) setItems(data.faq);
       setEditingId(null);
       setShowForm(false);
+      emitToastSuccess(toastMessages.deleted);
       refresh();
     },
   });
@@ -61,6 +65,7 @@ export function AdminLandingFaq({ items: initialItems }: AdminLandingFaqProps) {
     {
       onSuccess: ({ data }) => {
         if (data?.faq) setItems(data.faq);
+        emitToastSuccess("FAQ restaurado");
         refresh();
       },
     },

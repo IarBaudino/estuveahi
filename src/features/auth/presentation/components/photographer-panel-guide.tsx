@@ -25,7 +25,10 @@ export function PhotographerPanelGuide({
         </span>
       </div>
 
-      <details className="group hairline-border p-5 transition-colors open:bg-white/5">
+      <details
+        open
+        className="group hairline-border p-5 transition-colors open:bg-white/5"
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold tracking-tight">

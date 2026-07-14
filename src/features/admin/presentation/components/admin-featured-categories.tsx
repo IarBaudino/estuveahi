@@ -21,6 +21,8 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { cn } from "@/shared/lib/utils";
 import type { LandingImages } from "@/config/landing.defaults";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface AdminFeaturedCategoriesProps {
   categories: LandingFeaturedCategory[];
@@ -70,6 +72,7 @@ export function AdminFeaturedCategories({
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
+      emitToastSuccess(toastMessages.saved);
       refresh();
     },
   });
@@ -81,6 +84,7 @@ export function AdminFeaturedCategories({
         if (data?.categories) setCategories(data.categories);
         setEditingId(null);
         setShowForm(false);
+        emitToastSuccess(toastMessages.deleted);
         refresh();
       },
     },
@@ -91,6 +95,7 @@ export function AdminFeaturedCategories({
     {
       onSuccess: ({ data }) => {
         if (data?.categories) setCategories(data.categories);
+        emitToastSuccess("Categorías restauradas");
         refresh();
       },
     },
@@ -98,7 +103,12 @@ export function AdminFeaturedCategories({
 
   const { execute: uploadImage, isExecuting: uploading } = useAction(
     uploadFeaturedCategoryImageAction,
-    { onSuccess: () => refresh() },
+    {
+      onSuccess: () => {
+        emitToastSuccess("Imagen actualizada");
+        refresh();
+      },
+    },
   );
 
   function startEdit(category: LandingFeaturedCategory) {

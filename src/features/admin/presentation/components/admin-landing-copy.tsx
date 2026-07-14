@@ -11,6 +11,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
+import { emitToastError, emitToastSuccess } from "@/shared/lib/toast-bus";
 
 interface AdminLandingCopyProps {
   copy: LandingCopy;
@@ -28,9 +29,13 @@ export function AdminLandingCopy({ copy: initialCopy }: AdminLandingCopyProps) {
   const { execute: save, isExecuting: saving } = useAction(updateLandingCopyAction, {
     onSuccess: () => {
       setMessage("Textos guardados");
+      emitToastSuccess("Textos guardados");
       router.refresh();
     },
-    onError: () => setMessage("No se pudieron guardar los textos"),
+    onError: () => {
+      setMessage("No se pudieron guardar los textos");
+      emitToastError("No se pudieron guardar los textos");
+    },
   });
 
   const { execute: restore, isExecuting: restoring } = useAction(
@@ -39,6 +44,7 @@ export function AdminLandingCopy({ copy: initialCopy }: AdminLandingCopyProps) {
       onSuccess: ({ data }) => {
         if (data?.copy) setCopy(data.copy);
         setMessage("Textos restaurados");
+        emitToastSuccess("Textos restaurados");
         router.refresh();
       },
     },

@@ -19,6 +19,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Badge } from "@/shared/ui/badge";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface PhotographerProfileFormProps {
   profile: PhotographerProfile;
@@ -53,7 +54,7 @@ export function PhotographerProfileForm({
 
   const { execute, isExecuting, result } = useAction(
     updatePhotographerProfileAction,
-    { onSuccess: () => router.refresh() },
+    actionFeedback({ onSuccess: () => router.refresh() }),
   );
 
   function toggleProvince(province: ArgentinaProvince) {

@@ -13,6 +13,8 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
+import { emitToastSuccess } from "@/shared/lib/toast-bus";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 interface AdminLandingTestimonialsProps {
   testimonials: LandingTestimonial[];
@@ -48,6 +50,7 @@ export function AdminLandingTestimonials({
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
+      emitToastSuccess(toastMessages.saved);
       refresh();
     },
   });
@@ -59,6 +62,7 @@ export function AdminLandingTestimonials({
         if (data?.testimonials) setTestimonials(data.testimonials);
         setEditingId(null);
         setShowForm(false);
+        emitToastSuccess(toastMessages.deleted);
         refresh();
       },
     },
@@ -69,6 +73,7 @@ export function AdminLandingTestimonials({
     {
       onSuccess: ({ data }) => {
         if (data?.testimonials) setTestimonials(data.testimonials);
+        emitToastSuccess("Testimonios restaurados");
         refresh();
       },
     },

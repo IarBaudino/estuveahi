@@ -12,7 +12,7 @@ import {
   adminArchiveEventAction,
   adminDeleteEventAction,
 } from "@/features/admin/presentation/actions/admin.actions";
-import { showAdminActionError } from "@/shared/lib/admin-action-feedback";
+import { adminActionFeedback } from "@/shared/lib/admin-action-feedback";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 export interface AdminEventRow {
@@ -30,11 +30,7 @@ export interface AdminEventRow {
 
 export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
   const router = useRouter();
-  const actionOptions = {
-    onSuccess: () => router.refresh(),
-    onError: ({ error }: { error: { serverError?: string; validationErrors?: unknown } }) =>
-      showAdminActionError(error),
-  };
+  const actionOptions = adminActionFeedback({ onSuccess: () => router.refresh() });
 
   const { execute: archive, isExecuting: archiving } = useAction(
     adminArchiveEventAction,

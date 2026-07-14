@@ -17,6 +17,7 @@ import { isProfileComplete } from "@/shared/lib/profile";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Badge } from "@/shared/ui/badge";
+import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface ProfileFormProps {
   profile: Profile;
@@ -39,9 +40,10 @@ export function ProfileForm({ profile, hideAvatar = false }: ProfileFormProps) {
     },
   });
 
-  const { execute: save, isExecuting, result } = useAction(updateProfileAction, {
-    onSuccess: () => router.refresh(),
-  });
+  const { execute: save, isExecuting, result } = useAction(
+    updateProfileAction,
+    actionFeedback({ onSuccess: () => router.refresh() }),
+  );
 
   const complete = isProfileComplete({
     firstName: profile.firstName,

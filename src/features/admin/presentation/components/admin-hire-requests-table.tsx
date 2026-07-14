@@ -23,6 +23,8 @@ import { formatDate } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
+import { adminActionFeedback } from "@/shared/lib/admin-action-feedback";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 function statusVariant(status: HireRequest["status"]) {
   if (status === HireRequestStatus.PENDING) return "warning" as const;
@@ -45,16 +47,18 @@ function HireRequestManagePanel({
 
   const { execute: updateStatus, isExecuting: updatingStatus } = useAction(
     updateHireRequestStatusAction,
-    { onSuccess: () => router.refresh() },
+    adminActionFeedback({
+      successMessage: toastMessages.statusUpdated,
+      onSuccess: () => router.refresh(),
+    }),
   );
 
   const { execute: notify, isExecuting: notifying, result } = useAction(
     notifyHirePhotographersAction,
-    {
-      onSuccess: () => {
-        router.refresh();
-      },
-    },
+    adminActionFeedback({
+      successMessage: toastMessages.notified,
+      onSuccess: () => router.refresh(),
+    }),
   );
 
   const selectable = useMemo(
