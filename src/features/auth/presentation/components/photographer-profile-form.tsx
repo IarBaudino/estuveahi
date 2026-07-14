@@ -20,6 +20,7 @@ import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
 import { Badge } from "@/shared/ui/badge";
 import { actionFeedback } from "@/shared/lib/action-feedback";
+import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 
 interface PhotographerProfileFormProps {
   profile: PhotographerProfile;
@@ -46,11 +47,13 @@ export function PhotographerProfileForm({
       instagramHandle: profile.instagramHandle ?? "",
       coverageProvinces: (profile.coverageProvinces ?? []) as ArgentinaProvince[],
       availableForHire: profile.availableForHire,
+      isPublicProfile: profile.isPublicProfile,
     },
   });
 
   const coverageProvinces = watch("coverageProvinces") ?? [];
   const availableForHire = watch("availableForHire");
+  const isPublicProfile = watch("isPublicProfile");
 
   const { execute, isExecuting, result } = useAction(
     updatePhotographerProfileAction,
@@ -71,6 +74,30 @@ export function PhotographerProfileForm({
         {profile.isVerified && (
           <Badge variant="outline">Fotógrafo verificado</Badge>
         )}
+        <Badge variant={isPublicProfile ? "success" : "warning"}>
+          {isPublicProfile ? "Perfil activo" : "Perfil oculto"}
+        </Badge>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-white/10 bg-zinc-950/40 p-4">
+        <div>
+          <h3 className="text-sm font-medium">Visibilidad del perfil</h3>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            Si lo desactivás, no aparecés en el directorio de {PHOTOGRAPHER_LABEL.plural} ni
+            en avisos de contratación. Tus eventos publicados siguen en el catálogo.
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isPublicProfile}
+            onChange={(e) =>
+              setValue("isPublicProfile", e.target.checked, { shouldDirty: true })
+            }
+            className="rounded"
+          />
+          Perfil público activo
+        </label>
       </div>
 
       <Input

@@ -9,11 +9,12 @@ import {
   verifyPhotographerAction,
   unverifyPhotographerAction,
 } from "@/features/auth/presentation/actions/auth.actions";
-import { setUserBlockedAction } from "@/features/profile/presentation/actions/profile.actions";
+import { setUserBlockedAction, deleteUserAction } from "@/features/profile/presentation/actions/profile.actions";
 import type { AdminUserListItem } from "@/features/events/infrastructure/event.repository";
 import { PHOTOGRAPHER_LABEL } from "@/config/copy";
 import { getDisplayName } from "@/shared/lib/profile";
 import { adminActionFeedback } from "@/shared/lib/admin-action-feedback";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 const ROLE_LABELS: Record<AdminUserListItem["role"], string> = {
   client: "Cliente",
@@ -40,6 +41,13 @@ export function AdminUsersTable({ users }: { users: AdminUserListItem[] }) {
   const { execute: setBlocked, isExecuting: blocking } = useAction(
     setUserBlockedAction,
     actionOptions,
+  );
+  const { execute: removeUser, isExecuting: deleting } = useAction(
+    deleteUserAction,
+    adminActionFeedback({
+      successMessage: toastMessages.deleted,
+      onSuccess: () => router.refresh(),
+    }),
   );
 
   if (users.length === 0) {
@@ -184,6 +192,30 @@ export function AdminUsersTable({ users }: { users: AdminUserListItem[] }) {
                       }}
                     >
                       {user.isBlocked ? "Desbloquear" : "Bloquear"}
+                    </Button>
+                  )}
+                  {user.role !== "admin" && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      isLoading={deleting}
+                      onClick={() => {
+                        const name = getDisplayName({
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          email: user.email,
+                          phone: user.phone,
+                        });
+                        if (
+                          confirm(
+                            `¿Eliminar permanentemente a ${name}?\n\nSe borrarán su cuenta, eventos, fotos y solicitudes. Esta acción no se puede deshacer.`,
+                          )
+                        ) {
+                          removeUser({ userId: user.id });
+                        }
+                      }}
+                    >
+                      Eliminar
                     </Button>
                   )}
                 </div>

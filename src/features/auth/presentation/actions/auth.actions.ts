@@ -161,5 +161,8 @@ export const updatePhotographerProfileAction = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     await updatePhotographerProfile(ctx.user.id, parsedInput);
     revalidatePath(routes.photographer.profile);
+    revalidatePath(routes.photographers);
+    revalidatePath(routes.photographerPublic(ctx.user.id));
+    revalidatePath(routes.photographer.requests);
     return { success: true };
   });

@@ -28,6 +28,8 @@ export interface PhotographerProfile {
   coverageProvinces: string[];
   /** Si quiere recibir consultas de contratación. */
   availableForHire: boolean;
+  /** Si aparece en el directorio público de fotografxs. */
+  isPublicProfile: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

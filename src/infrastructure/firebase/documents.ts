@@ -29,6 +29,8 @@ export interface PhotographerProfileDoc {
   applicationStatus?: PhotographerApplicationStatus;
   coverageProvinces?: string[];
   availableForHire?: boolean;
+  /** false = oculto del directorio público; default true si falta. */
+  isPublicProfile?: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

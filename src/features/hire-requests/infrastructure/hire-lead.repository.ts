@@ -96,6 +96,11 @@ export async function listPhotographersAvailableForHire(): Promise<
   const db = getDbIfConfigured();
   if (!db) return [];
 
+  type HireEligiblePhotographer = Omit<
+    HireLeadPhotographerSummary,
+    "alreadyNotified" | "leadStatus"
+  >;
+
   try {
     const photoSnap = await db
       .collection(COLLECTIONS.photographerProfiles)
@@ -112,6 +117,7 @@ export async function listPhotographersAvailableForHire(): Promise<
           return false;
         }
         if (row.data.availableForHire !== true) return false;
+        if (row.data.isPublicProfile === false) return false;
         return (row.data.coverageProvinces ?? []).length > 0;
       });
 
@@ -119,18 +125,25 @@ export async function listPhotographersAvailableForHire(): Promise<
       candidates.map((row) => db.collection(COLLECTIONS.profiles).doc(row.id).get()),
     );
 
-    return candidates.map((row, index) => {
+    const results: HireEligiblePhotographer[] = [];
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      const row = candidates[index]!;
       const profile = profileSnaps[index]?.data() as ProfileDoc | undefined;
-      return {
+      if (!profile || profile.isBlocked) continue;
+
+      results.push({
         id: row.id,
         displayName: row.data.displayName,
-        phone: profile?.phone ?? null,
-        email: profile?.email ?? null,
+        phone: profile.phone ?? null,
+        email: profile.email ?? null,
         isVerified: row.data.isVerified,
         coverageProvinces: row.data.coverageProvinces ?? [],
         availableForHire: true,
-      };
-    });
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error("[listPhotographersAvailableForHire]", error);
     return [];

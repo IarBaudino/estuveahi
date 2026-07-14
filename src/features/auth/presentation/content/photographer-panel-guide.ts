@@ -34,7 +34,7 @@ export const PHOTOGRAPHER_PANEL_ACCESS = [
   {
     icon: "badge",
     title: "Perfil público",
-    text: `Tu ficha en el directorio de ${PHOTOGRAPHER_LABEL.plural}: bio, redes y provincias.`,
+    text: `Tu ficha en el directorio de ${PHOTOGRAPHER_LABEL.plural}: bio, redes, disponibilidad y provincias. Podés activarla u ocultarla cuando quieras.`,
     href: routes.photographer.profile,
     linkLabel: "Perfil",
   },

@@ -28,6 +28,7 @@ function mapPhotographerProfile(id: string, data: PhotographerProfileDoc): Photo
     applicationStatus: data.applicationStatus ?? null,
     coverageProvinces: data.coverageProvinces ?? [],
     availableForHire: data.availableForHire === true,
+    isPublicProfile: data.isPublicProfile !== false,
     createdAt: toDate(data.createdAt),
     updatedAt: toDate(data.updatedAt),
   };
@@ -79,6 +80,7 @@ export async function submitPhotographerApplication(
     applicationStatus: PhotographerApplicationStatus.PENDING,
     coverageProvinces: [],
     availableForHire: false,
+    isPublicProfile: true,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
   };
@@ -282,6 +284,7 @@ async function ensurePhotographerProfileApproved(
     applicationStatus: PhotographerApplicationStatus.APPROVED,
     coverageProvinces: [],
     availableForHire: false,
+    isPublicProfile: true,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
     updatedAt: FieldValue.serverTimestamp() as unknown as Date,
   };
@@ -351,6 +354,7 @@ export async function updatePhotographerProfile(
     instagramHandle: input.instagramHandle ?? null,
     coverageProvinces: input.coverageProvinces,
     availableForHire: input.availableForHire,
+    isPublicProfile: input.isPublicProfile,
     updatedAt: FieldValue.serverTimestamp(),
   });
 }

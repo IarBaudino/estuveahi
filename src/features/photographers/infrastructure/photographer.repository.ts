@@ -17,6 +17,7 @@ function isPublicListing(data: EventDoc): boolean {
 function isListedPhotographer(data: PhotographerProfileDoc): boolean {
   if (data.applicationStatus === PhotographerApplicationStatus.PENDING) return false;
   if (data.applicationStatus === PhotographerApplicationStatus.REJECTED) return false;
+  if (data.isPublicProfile === false) return false;
   return true;
 }
 

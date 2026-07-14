@@ -16,9 +16,12 @@ import {
   updateProfile,
   uploadAvatar,
 } from "../../infrastructure/profile.repository";
+import { deleteUserCompletely } from "../../infrastructure/user-cleanup";
 import { routes } from "@/config/routes";
 import { z } from "zod";
 import { firebaseUserIdSchema } from "@/shared/schemas/firebase.schema";
+import { DomainError } from "@/domain/errors/domain-errors";
+import { toastMessages } from "@/shared/lib/toast-messages";
 
 export const updateProfileAction = authActionClient
   .schema(updateProfileSchema)
@@ -57,9 +60,21 @@ export const setUserBlockedAction = adminActionClient
   )
   .action(async ({ parsedInput, ctx }) => {
     if (parsedInput.userId === ctx.user.id) {
-      throw new Error("No podés bloquear tu propia cuenta");
+      throw new DomainError("No podés bloquear tu propia cuenta", "VALIDATION");
     }
     await setUserBlocked(parsedInput.userId, parsedInput.blocked);
     revalidatePath(routes.admin.users);
     return { success: true };
+  });
+
+export const deleteUserAction = adminActionClient
+  .schema(z.object({ userId: firebaseUserIdSchema }))
+  .action(async ({ parsedInput, ctx }) => {
+    await deleteUserCompletely(parsedInput.userId, ctx.user.id);
+    revalidatePath(routes.admin.users);
+    revalidatePath(routes.admin.events);
+    revalidatePath(routes.admin.photographers);
+    revalidatePath(routes.admin.requests);
+    revalidatePath(routes.photographers);
+    return { success: true as const, message: toastMessages.deleted };
   });

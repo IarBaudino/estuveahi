@@ -64,6 +64,7 @@ export type PhotographerOnboardingInput = z.infer<
 export const photographerProfileUpdateSchema = photographerOnboardingSchema.extend({
   coverageProvinces: z.array(z.enum(argentinaProvinceValues)).max(24),
   availableForHire: z.boolean(),
+  isPublicProfile: z.boolean(),
 });
 
 export type PhotographerProfileUpdateInput = z.infer<
