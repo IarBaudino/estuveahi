@@ -11,13 +11,21 @@ import {
 import { businessConfig } from "@/config/business";
 import { actionFeedback } from "@/shared/lib/action-feedback";
 import { toastMessages } from "@/shared/lib/toast-messages";
+import { isEventDateTodayOrYesterday } from "@/shared/lib/event-same-day";
 
 interface EventActionsProps {
   eventId: string;
   status: string;
+  photoCount?: number;
+  eventDate?: string | Date;
 }
 
-export function EventActions({ eventId, status }: EventActionsProps) {
+export function EventActions({
+  eventId,
+  status,
+  photoCount = 0,
+  eventDate,
+}: EventActionsProps) {
   const router = useRouter();
   const { execute: publish, isExecuting: publishing } = useAction(
     publishEventAction,
@@ -41,6 +49,13 @@ export function EventActions({ eventId, status }: EventActionsProps) {
     }),
   );
 
+  const emptyGalleryNotice =
+    photoCount === 0
+      ? eventDate && isEventDateTodayOrYesterday(eventDate)
+        ? "\n\nSin fotos aún: al publicar, el evento aparece en la home como “Pronto” hasta que subas la primera imagen."
+        : "\n\nSin fotos: solo podés anunciar la galería vacía si la fecha del evento es hoy o ayer."
+      : "";
+
   return (
     <div className="flex flex-wrap gap-2">
       {status === "draft" && (
@@ -49,7 +64,7 @@ export function EventActions({ eventId, status }: EventActionsProps) {
           onClick={() => {
             if (
               confirm(
-                `¿Publicar este evento en el catálogo?\n\n${businessConfig.eventListingNotice}`,
+                `¿Publicar este evento en el catálogo?\n\n${businessConfig.eventListingNotice}${emptyGalleryNotice}`,
               )
             ) {
               publish({ eventId });

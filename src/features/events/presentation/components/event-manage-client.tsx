@@ -219,7 +219,14 @@ export function EventManageClient({
             />
           )}
         </div>
-        {isOwner && <EventActions eventId={event.id} status={event.status} />}
+        {isOwner && (
+          <EventActions
+            eventId={event.id}
+            status={event.status}
+            photoCount={photoCount}
+            eventDate={event.eventDate}
+          />
+        )}
       </div>
 
       <form onSubmit={onSaveAll} className="mt-6 space-y-8">

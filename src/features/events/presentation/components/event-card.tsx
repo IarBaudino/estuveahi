@@ -56,7 +56,9 @@ export async function EventCard({
           <div className="mt-3 flex flex-wrap gap-3 text-caption text-on-surface-variant/70">
             <span>{formatDate(event.eventDate)}</span>
             {event.city && <span>{event.city}</span>}
-            <span>{event.photoCount} fotos</span>
+            <span>
+              {event.photoCount === 0 ? "Galería en camino" : `${event.photoCount} fotos`}
+            </span>
           </div>
         </div>
       </article>

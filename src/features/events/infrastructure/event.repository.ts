@@ -41,6 +41,14 @@ import {
 } from "@/features/events/infrastructure/event-cleanup";
 import { canManageEvent } from "./event-access";
 import { getTotalPhotoLikes } from "@/features/photo-likes/infrastructure/photo-like.repository";
+import {
+  assertCanPublishEvent,
+  assertEventDateIsToday,
+} from "../application/event-same-day-rules";
+import {
+  isEventDateTodayOrYesterday,
+  toEventCalendarDateString,
+} from "@/shared/lib/event-same-day";
 
 async function getPhotographerSummary(photographerId: string) {
   const db = getDbIfConfigured();
@@ -62,6 +70,8 @@ export async function createEvent(
   photographerId: string,
   input: CreateEventInput,
 ): Promise<Event> {
+  assertEventDateIsToday(input.eventDate);
+
   const db = getDb();
   const id = randomUUID();
   const baseSlug = slugify(input.title);
@@ -284,6 +294,13 @@ export async function updateEvent(
   }
 
   const current = doc.data() as EventDoc;
+  if (input.eventDate !== undefined) {
+    const nextDate = toEventCalendarDateString(input.eventDate);
+    const currentDate = toEventCalendarDateString(toDate(current.eventDate));
+    if (nextDate !== currentDate) {
+      assertEventDateIsToday(input.eventDate);
+    }
+  }
   const title = input.title ?? current.title;
   const description =
     input.description !== undefined ? (input.description ?? null) : current.description;
@@ -342,6 +359,12 @@ export async function publishEvent(
   if (!doc.exists || !canManageEvent(doc.data() as EventDoc, userId, role)) {
     throw new NotFoundError("Evento no encontrado");
   }
+
+  const current = doc.data() as EventDoc;
+  assertCanPublishEvent({
+    eventDate: toDate(current.eventDate),
+    photoCount: current.photoCount ?? 0,
+  });
 
   await ref.update({
     status: EventStatus.PUBLISHED,
@@ -735,6 +758,44 @@ export async function getFeaturedEventsByIds(
     );
   } catch (error) {
     console.error("[getFeaturedEventsByIds]", error);
+    return [];
+  }
+}
+
+/** Eventos publicados hoy sin fotos aún — cartel “Pronto” en home. */
+export async function getComingSoonPublicEvents(
+  limit = 6,
+): Promise<EventWithPhotographer[]> {
+  const db = getDbIfConfigured();
+  if (!db) return [];
+
+  try {
+    const snap = await db
+      .collection(COLLECTIONS.events)
+      .where("status", "==", EventStatus.PUBLISHED)
+      .limit(200)
+      .get();
+
+    const rows = snap.docs
+      .map((doc) => ({ id: doc.id, data: doc.data() as EventDoc }))
+      .filter((row) => row.data.isPublic !== false)
+      .filter((row) => isEventListingActive(row.data))
+      .filter((row) => (row.data.photoCount ?? 0) === 0)
+      .filter((row) => isEventDateTodayOrYesterday(toDate(row.data.eventDate)))
+      .sort(
+        (a, b) =>
+          toDate(b.data.createdAt).getTime() - toDate(a.data.createdAt).getTime(),
+      )
+      .slice(0, limit);
+
+    return Promise.all(
+      rows.map(async (row) => {
+        const photographer = await getPhotographerSummary(row.data.photographerId);
+        return mapEventWithPhotographer(row.id, row.data, photographer);
+      }),
+    );
+  } catch (error) {
+    console.error("[getComingSoonPublicEvents]", error);
     return [];
   }
 }

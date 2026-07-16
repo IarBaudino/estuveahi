@@ -128,7 +128,12 @@ export default async function EventGalleryPage({ params }: PageProps) {
       )}
 
       {photos.length === 0 ? (
-        <p className="text-zinc-500">Todavía no hay fotografías publicadas en esta galería.</p>
+        <div className="rounded-lg border border-white/10 bg-surface-container px-6 py-12 text-center">
+          <p className="text-lg font-medium">Galería en camino</p>
+          <p className="mt-2 text-sm text-on-surface-variant">
+            Las fotos se van a publicar pronto.
+          </p>
+        </div>
       ) : (
       <PhotoGallery
         photos={toPublicPhotos(photos)}

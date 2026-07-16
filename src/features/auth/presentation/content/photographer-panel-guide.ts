@@ -13,9 +13,16 @@ export const PHOTOGRAPHER_PANEL_ACCESS = [
   {
     icon: "calendar_month",
     title: "Eventos y galerías",
-    text: `Creá eventos, subí fotos y publicá en cartelera (${businessConfig.eventListingDays} días). QR, precios y visibilidad desde un solo lugar.`,
+    text: `Creá el evento con fecha de hoy o de ayer (día de la cobertura). Podés publicarlo sin fotos para que aparezca en la home como “Pronto”. Cartelera: ${businessConfig.eventListingDays} días.`,
     href: routes.photographer.events,
     linkLabel: "Eventos",
+  },
+  {
+    icon: "campaign",
+    title: "Anunciar sin fotos",
+    text: "Si cubriste un evento hoy o ayer, crealo aunque todavía no tengas las imágenes. Al publicarlo, el público ve que la galería llega pronto. Cuando subas la primera foto, el aviso se reemplaza por la galería.",
+    href: routes.photographer.newEvent,
+    linkLabel: "Nuevo evento",
   },
   {
     icon: "shopping_bag",

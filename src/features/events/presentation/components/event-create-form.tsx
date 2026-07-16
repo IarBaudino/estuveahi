@@ -21,10 +21,16 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
-import { Card, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { routes } from "@/config/routes";
 import { emitToastSuccess } from "@/shared/lib/toast-bus";
 import { toastMessages } from "@/shared/lib/toast-messages";
+import {
+  EVENT_COMING_SOON_HINT,
+  EVENT_SAME_DAY_RULE,
+  getArgentinaTodayString,
+  getArgentinaYesterdayString,
+} from "@/shared/lib/event-same-day";
 
 interface PhotographerOption {
   id: string;
@@ -32,11 +38,15 @@ interface PhotographerOption {
   email: string;
 }
 
+const today = getArgentinaTodayString();
+const yesterday = getArgentinaYesterdayString();
+
 const defaultValues = {
   category: "other" as const,
   country: "AR",
   province: ArgentinaProvince.CABA,
   isPublic: true,
+  eventDate: today,
 };
 
 function EventFields({
@@ -80,12 +90,17 @@ function EventFields({
         </div>
       </div>
       <Input label="Ciudad" {...register("city")} />
-      <Input
-        label="Fecha del evento"
-        type="date"
-        {...register("eventDate")}
-        error={errors.eventDate?.message}
-      />
+      <div className="space-y-1.5">
+        <Input
+          label="Fecha del evento"
+          type="date"
+          min={yesterday}
+          max={today}
+          {...register("eventDate")}
+          error={errors.eventDate?.message}
+        />
+        <p className="text-xs text-on-surface-variant">{EVENT_SAME_DAY_RULE}</p>
+      </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" {...register("isPublic")} className="rounded" />
         Evento público (visible en búsqueda)
@@ -116,6 +131,7 @@ function PhotographerEventCreateForm() {
     <Card className="mt-6">
       <CardHeader>
         <CardTitle>Información del evento</CardTitle>
+        <CardDescription>{EVENT_COMING_SOON_HINT}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">
         <EventFields register={register} errors={errors} />

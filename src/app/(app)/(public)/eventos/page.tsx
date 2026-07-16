@@ -96,7 +96,10 @@ export default async function EventsPage({ searchParams }: PageProps) {
                   </p>
                   <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    {formatDate(event.eventDate)} · {event.photoCount} fotos
+                    {formatDate(event.eventDate)} ·{" "}
+                    {event.photoCount === 0
+                      ? "Galería en camino"
+                      : `${event.photoCount} fotos`}
                     {locationParts.length > 0 ? ` · ${locationParts.join(", ")}` : ""}
                   </p>
                 </Link>
