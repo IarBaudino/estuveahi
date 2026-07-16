@@ -6,7 +6,7 @@ import type { ArgentinaProvince } from "@/domain/enums/argentina-province";
 import { ARGENTINA_PROVINCE_LABELS } from "@/domain/enums/argentina-province";
 import Link from "next/link";
 import { routes } from "@/config/routes";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 import { EVENT_LISTING_NOTICE } from "@/shared/lib/event-listing";
 
@@ -96,7 +96,7 @@ export default async function EventsPage({ searchParams }: PageProps) {
                   </p>
                   <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    {formatDate(event.eventDate)} ·{" "}
+                    {formatEventDate(event.eventDate)} ·{" "}
                     {event.photoCount === 0
                       ? "Galería en camino"
                       : `${event.photoCount} fotos`}

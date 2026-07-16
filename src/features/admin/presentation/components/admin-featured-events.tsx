@@ -6,7 +6,7 @@ import { useAction } from "next-safe-action/hooks";
 import type { PublishedEventPickerItem } from "@/features/events/infrastructure/event.repository";
 import { setFeaturedEventIdsAction } from "@/features/admin/presentation/actions/landing.actions";
 import { Button } from "@/shared/ui/button";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { actionFeedback } from "@/shared/lib/action-feedback";
 
 interface AdminFeaturedEventsProps {
@@ -62,7 +62,7 @@ export function AdminFeaturedEvents({
                   <span>
                     <span className="font-medium">{event.title}</span>
                     <span className="mt-0.5 block text-xs text-on-surface-variant">
-                      {formatDate(event.eventDate)} · {event.photoCount} fotos
+                      {formatEventDate(event.eventDate)} · {event.photoCount} fotos
                     </span>
                   </span>
                 </label>

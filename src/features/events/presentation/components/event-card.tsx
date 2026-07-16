@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { EventWithPhotographer } from "@/domain/entities/event";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { routes } from "@/config/routes";
 import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
@@ -54,7 +54,7 @@ export async function EventCard({
             {event.photographer.isVerified && " ✓"}
           </p>
           <div className="mt-3 flex flex-wrap gap-3 text-caption text-on-surface-variant/70">
-            <span>{formatDate(event.eventDate)}</span>
+            <span>{formatEventDate(event.eventDate)}</span>
             {event.city && <span>{event.city}</span>}
             <span>
               {event.photoCount === 0 ? "Galería en camino" : `${event.photoCount} fotos`}

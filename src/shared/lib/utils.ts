@@ -23,6 +23,23 @@ export function formatDate(date: Date | string): string {
   }).format(d);
 }
 
+/**
+ * Fecha calendario de un evento (se guarda como medianoche UTC).
+ * Formatear en UTC evita el desfase de un día en Argentina (UTC-3).
+ */
+export function formatEventDate(date: Date | string): string {
+  const d =
+    typeof date === "string"
+      ? new Date(date.length <= 10 ? `${date}T12:00:00.000Z` : date)
+      : date;
+  return new Intl.DateTimeFormat("es-AR", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(d);
+}
+
 export function formatCurrency(cents: number, currency = "ARS"): string {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",

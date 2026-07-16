@@ -8,7 +8,7 @@ import {
   getPublicPhotographerById,
 } from "@/features/photographers/infrastructure/photographer.repository";
 import { PhotographerPublicProfile } from "@/features/photographers/presentation/components/photographer-public-profile";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +67,7 @@ export default async function PhotographerProfilePage({ params }: PageProps) {
                 </p>
                 <h3 className="text-headline-md mt-1 line-clamp-1">{event.title}</h3>
                 <p className="mt-2 text-sm text-on-surface-variant">
-                  {formatDate(event.eventDate)} · {event.photoCount} fotos
+                  {formatEventDate(event.eventDate)} · {event.photoCount} fotos
                 </p>
               </Link>
             ))}

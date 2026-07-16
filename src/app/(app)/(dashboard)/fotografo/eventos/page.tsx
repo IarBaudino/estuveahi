@@ -4,7 +4,7 @@ import { getPhotographerEvents } from "@/features/events/infrastructure/event.re
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { routes } from "@/config/routes";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { Plus } from "lucide-react";
 import { EVENT_LISTING_NOTICE } from "@/shared/lib/event-listing";
 import { EventListingBadge } from "@/shared/components/event-listing-notice";
@@ -60,7 +60,7 @@ export default async function PhotographerEventsPage() {
                   )}
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {formatDate(event.eventDate)} · {event.photoCount} fotos · QR: {event.qrCode}
+                  {formatEventDate(event.eventDate)} · {event.photoCount} fotos · QR: {event.qrCode}
                 </p>
               </div>
               <div className="flex gap-2">

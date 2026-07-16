@@ -22,7 +22,7 @@ export async function PopularPhotosSection() {
             <span className="text-label-sm mb-4 block tracking-[0.3em] text-on-surface-variant/50">
               Ranking
             </span>
-            <h2 className="text-headline-lg">Fotos más queridas</h2>
+            <h2 className="text-headline-lg">Fotos más populares</h2>
             <p className="mt-2 text-sm text-on-surface-variant">
               Las imágenes con más likes de la comunidad
             </p>

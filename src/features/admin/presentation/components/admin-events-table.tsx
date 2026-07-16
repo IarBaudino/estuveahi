@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { formatListingExpiryDate } from "@/shared/lib/event-listing";
 import { routes } from "@/config/routes";
 import {
@@ -64,7 +64,7 @@ export function AdminEventsTable({ events }: { events: AdminEventRow[] }) {
             <tr key={event.id}>
               <td className="px-4 py-3 font-medium">{event.title}</td>
               <td className="px-4 py-3">{event.photographerName}</td>
-              <td className="px-4 py-3">{formatDate(event.eventDate)}</td>
+              <td className="px-4 py-3">{formatEventDate(event.eventDate)}</td>
               <td className="px-4 py-3">
                 <Badge>{event.status}</Badge>
               </td>

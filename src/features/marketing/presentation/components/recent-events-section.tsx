@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { searchPublicEvents } from "@/features/events/infrastructure/event.repository";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { routes } from "@/config/routes";
 import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
@@ -73,7 +73,7 @@ export async function RecentEventsSection() {
                 </p>
                 <h4 className="text-headline-md line-clamp-1">{event.title}</h4>
                 <p className="text-caption mt-1 text-on-surface-variant/70">
-                  {formatDate(event.eventDate)} · {event.photoCount} fotos
+                  {formatEventDate(event.eventDate)} · {event.photoCount} fotos
                 </p>
               </div>
             </Link>

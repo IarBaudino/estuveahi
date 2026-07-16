@@ -219,3 +219,30 @@ details > summary::-webkit-details-marker {
 .protected-image img {
   -webkit-user-drag: none;
 }
+
+@keyframes coming-soon-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes coming-soon-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.coming-soon-pulse {
+  animation: coming-soon-pulse 1.8s ease-in-out infinite;
+}
+
+.coming-soon-shimmer {
+  animation: coming-soon-shimmer 1.4s ease-in-out infinite;
+}

@@ -5,7 +5,7 @@ import { getEventBySlug } from "@/features/events/infrastructure/event.repositor
 import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { toPublicPhotos } from "@/domain/dto/public-photo";
 import { PhotoGallery } from "@/features/photos/presentation/components/photo-gallery";
-import { formatDate } from "@/shared/lib/utils";
+import { formatEventDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 import { Badge } from "@/shared/ui/badge";
 import { siteConfig } from "@/config/site";
@@ -98,7 +98,7 @@ export default async function EventGalleryPage({ params }: PageProps) {
         <div className="mt-4 flex flex-wrap gap-4 text-sm text-zinc-500">
           <span className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            {formatDate(event.eventDate)}
+            {formatEventDate(event.eventDate)}
           </span>
           {(event.venue || event.city) && (
             <span className="flex items-center gap-1">
