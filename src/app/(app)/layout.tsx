@@ -2,7 +2,6 @@ import { Header } from "@/shared/components/header";
 import { Footer } from "@/shared/components/footer";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 export default function AppShellLayout({
   children,

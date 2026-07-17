@@ -13,7 +13,7 @@ import { LandingHireCtaSection } from "@/features/marketing/presentation/compone
 import { LandingStatsSection } from "@/features/marketing/presentation/components/landing-stats-section";
 import { LandingTestimonialsSection } from "@/features/marketing/presentation/components/landing-testimonials-section";
 import { LandingFaqSection } from "@/features/marketing/presentation/components/landing-faq-section";
-import { PopularPhotosSection } from "@/features/marketing/presentation/components/popular-photos-section";
+import { LatestEventsSection } from "@/features/marketing/presentation/components/latest-events-section";
 import { ComingSoonEventsSection } from "@/features/marketing/presentation/components/coming-soon-events-section";
 import { getLandingSettings } from "@/features/platform/infrastructure/landing-settings.repository";
 import {
@@ -22,7 +22,7 @@ import {
 } from "@/features/platform/infrastructure/platform-stats.repository";
 import { cn } from "@/shared/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const runtime = "nodejs";
 
 export default async function HomePage() {
@@ -98,10 +98,10 @@ export default async function HomePage() {
         </Suspense>
       </LandingFadeIn>
 
-      {/* Top fotos por likes — prueba visual justo después del hero */}
+      {/* Últimos eventos publicados */}
       <LandingFadeIn>
         <Suspense fallback={null}>
-          <PopularPhotosSection />
+          <LatestEventsSection />
         </Suspense>
       </LandingFadeIn>
 

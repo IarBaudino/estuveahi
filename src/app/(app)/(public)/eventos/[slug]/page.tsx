@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Calendar, MapPin, QrCode } from "lucide-react";
 import { getEventBySlug } from "@/features/events/infrastructure/event.repository";
 import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
+import { PUBLIC_GALLERY_INITIAL_PHOTOS } from "@/features/photos/application/gallery.constants";
 import { toPublicPhotos } from "@/domain/dto/public-photo";
 import { PhotoGallery } from "@/features/photos/presentation/components/photo-gallery";
 import { formatEventDate } from "@/shared/lib/utils";
@@ -19,6 +20,8 @@ import { EventListingNotice } from "@/shared/components/event-listing-notice";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -57,19 +60,16 @@ export default async function EventGalleryPage({ params }: PageProps) {
   }
 
   const [photos, session] = await Promise.all([
-    getEventPhotos(event.id),
+    getEventPhotos(event.id, PUBLIC_GALLERY_INITIAL_PHOTOS),
     auth(),
   ]);
 
-  const photosTruncated = event.photoCount > photos.length;
+  const hasMorePhotos = event.photoCount > photos.length;
+  const userId = session?.user?.id;
 
-  const favoriteIds = session?.user?.id
-    ? await getUserFavoriteIds(session.user.id)
-    : new Set<string>();
-
-  const likedIds = session?.user?.id
-    ? await getUserLikedIds(session.user.id)
-    : new Set<string>();
+  const [favoriteIds, likedIds] = userId
+    ? await Promise.all([getUserFavoriteIds(userId), getUserLikedIds(userId)])
+    : [new Set<string>(), new Set<string>()];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -107,9 +107,9 @@ export default async function EventGalleryPage({ params }: PageProps) {
             </span>
           )}
           <span>
-            {photos.length === event.photoCount
-              ? `${event.photoCount} fotografías`
-              : `${photos.length} de ${event.photoCount} fotografías`}
+            {hasMorePhotos
+              ? `${photos.length} de ${event.photoCount} fotografías`
+              : `${event.photoCount} fotografías`}
           </span>
         </div>
 
@@ -120,10 +120,10 @@ export default async function EventGalleryPage({ params }: PageProps) {
         />
       </div>
 
-      {photosTruncated && (
-        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          Hay más fotos en este evento. Si no ves una imagen recién subida, esperá unos segundos y
-          recargá la página.
+      {hasMorePhotos && (
+        <p className="mb-4 text-sm text-on-surface-variant">
+          Primera carga: {photos.length} de {event.photoCount} fotos. Podés cargar el resto desde la
+          grilla.
         </p>
       )}
 
@@ -135,15 +135,15 @@ export default async function EventGalleryPage({ params }: PageProps) {
           </p>
         </div>
       ) : (
-      <PhotoGallery
-        photos={toPublicPhotos(photos)}
-        favoriteIds={Array.from(favoriteIds)}
-        likedIds={Array.from(likedIds)}
-        isAuthenticated={!!session?.user}
-      />
+        <PhotoGallery
+          photos={toPublicPhotos(photos)}
+          favoriteIds={Array.from(favoriteIds)}
+          likedIds={Array.from(likedIds)}
+          isAuthenticated={!!session?.user}
+          eventId={event.id}
+          totalPhotoCount={event.photoCount}
+        />
       )}
     </div>
   );
 }
-
-export const dynamic = "force-dynamic";

@@ -4,7 +4,6 @@ import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 import { formatEventDate } from "@/shared/lib/utils";
 import { getSecureMediaUrl } from "@/shared/lib/media-url";
 import { routes } from "@/config/routes";
-import { getEventPhotos } from "@/features/photos/infrastructure/photo-read.repository";
 import { MaterialIcon } from "@/shared/components/icon";
 import { ProtectedImage } from "@/shared/components/protected-image";
 
@@ -15,8 +14,7 @@ export async function EventCard({
   event: EventWithPhotographer;
   colorCover?: boolean;
 }) {
-  const photos = await getEventPhotos(event.id, 1);
-  const coverPhotoId = photos[0]?.id;
+  const coverPhotoId = event.coverPhotoId;
 
   return (
     <Link href={routes.event(event.slug)} className="group block">

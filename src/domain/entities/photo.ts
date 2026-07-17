@@ -17,5 +17,7 @@ export interface Photo {
   capturedAt: Date | null;
   metadata: Record<string, unknown>;
   likeCount: number;
+  /** Variantes en storage ya incluyen marca de agua. */
+  watermarkBakedIn: boolean;
   createdAt: Date;
 }

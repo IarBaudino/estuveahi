@@ -1,12 +1,17 @@
 "use server";
 
 import { z } from "zod";
-import { photographerActionClient } from "@/shared/lib/safe-action";
+import { actionClient, photographerActionClient } from "@/shared/lib/safe-action";
 import { revalidatePublicEventPath } from "@/shared/lib/revalidate-event";
 import { toPhotoDTO } from "@/shared/lib/photo-serialization";
 import { uploadPhotoSchema, updatePhotoPriceSchema, bulkUpdatePhotoPricesSchema } from "../../application/schemas/photo.schema";
 import { deletePhoto, uploadPhoto, updatePhotoPrice } from "../../infrastructure/photo.repository";
 import { getEventById } from "@/features/events/infrastructure/event.repository";
+import { getEventPhotos } from "../../infrastructure/photo-read.repository";
+import { PUBLIC_GALLERY_INITIAL_PHOTOS } from "../../application/gallery.constants";
+import { toPublicPhotos } from "@/domain/dto/public-photo";
+import { EventStatus } from "@/domain/enums/event-status";
+import { isListingCurrentlyActive } from "@/shared/lib/event-listing";
 
 async function revalidatePublicGallery(eventId: string) {
   try {
@@ -70,4 +75,32 @@ export const bulkUpdatePhotoPricesAction = photographerActionClient
     );
     await revalidatePublicGallery(parsedInput.eventId);
     return { photos: photos.map(toPhotoDTO) };
+  });
+
+export const loadMorePublicEventPhotosAction = actionClient
+  .schema(
+    z.object({
+      eventId: z.string().min(1),
+      offset: z.number().int().min(0),
+      limit: z.number().int().min(1).max(100).optional(),
+    }),
+  )
+  .action(async ({ parsedInput }) => {
+    const event = await getEventById(parsedInput.eventId);
+    if (
+      !event ||
+      event.status !== EventStatus.PUBLISHED ||
+      event.isPublic === false ||
+      !isListingCurrentlyActive(event.listingExpiresAt)
+    ) {
+      return { photos: [] as ReturnType<typeof toPublicPhotos> };
+    }
+
+    const photos = await getEventPhotos(
+      parsedInput.eventId,
+      parsedInput.limit ?? PUBLIC_GALLERY_INITIAL_PHOTOS,
+      parsedInput.offset,
+    );
+
+    return { photos: toPublicPhotos(photos) };
   });

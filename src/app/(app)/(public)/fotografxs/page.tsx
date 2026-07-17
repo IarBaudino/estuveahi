@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: `Conocé a lxs ${PHOTOGRAPHER_LABEL.plural} que publican galerías de eventos en EstuveAhí.`,
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const runtime = "nodejs";
 
 interface PageProps {

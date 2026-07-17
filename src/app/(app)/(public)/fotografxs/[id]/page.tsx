@@ -11,7 +11,7 @@ import { PhotographerPublicProfile } from "@/features/photographers/presentation
 import { formatEventDate } from "@/shared/lib/utils";
 import { EVENT_CATEGORY_LABELS } from "@/domain/enums/event-category";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const runtime = "nodejs";
 
 interface PageProps {

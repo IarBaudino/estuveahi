@@ -22,6 +22,7 @@ export function mapPhoto(id: string, data: PhotoDoc): Photo {
     capturedAt: data.capturedAt ? toDate(data.capturedAt) : null,
     metadata: data.metadata ?? {},
     likeCount: data.likeCount ?? 0,
+    watermarkBakedIn: data.watermarkBakedIn === true,
     createdAt: toDate(data.createdAt),
   };
 }

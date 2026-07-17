@@ -103,6 +103,7 @@ export async function uploadPhoto(
     capturedAt: null,
     metadata: {},
     likeCount: 0,
+    watermarkBakedIn: true,
     createdAt: FieldValue.serverTimestamp() as unknown as Date,
   };
 

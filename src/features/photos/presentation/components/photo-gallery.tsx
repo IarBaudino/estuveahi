@@ -15,31 +15,70 @@ import { togglePhotoLikeAction } from "@/features/photo-likes/presentation/actio
 import { PurchaseRequestDialog } from "@/features/purchase-requests/presentation/components/purchase-request-dialog";
 import { usePathname, useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
+import { loadMorePublicEventPhotosAction } from "@/features/photos/presentation/actions/photo.actions";
+import { PUBLIC_GALLERY_INITIAL_PHOTOS } from "@/features/photos/application/gallery.constants";
 
 interface PhotoGalleryProps {
   photos: PublicPhoto[];
   favoriteIds: string[];
   likedIds: string[];
   isAuthenticated: boolean;
+  eventId?: string;
+  totalPhotoCount?: number;
 }
 
 export function PhotoGallery({
-  photos,
+  photos: initialPhotos,
   favoriteIds: initialFavorites,
   likedIds: initialLikedIds,
   isAuthenticated,
+  eventId,
+  totalPhotoCount,
 }: PhotoGalleryProps) {
+  const [photos, setPhotos] = useState(initialPhotos);
   const [selectedPhoto, setSelectedPhoto] = useState<PublicPhoto | null>(null);
   const [favorites, setFavorites] = useState(new Set(initialFavorites));
   const [likes, setLikes] = useState(new Set(initialLikedIds));
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>(() =>
-    Object.fromEntries(photos.map((photo) => [photo.id, photo.likeCount])),
+    Object.fromEntries(initialPhotos.map((photo) => [photo.id, photo.likeCount])),
   );
   const [purchasePhoto, setPurchasePhoto] = useState<PublicPhoto | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  const canLoadMore =
+    Boolean(eventId) &&
+    typeof totalPhotoCount === "number" &&
+    photos.length < totalPhotoCount;
+
   useGalleryProtection(photos.length > 0);
+
+  async function handleLoadMore() {
+    if (!eventId || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await loadMorePublicEventPhotosAction({
+        eventId,
+        offset: photos.length,
+        limit: PUBLIC_GALLERY_INITIAL_PHOTOS,
+      });
+      const next = result?.data?.photos ?? [];
+      if (next.length > 0) {
+        setPhotos((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          const appended = next.filter((p) => !seen.has(p.id));
+          return [...prev, ...appended];
+        });
+        setLikeCounts((prev) => ({
+          ...prev,
+          ...Object.fromEntries(next.map((photo) => [photo.id, photo.likeCount])),
+        }));
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   function goToLogin() {
     const callback = pathname ? `${pathname}${window.location.search}` : routes.events;
@@ -186,6 +225,23 @@ export function PhotoGallery({
           </article>
         ))}
       </div>
+
+      {canLoadMore && (
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <p className="text-sm text-on-surface-variant">
+            Mostrando {photos.length}
+            {typeof totalPhotoCount === "number" ? ` de ${totalPhotoCount}` : ""} fotos
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleLoadMore}
+            isLoading={loadingMore}
+          >
+            Cargar más fotos
+          </Button>
+        </div>
+      )}
 
       <AnimatePresence>
         {selectedPhoto && (

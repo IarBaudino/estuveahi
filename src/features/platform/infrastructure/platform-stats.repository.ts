@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import { EventStatus } from "@/domain/enums/event-status";
@@ -17,7 +18,7 @@ export interface LandingStatItem {
   label: string;
 }
 
-export async function getPlatformPublicStats(): Promise<PlatformPublicStats> {
+async function fetchPlatformPublicStats(): Promise<PlatformPublicStats> {
   const db = getDbIfConfigured();
   if (!db) {
     return { photos: 0, events: 0, photographers: 0, users: 0 };
@@ -46,6 +47,12 @@ export async function getPlatformPublicStats(): Promise<PlatformPublicStats> {
     return { photos: 0, events: 0, photographers: 0, users: 0 };
   }
 }
+
+export const getPlatformPublicStats = unstable_cache(
+  fetchPlatformPublicStats,
+  ["platform-public-stats"],
+  { revalidate: 120 },
+);
 
 export function mapPlatformStatsToLanding(stats: PlatformPublicStats): LandingStatItem[] {
   return [

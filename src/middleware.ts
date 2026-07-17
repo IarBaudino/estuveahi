@@ -7,6 +7,10 @@ const protectedRoutes: Record<string, string[]> = {
   "/cliente": ["client", "photographer", "admin"],
 };
 
+function isProtectedPath(pathname: string): boolean {
+  return Object.keys(protectedRoutes).some((route) => pathname.startsWith(route));
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
@@ -15,6 +19,11 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/fotografo/onboarding")) {
     const target = pathname.includes("pendiente") ? "/fotografo" : "/ser-fotografx";
     return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  // Rutas públicas: sin auth en el edge (evita JWT en cada navegación).
+  if (!isProtectedPath(pathname)) {
+    return response;
   }
 
   let session = null;
@@ -61,6 +70,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/media|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -8,9 +8,12 @@ import { getBucketAndPath } from "@/infrastructure/storage/storage.constants";
 import { canManageEvent, canContributeToEvent } from "@/features/events/infrastructure/event-access";
 
 export interface MediaAccessResult {
+  photoId: string;
   bucket: string;
   path: string;
   contentType: string;
+  /** Si true, el archivo en Storage ya tiene marca de agua. */
+  watermarkBakedIn: boolean;
 }
 
 export async function resolvePhotoMediaAccess(
@@ -51,5 +54,11 @@ export async function resolvePhotoMediaAccess(
     variant === "preview" ? photo.previewPath : photo.thumbnailPath;
   const { bucket, path } = getBucketAndPath(fullPath);
 
-  return { bucket, path, contentType: "image/webp" };
+  return {
+    photoId,
+    bucket,
+    path,
+    contentType: "image/webp",
+    watermarkBakedIn: photo.watermarkBakedIn === true,
+  };
 }

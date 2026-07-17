@@ -3,9 +3,12 @@ import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type { PhotoDoc } from "@/infrastructure/firebase/documents";
 import { mapPhoto } from "@/infrastructure/mappers/photo.mapper";
 import type { Photo } from "@/domain/entities/photo";
+import {
+  MAX_EVENT_GALLERY_PHOTOS,
+  PUBLIC_GALLERY_INITIAL_PHOTOS,
+} from "../application/gallery.constants";
 
-/** Máximo de fotos visibles por galería (público y panel). */
-export const MAX_EVENT_GALLERY_PHOTOS = 2000;
+export { MAX_EVENT_GALLERY_PHOTOS, PUBLIC_GALLERY_INITIAL_PHOTOS };
 
 export async function getEventPhotos(
   eventId: string,
@@ -15,6 +18,28 @@ export async function getEventPhotos(
   try {
     const db = getDbIfConfigured();
     if (!db) return [];
+
+    // Path rápido cuando pedimos pocas fotos (cards / primera página de galería).
+    if (offset === 0 && limit <= 100) {
+      try {
+        const snap = await db
+          .collection(COLLECTIONS.photos)
+          .where("eventId", "==", eventId)
+          .orderBy("sortOrder", "asc")
+          .limit(Math.min(limit * 2, 200))
+          .get();
+
+        const photos = snap.docs
+          .map((doc) => mapPhoto(doc.id, doc.data() as PhotoDoc))
+          .filter((photo) => photo.isVisible)
+          .slice(0, limit);
+
+        if (photos.length > 0 || snap.empty) return photos;
+      } catch (error) {
+        // Sin índice compuesto caemos al scan completo.
+        console.warn("[getEventPhotos] orderBy path failed, falling back:", error);
+      }
+    }
 
     const snap = await db
       .collection(COLLECTIONS.photos)

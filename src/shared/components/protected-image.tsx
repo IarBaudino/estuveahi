@@ -55,6 +55,7 @@ export function ProtectedImage({
         fill={fill}
         unoptimized
         draggable={false}
+        loading={props.priority ? undefined : (props.loading ?? "lazy")}
         className={cn("pointer-events-none select-none", className)}
         onError={(event) => {
           setFailed(true);

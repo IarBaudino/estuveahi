@@ -76,6 +76,8 @@ export interface PhotoDoc {
   capturedAt: Timestamp | Date | null;
   metadata: Record<string, unknown>;
   likeCount?: number;
+  /** true = preview/thumbnail en Storage ya tienen marca de agua. */
+  watermarkBakedIn?: boolean;
   createdAt: Timestamp | Date;
 }
 

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: "Encuentra fotografías de recitales, festivales, deportes y más.",
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const runtime = "nodejs";
 
 interface PageProps {

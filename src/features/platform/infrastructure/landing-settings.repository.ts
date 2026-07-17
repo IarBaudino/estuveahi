@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { randomUUID } from "crypto";
+import { unstable_cache } from "next/cache";
 import { getDb, getDbIfConfigured } from "@/infrastructure/firebase/admin";
 import { COLLECTIONS } from "@/infrastructure/firebase/collections";
 import type {
@@ -170,23 +171,31 @@ async function getLandingDocRef() {
 }
 
 export async function getLandingSettings(): Promise<LandingSettings> {
-  const db = getDbIfConfigured();
-  if (!db) return emptySettings();
-
-  try {
-    const doc = await db
-      .collection(COLLECTIONS.platformSettings)
-      .doc(LANDING_DOC_ID)
-      .get();
-
-    if (!doc.exists) return emptySettings();
-
-    return mapSettings(doc.data() as LandingSettingsDoc);
-  } catch (error) {
-    console.error("[getLandingSettings]", error);
-    return emptySettings();
-  }
+  return getCachedLandingSettings();
 }
+
+const getCachedLandingSettings = unstable_cache(
+  async (): Promise<LandingSettings> => {
+    const db = getDbIfConfigured();
+    if (!db) return emptySettings();
+
+    try {
+      const doc = await db
+        .collection(COLLECTIONS.platformSettings)
+        .doc(LANDING_DOC_ID)
+        .get();
+
+      if (!doc.exists) return emptySettings();
+
+      return mapSettings(doc.data() as LandingSettingsDoc);
+    } catch (error) {
+      console.error("[getLandingSettings]", error);
+      return emptySettings();
+    }
+  },
+  ["landing-settings"],
+  { revalidate: 60 },
+);
 
 export async function getLandingImages(): Promise<LandingImages> {
   const settings = await getLandingSettings();
